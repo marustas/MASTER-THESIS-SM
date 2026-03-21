@@ -1,6 +1,6 @@
 # Implementation Progress
 
-## Step 1 — Study Programme Data Collection [ ]
+## Step 1 — Study Programme Data Collection [~]
 Scrape LAMA BPO for Bachelor CS/ICT programmes (name, institution, mode, field, brief description).
 Follow programme links to university websites for extended curriculum descriptions.
 Exclude programmes with no descriptive text.
