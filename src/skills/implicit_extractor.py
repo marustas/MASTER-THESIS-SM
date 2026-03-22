@@ -143,10 +143,14 @@ class ImplicitSkillExtractor:
         if not text or not text.strip():
             return []
 
-        # Step 1 — Embed the target document
-        target_emb = self._model.encode(
-            [text], normalize_embeddings=True, show_progress_bar=False
-        )[0]  # (dim,)
+        # Step 1 — Embed the target document.
+        # Reuse stored corpus embedding when doc_idx is known (avoids redundant inference).
+        if doc_idx is not None and self._corpus_embeddings is not None and 0 <= doc_idx < len(self._corpus_embeddings):
+            target_emb = self._corpus_embeddings[doc_idx]
+        else:
+            target_emb = self._model.encode(
+                [text], normalize_embeddings=True, show_progress_bar=False
+            )[0]  # (dim,)
 
         # Step 2 — Cosine similarity against all corpus embeddings
         sims: np.ndarray = self._corpus_embeddings @ target_emb  # (N,)
@@ -182,7 +186,11 @@ class ImplicitSkillExtractor:
                     if neighbour_sim > existing_sim:
                         implicit_candidates[skill.esco_uri] = (skill, neighbour_sim)
 
-        # Step 5 — Build output list with implicit flag and confidence
+        # Step 5 — Build output list with implicit flag and confidence.
+        # Confidence = cosine similarity to the best neighbour that sourced the skill.
+        # Note: E3=0.5 from the paper is an edge-weight factor used during *matching*
+        # (Section 4.3), not a property of the skill itself. It is applied in the
+        # alignment modules (Steps 8-10), not here.
         results: list[ExtractedSkill] = []
         for uri, (skill, sim) in implicit_candidates.items():
             results.append(ExtractedSkill(
@@ -191,7 +199,7 @@ class ImplicitSkillExtractor:
                 matched_text=skill.matched_text,
                 explicit=False,
                 implicit=True,
-                confidence=round(sim * IMPLICIT_SCORE, 4),  # scale by E3=0.5 (paper)
+                confidence=round(sim, 4),
             ))
 
         return sorted(results, key=lambda s: -s.confidence)

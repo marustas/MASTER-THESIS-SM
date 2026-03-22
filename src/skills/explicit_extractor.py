@@ -246,8 +246,8 @@ class ExplicitSkillExtractor:
         s4_results = self._s4_embed(list(all_candidates))
 
         # ── Compute relevance score per candidate (Equation 1) ─────────────────
-        results: list[ExtractedSkill] = []
-        seen_uris: set[str] = set()
+        # uri → best (relevance, matched_text, preferred_label) seen so far
+        best_per_uri: dict[str, tuple[float, str, str]] = {}
 
         for candidate in all_candidates:
             s1 = s1_scores.get(candidate, 0.0)
@@ -262,7 +262,7 @@ class ExplicitSkillExtractor:
             if relevance < _RELEVANCE_THRESHOLD:
                 continue
 
-            # Resolve the best ESCO URI for this candidate
+            # Resolve ESCO URI — dictionary hit takes priority over embedding match
             if candidate in dict_hit_surfaces:
                 uri, label = s3_hits[candidate]
             elif best_uri:
@@ -270,18 +270,22 @@ class ExplicitSkillExtractor:
             else:
                 continue  # no ESCO concept resolved
 
-            if uri in seen_uris:
-                continue
-            seen_uris.add(uri)
+            # Keep the highest-confidence surface form per URI (fixes non-determinism
+            # when the same URI is reached via multiple candidate strings)
+            existing = best_per_uri.get(uri)
+            if existing is None or relevance > existing[0]:
+                best_per_uri[uri] = (relevance, candidate, label)
 
-            results.append(ExtractedSkill(
+        results: list[ExtractedSkill] = [
+            ExtractedSkill(
                 esco_uri=uri,
                 preferred_label=label,
-                matched_text=candidate,
+                matched_text=matched,
                 explicit=True,
                 confidence=round(relevance, 4),
-            ))
-
+            )
+            for uri, (relevance, matched, label) in best_per_uri.items()
+        ]
         return sorted(results, key=lambda s: (-s.confidence, s.esco_uri))
 
     def extract_labels(self, text: str) -> list[str]:
