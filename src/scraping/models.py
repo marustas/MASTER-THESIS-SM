@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class Programme(BaseModel):
@@ -34,6 +34,27 @@ class Programme(BaseModel):
     # Metadata
     scraped_at: datetime = Field(default_factory=datetime.utcnow)
     source: str = "lama_bpo"
+
+
+class JobAd(BaseModel):
+    """A job advertisement scraped from an online job platform."""
+
+    # Core fields (per thesis methodology Step 2)
+    job_title: str
+    company: Optional[str] = None
+    description: Optional[str] = None
+    required_skills: list[str] = Field(default_factory=list)  # explicitly listed skills
+    employer_sector: Optional[str] = None
+    location: Optional[str] = None
+    country: Optional[str] = None
+    employment_type: Optional[str] = None   # full-time / part-time / contract
+    remote: Optional[bool] = None
+    posting_date: Optional[str] = None      # raw string; normalised in preprocessing
+
+    # Source metadata
+    url: Optional[str] = None
+    source: str                             # e.g. "cvbankas", "linkedin"
+    scraped_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class CourseModule(BaseModel):
