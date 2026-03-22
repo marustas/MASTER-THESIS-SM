@@ -10,7 +10,7 @@ Exclude programmes with no descriptive text.
 
 ---
 
-## Step 2 — Job Advertisement Data Collection [ ]
+## Step 2 — Job Advertisement Data Collection [~]
 Collect EU ICT/AI job postings from LinkedIn, TotalJobs, Upwork or similar.
 Fields: title, description, required skills, employer sector, location, posting date.
 Apply EU/Lithuania geographic + temporal filters.
