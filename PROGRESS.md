@@ -29,7 +29,7 @@ Unified pipeline for both sources: language normalization (multilingual), text c
 
 ---
 
-## Step 4 — Skill Extraction & Ontology Mapping [ ]
+## Step 4 — Skill Extraction & Ontology Mapping [~]
 Map explicit skills to ESCO ontology. Extract implicit skills via document embeddings
 (Gugnani & Misra 2020). Produces symbolic representation per record.
 

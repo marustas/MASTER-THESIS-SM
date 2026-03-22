@@ -23,6 +23,9 @@ data/processed/
 data/dataset/*.parquet
 data/dataset/*.csv
 
+# Keep ESCO README
+!data/raw/esco/README.md
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb_checkpoints
