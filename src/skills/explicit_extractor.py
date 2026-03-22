@@ -75,12 +75,24 @@ class ExplicitSkillExtractor:
         self,
         esco_index: EscoIndex,
         nlp_model: str = "en_core_web_sm",
-        embedding_model: str = EMBEDDING_MODEL,
+        embedding_model: str | object = EMBEDDING_MODEL,
     ):
+        """
+        Parameters
+        ----------
+        embedding_model:
+            Either a model name string (downloads from HuggingFace) or any
+            object with an `.encode(texts, *, normalize_embeddings, ...) -> np.ndarray`
+            interface.  Pass a mock in tests to avoid network access.
+        """
         self._index = esco_index
         self._nlp = self._load_nlp(nlp_model)
         self._phrase_matcher = self._build_phrase_matcher()
-        self._embed_model = SentenceTransformer(embedding_model)
+
+        if isinstance(embedding_model, str):
+            self._embed_model = SentenceTransformer(embedding_model)
+        else:
+            self._embed_model = embedding_model  # injected (e.g. mock for tests)
 
         # Pre-compute ESCO label embeddings for S4 scoring (normalised)
         logger.info("Pre-computing ESCO label embeddings for relevance scoring…")
