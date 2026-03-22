@@ -20,7 +20,7 @@ Apply EU/Lithuania geographic + temporal filters.
 
 ---
 
-## Step 3 — Text Preprocessing Pipeline [ ]
+## Step 3 — Text Preprocessing Pipeline [~]
 Unified pipeline for both sources: language normalization (multilingual), text cleaning
 (HTML, boilerplate, duplicates), tokenization. Reusable and documented.
 
