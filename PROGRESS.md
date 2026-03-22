@@ -57,7 +57,7 @@ Qualitative review of a representative subset.
 
 ---
 
-## Step 7 — Clustering [ ]
+## Step 7 — Clustering [x]
 Cluster programme embeddings/skill vectors (specialization patterns).
 Separately cluster job ads (labour-market demand groups).
 
