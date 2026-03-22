@@ -47,13 +47,13 @@ and job postings. Stored alongside symbolic representations.
 
 ---
 
-## Step 6 — Dataset Assembly & Descriptive Validation [ ]
+## Step 6 — Dataset Assembly & Descriptive Validation [x]
 Merge all data into single structured machine-readable dataset.
 Compute descriptive stats (skill frequency, text length distributions, coverage rates).
 Qualitative review of a representative subset.
 
 **Output:** `data/dataset/`
-**Module:** `src/dataset_builder.py`, `notebooks/06_descriptive_validation.ipynb`
+**Module:** `src/dataset_builder.py`
 
 ---
 
