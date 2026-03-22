@@ -29,7 +29,7 @@ Unified pipeline for both sources: language normalization (multilingual), text c
 
 ---
 
-## Step 4 — Skill Extraction & Ontology Mapping [~]
+## Step 4 — Skill Extraction & Ontology Mapping [x]
 Map explicit skills to ESCO ontology. Extract implicit skills via document embeddings
 (Gugnani & Misra 2020). Produces symbolic representation per record.
 
@@ -38,7 +38,7 @@ Map explicit skills to ESCO ontology. Extract implicit skills via document embed
 
 ---
 
-## Step 5 — Semantic Embedding Generation [ ]
+## Step 5 — Semantic Embedding Generation [x]
 Transformer-based dense embeddings for all programme descriptions (brief + extended)
 and job postings. Stored alongside symbolic representations.
 

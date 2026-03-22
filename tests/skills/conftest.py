@@ -100,6 +100,9 @@ class MockEmbeddingModel:
         "data": 15, "analysis": 15, "analytics": 15, "engineering": 15,
     }
 
+    def get_sentence_embedding_dimension(self) -> int:
+        return self.DIM
+
     def encode(
         self,
         texts: list[str],
