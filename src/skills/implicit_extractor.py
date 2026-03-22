@@ -1,229 +1,217 @@
 """
-Implicit skill extraction via document embeddings.
+Implicit skill extraction via similar-document skill propagation.
 
-Approach (inspired by Gugnani & Misra, 2020):
-  The original paper showed that extracting implicit skills — competencies
-  *implied* by the document context but not explicitly named — improved
-  job–resume matching reciprocal rank by 29.4%.
+This is a faithful adaptation of Gugnani & Misra (2020), Section 4.2.
 
-  Implementation:
-  1. Embed all ESCO skill descriptions using a sentence-transformer model.
-     These embeddings are computed once and cached to disk.
-  2. For each document, extract candidate phrases:
-       - Noun chunks from spaCy dependency parse
-       - Named entities (ORG, PRODUCT, LANGUAGE tags often capture tech skills)
-       - Bigrams/trigrams from sliding window
-  3. Embed each candidate phrase.
-  4. Compute cosine similarity between the phrase embedding and all ESCO skill
-     embeddings.
-  5. Candidates whose top-1 ESCO match exceeds `IMPLICIT_THRESHOLD` and whose
-     surface form does NOT appear in the explicit skill set → implicit skills.
+Paper's method (Section 4.2 — "Identifying Similar JDs"):
+  1. Train Doc2Vec on 1.1 Million JDs; project all JDs into semantic space.
+  2. For each target JD, find top-10 most similar JDs (similarity ≥ 0.59).
+  3. Extract explicit skills from those similar JDs.
+  4. Skills present in similar JDs but ABSENT from the target JD = implicit skills.
+  5. These implicit skills are weighted at E3=0.5 (vs. E3=1.0 for explicit) in matching.
 
-  The final skill set per document = explicit ∪ implicit, each tagged accordingly.
+Adaptation for this thesis:
+  - Instead of Doc2Vec trained on 1.1M external JDs, we use sentence-transformer
+    embeddings of our own collected documents. This is justified because our dataset
+    is domain-specific (ICT/AI) and sentence-transformers outperform Doc2Vec on
+    semantic similarity for short-to-medium texts.
+  - Similarity threshold adapted from 0.59 (paper) → configurable (default 0.60).
+  - Top-K neighbours: default 10 (same as paper).
+  - The corpus for neighbour search is the same document collection (job ads search
+    within job ads; programmes search within programmes).
+
+Usage:
+    extractor = ImplicitSkillExtractor(explicit_extractor)
+    # Fit on the full corpus first (computes and indexes all embeddings)
+    extractor.fit(texts, explicit_skills_per_doc)
+    # Then for any document:
+    implicit = extractor.extract(text, explicit_uris_for_this_doc)
 """
 
 from __future__ import annotations
 
-import hashlib
-import json
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Optional
-
 import numpy as np
-import spacy
+from dataclasses import dataclass
 from loguru import logger
 from sentence_transformers import SentenceTransformer
-from spacy.language import Language
 
-from src.skills.esco_loader import EscoIndex, EscoSkill
-from src.skills.explicit_extractor import ExtractedSkill
-from src.scraping.config import DATA_DIR
+from src.skills.explicit_extractor import ExtractedSkill, ExplicitSkillExtractor
 
-# ── Configuration ──────────────────────────────────────────────────────────────
-IMPLICIT_THRESHOLD: float = 0.72       # cosine similarity cutoff for implicit match
-EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"   # fast, strong multilingual performance
-ESCO_EMBEDDINGS_CACHE: Path = DATA_DIR / "raw" / "esco" / "esco_skill_embeddings.npz"
-MAX_CANDIDATE_TOKENS: int = 6          # max tokens in a candidate phrase
-MIN_CANDIDATE_CHARS: int = 3           # minimum candidate phrase length
-BATCH_SIZE: int = 256                  # embedding batch size
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+DEFAULT_TOP_K = 10
+DEFAULT_SIM_THRESHOLD = 0.60   # paper uses 0.59; slightly raised for domain focus
+IMPLICIT_SCORE = 0.5           # paper's E3 weight for implicit skills
 
-
-# ── Implicit extractor ─────────────────────────────────────────────────────────
 
 class ImplicitSkillExtractor:
     """
-    Embedding-based implicit skill extractor.
+    Corpus-level implicit skill extractor.
 
-    Build once per process (loading/computing ESCO embeddings is expensive):
-        extractor = ImplicitSkillExtractor(esco_index)
+    Implements the Gugnani & Misra (2020) approach:
+    find similar documents, take skills present in them but missing from the target.
+
+    Workflow:
+        extractor = ImplicitSkillExtractor(explicit_extractor)
+        extractor.fit(corpus_texts, corpus_explicit_skills)
+        implicit_skills = extractor.extract(target_text, target_explicit_uris)
     """
 
     def __init__(
         self,
-        esco_index: EscoIndex,
+        explicit_extractor: ExplicitSkillExtractor,
         model_name: str = EMBEDDING_MODEL,
-        threshold: float = IMPLICIT_THRESHOLD,
-        nlp_model: str = "en_core_web_sm",
+        top_k: int = DEFAULT_TOP_K,
+        sim_threshold: float = DEFAULT_SIM_THRESHOLD,
     ):
-        self._index = esco_index
-        self._threshold = threshold
+        self._explicit_extractor = explicit_extractor
         self._model = SentenceTransformer(model_name)
-        self._nlp = self._load_nlp(nlp_model)
-        self._esco_embeddings: Optional[np.ndarray] = None   # (n_skills, dim)
-        self._esco_uris: list[str] = []
-        self._load_or_compute_esco_embeddings()
+        self._top_k = top_k
+        self._sim_threshold = sim_threshold
 
-    # ── Setup ──────────────────────────────────────────────────────────────────
+        # Set after fit()
+        self._corpus_embeddings: np.ndarray | None = None   # (N, dim), L2-normalised
+        self._corpus_skill_sets: list[list[ExtractedSkill]] = []   # explicit skills per doc
 
-    @staticmethod
-    def _load_nlp(model: str) -> Language:
-        try:
-            return spacy.load(model, disable=["ner"])
-        except OSError:
-            logger.warning(f"spaCy '{model}' not found — using blank model (no noun chunks)")
-            return spacy.blank("en")
+    # ── Corpus indexing ────────────────────────────────────────────────────────
 
-    def _load_or_compute_esco_embeddings(self) -> None:
-        """Load ESCO skill embeddings from cache, or compute and cache them."""
-        cache_key = self._embeddings_cache_key()
-        cache_path = ESCO_EMBEDDINGS_CACHE.with_stem(
-            f"esco_skill_embeddings_{cache_key[:8]}"
-        )
+    def fit(
+        self,
+        texts: list[str],
+        explicit_skills_per_doc: list[list[ExtractedSkill]] | None = None,
+        batch_size: int = 256,
+    ) -> "ImplicitSkillExtractor":
+        """
+        Embed all corpus documents and store their explicit skill sets.
 
-        if cache_path.exists():
-            logger.info(f"Loading ESCO embeddings from cache: {cache_path}")
-            data = np.load(cache_path, allow_pickle=True)
-            self._esco_embeddings = data["embeddings"]
-            self._esco_uris = list(data["uris"])
-            logger.info(f"Loaded {len(self._esco_uris)} ESCO skill embeddings")
-            return
+        Parameters
+        ----------
+        texts:
+            Cleaned text for every document in the corpus.
+        explicit_skills_per_doc:
+            Pre-computed explicit skills for each document.
+            If None, the explicit extractor is run on each text (slow).
+        """
+        logger.info(f"Fitting ImplicitSkillExtractor on {len(texts)} documents…")
 
-        logger.info(
-            f"Computing embeddings for {len(self._index.skills)} ESCO skills "
-            f"(model: {EMBEDDING_MODEL}) — this runs once and is cached…"
-        )
-        texts = [
-            f"{s.preferred_label}. {s.description or ''}"
-            for s in self._index.skills
-        ]
-        self._esco_uris = [s.uri for s in self._index.skills]
-        self._esco_embeddings = self._model.encode(
+        self._corpus_embeddings = self._model.encode(
             texts,
-            batch_size=BATCH_SIZE,
-            show_progress_bar=True,
+            batch_size=batch_size,
             normalize_embeddings=True,
+            show_progress_bar=True,
         )
 
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        np.savez_compressed(
-            cache_path,
-            embeddings=self._esco_embeddings,
-            uris=np.array(self._esco_uris),
-        )
-        logger.info(f"ESCO embeddings cached → {cache_path}")
+        if explicit_skills_per_doc is not None:
+            self._corpus_skill_sets = explicit_skills_per_doc
+        else:
+            logger.info("Running explicit extraction on corpus (this may take a while)…")
+            self._corpus_skill_sets = [
+                self._explicit_extractor.extract(t) for t in texts
+            ]
 
-    def _embeddings_cache_key(self) -> str:
-        """Hash over skill URIs + model name to detect stale caches."""
-        content = EMBEDDING_MODEL + "".join(s.uri for s in self._index.skills[:100])
-        return hashlib.md5(content.encode()).hexdigest()
+        logger.info("ImplicitSkillExtractor ready")
+        return self
 
-    # ── Candidate extraction ───────────────────────────────────────────────────
-
-    def _extract_candidates(self, text: str) -> list[str]:
-        """
-        Extract candidate phrases from `text`:
-          - spaCy noun chunks
-          - Named entities (PRODUCT, ORG, LANGUAGE, etc.)
-          - Sliding n-gram window (bigrams and trigrams) over tokens
-        """
-        doc = self._nlp(text[:100_000])
-        candidates: set[str] = set()
-
-        # Noun chunks
-        for chunk in doc.noun_chunks:
-            phrase = chunk.text.strip()
-            if MIN_CANDIDATE_CHARS <= len(phrase) and len(chunk) <= MAX_CANDIDATE_TOKENS:
-                candidates.add(phrase.lower())
-
-        # Named entities
-        for ent in doc.ents:
-            if ent.label_ in {"PRODUCT", "ORG", "LANGUAGE", "GPE", "WORK_OF_ART"}:
-                phrase = ent.text.strip().lower()
-                if len(phrase) >= MIN_CANDIDATE_CHARS:
-                    candidates.add(phrase)
-
-        # Sliding n-grams over non-stop, non-punct tokens (2–3 tokens)
-        tokens = [
-            t.lemma_.lower()
-            for t in doc
-            if not t.is_stop and not t.is_punct and not t.is_space and len(t.text) >= 2
-        ]
-        for n in (2, 3):
-            for i in range(len(tokens) - n + 1):
-                candidates.add(" ".join(tokens[i : i + n]))
-
-        return list(candidates)
-
-    # ── Implicit extraction ────────────────────────────────────────────────────
+    # ── Per-document implicit extraction ──────────────────────────────────────
 
     def extract(
         self,
         text: str,
         explicit_uris: set[str],
+        doc_idx: int | None = None,
     ) -> list[ExtractedSkill]:
         """
-        Extract implicit skills from `text`.
+        Find implicit skills for a single document.
 
-        `explicit_uris` — set of ESCO URIs already found by the explicit extractor.
-        Returns only skills NOT in `explicit_uris` whose embedding similarity
-        exceeds `self._threshold`.
+        Parameters
+        ----------
+        text:
+            Cleaned text of the target document.
+        explicit_uris:
+            Set of ESCO URIs already found explicitly — these are excluded.
+        doc_idx:
+            If provided, this document is excluded from its own neighbour search
+            (prevents self-match).
+
+        Returns
+        -------
+        List of implicit ExtractedSkill objects, sorted by confidence descending.
+        Confidence = cosine similarity of the neighbour document to the target.
         """
-        if self._esco_embeddings is None or not text.strip():
+        if self._corpus_embeddings is None:
+            raise RuntimeError("Call fit() before extract()")
+
+        if not text or not text.strip():
             return []
 
-        candidates = self._extract_candidates(text)
-        if not candidates:
+        # Step 1 — Embed the target document
+        target_emb = self._model.encode(
+            [text], normalize_embeddings=True, show_progress_bar=False
+        )[0]  # (dim,)
+
+        # Step 2 — Cosine similarity against all corpus embeddings
+        sims: np.ndarray = self._corpus_embeddings @ target_emb  # (N,)
+
+        # Exclude self
+        if doc_idx is not None and 0 <= doc_idx < len(sims):
+            sims[doc_idx] = -1.0
+
+        # Step 3 — Select top-K neighbours above threshold
+        ranked_indices = np.argsort(sims)[::-1]
+        neighbour_indices = [
+            int(i) for i in ranked_indices
+            if sims[i] >= self._sim_threshold
+        ][: self._top_k]
+
+        if not neighbour_indices:
             return []
 
-        # Embed all candidates in one batch
-        cand_embeddings: np.ndarray = self._model.encode(
-            candidates,
-            batch_size=BATCH_SIZE,
-            normalize_embeddings=True,
-            show_progress_bar=False,
-        )
+        # Step 4 — Collect skills from neighbours, exclude already-explicit ones
+        implicit_candidates: dict[str, tuple[ExtractedSkill, float]] = {}
+        # uri → (skill, max_neighbour_similarity)
 
-        # Cosine similarity: (n_candidates, n_esco_skills)
-        # Both embeddings are L2-normalised → dot product = cosine similarity
-        sim_matrix: np.ndarray = cand_embeddings @ self._esco_embeddings.T
+        for idx in neighbour_indices:
+            neighbour_sim = float(sims[idx])
+            for skill in self._corpus_skill_sets[idx]:
+                if skill.esco_uri in explicit_uris:
+                    continue
+                if skill.esco_uri not in implicit_candidates:
+                    implicit_candidates[skill.esco_uri] = (skill, neighbour_sim)
+                else:
+                    # Keep the highest neighbour similarity as confidence proxy
+                    existing_sim = implicit_candidates[skill.esco_uri][1]
+                    if neighbour_sim > existing_sim:
+                        implicit_candidates[skill.esco_uri] = (skill, neighbour_sim)
 
+        # Step 5 — Build output list with implicit flag and confidence
         results: list[ExtractedSkill] = []
-        seen_uris: set[str] = set(explicit_uris)
-
-        for i, candidate in enumerate(candidates):
-            best_idx = int(np.argmax(sim_matrix[i]))
-            best_sim = float(sim_matrix[i, best_idx])
-
-            if best_sim < self._threshold:
-                continue
-
-            uri = self._esco_uris[best_idx]
-            if uri in seen_uris:
-                continue
-
-            skill = self._index.lookup_uri(uri)
-            if skill is None:
-                continue
-
-            seen_uris.add(uri)
+        for uri, (skill, sim) in implicit_candidates.items():
             results.append(ExtractedSkill(
                 esco_uri=uri,
                 preferred_label=skill.preferred_label,
-                matched_text=candidate,
+                matched_text=skill.matched_text,
                 explicit=False,
                 implicit=True,
-                confidence=round(best_sim, 4),
+                confidence=round(sim * IMPLICIT_SCORE, 4),  # scale by E3=0.5 (paper)
             ))
 
-        return sorted(results, key=lambda s: (-s.confidence, s.esco_uri))
+        return sorted(results, key=lambda s: -s.confidence)
+
+    # ── Batch convenience ──────────────────────────────────────────────────────
+
+    def extract_batch(
+        self,
+        texts: list[str],
+        explicit_skills_list: list[list[ExtractedSkill]],
+    ) -> list[list[ExtractedSkill]]:
+        """
+        Extract implicit skills for all documents in the corpus.
+        Useful when the corpus IS the dataset (fit and extract on the same set).
+        """
+        results = []
+        for i, (text, explicit) in enumerate(zip(texts, explicit_skills_list)):
+            explicit_uris = {s.esco_uri for s in explicit}
+            implicit = self.extract(text, explicit_uris=explicit_uris, doc_idx=i)
+            results.append(implicit)
+            if (i + 1) % 100 == 0:
+                logger.info(f"  Implicit extraction: {i + 1}/{len(texts)}")
+        return results
