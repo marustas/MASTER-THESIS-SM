@@ -5,44 +5,55 @@ Supports two representation modes:
   "embedding"  — cluster on dense sentence-transformer vectors (default)
   "skills"     — cluster on a TF-IDF-weighted bag-of-ESCO-URIs
 
-Algorithm: K-Means (default k=8).  UMAP is used for dimensionality reduction
-before K-Means when the embedding dimension is large (>50), which improves
-cluster quality and enables 2-D visualisation coordinates as a side product.
+Supports three clustering algorithms:
+  "kmeans"       — K-Means; needs n_clusters; fast; assumes spherical clusters.
+  "hdbscan"      — Hierarchical density-based; determines k automatically;
+                   handles noise (label=-1); best for varied-density embeddings.
+                   Uses sklearn.cluster.HDBSCAN (requires scikit-learn ≥ 1.3).
+  "agglomerative"— Agglomerative hierarchical; needs n_clusters; no centroid
+                   assumption; suitable for smaller corpora.
+
+UMAP is used for dimensionality reduction before clustering when the embedding
+dimension is large (>50), improving cluster quality and producing 2-D
+visualisation coordinates as a by-product.
 
 Output columns added to the DataFrame:
-  cluster_label        — integer cluster id (0-based)
+  cluster_label        — integer cluster id (0-based; -1 = noise for HDBSCAN)
   cluster_label_2d_x   — UMAP x coordinate (for visualisation, optional)
   cluster_label_2d_y   — UMAP y coordinate (for visualisation, optional)
 """
 
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 from loguru import logger
-from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import normalize
 
 
 RepresentationMode = Literal["embedding", "skills"]
+ClusteringAlgorithm = Literal["kmeans", "hdbscan", "agglomerative"]
 
-_UMAP_THRESHOLD = 50   # reduce dimensions if embedding dim > this
+_UMAP_THRESHOLD = 50    # reduce dimensions if embedding dim > this
 _UMAP_N_COMPONENTS = 16
 _UMAP_VIS_COMPONENTS = 2
 
 
+# ── Representation extraction ──────────────────────────────────────────────────
+
 def _extract_embedding_matrix(df: pd.DataFrame) -> np.ndarray:
-    """Stack the 'embedding' list-column into a float32 matrix."""
+    """Stack the 'embedding' list-column into an L2-normalised float32 matrix."""
     if "embedding" not in df.columns:
         raise ValueError("DataFrame has no 'embedding' column. Run Step 5 first.")
     matrix = np.array(df["embedding"].tolist(), dtype=np.float32)
-    # Zero-norm rows (empty texts) get a small uniform vector so K-Means doesn't crash
     norms = np.linalg.norm(matrix, axis=1, keepdims=True)
-    zero_mask = (norms.ravel() < 1e-8)
+    zero_mask = norms.ravel() < 1e-8
     if zero_mask.any():
         logger.warning(f"  {zero_mask.sum()} zero-embedding rows replaced with uniform vector")
         matrix[zero_mask] = 1.0 / matrix.shape[1]
@@ -60,6 +71,8 @@ def _extract_skill_matrix(df: pd.DataFrame) -> np.ndarray:
     return vec.fit_transform(docs).toarray().astype(np.float32)
 
 
+# ── Dimensionality reduction ───────────────────────────────────────────────────
+
 def _umap_reduce(matrix: np.ndarray, n_components: int, random_state: int) -> np.ndarray:
     try:
         import umap  # type: ignore[import]
@@ -70,10 +83,62 @@ def _umap_reduce(matrix: np.ndarray, n_components: int, random_state: int) -> np
     return reducer.fit_transform(matrix).astype(np.float32)
 
 
+# ── Algorithm dispatch ─────────────────────────────────────────────────────────
+
+def _run_kmeans(
+    matrix: np.ndarray, n_clusters: int, random_state: int
+) -> np.ndarray:
+    if len(matrix) < n_clusters:
+        logger.warning(
+            f"Fewer records ({len(matrix)}) than n_clusters ({n_clusters}) — "
+            f"reducing to {len(matrix)}"
+        )
+        n_clusters = max(1, len(matrix))
+    logger.info(f"K-Means: k={n_clusters}")
+    return KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto").fit_predict(matrix)
+
+
+def _run_hdbscan(matrix: np.ndarray, min_cluster_size: int) -> np.ndarray:
+    """
+    HDBSCAN via scikit-learn (≥1.3).  Points that do not belong to any dense
+    cluster receive label -1 (noise).  min_cluster_size controls granularity:
+    smaller values yield more (smaller) clusters.
+    """
+    try:
+        from sklearn.cluster import HDBSCAN
+    except ImportError:
+        raise ImportError("HDBSCAN requires scikit-learn ≥ 1.3")
+    capped = max(2, min(min_cluster_size, len(matrix) // 2))
+    logger.info(f"HDBSCAN: min_cluster_size={capped}")
+    labels = HDBSCAN(min_cluster_size=capped).fit_predict(matrix)
+    n_found = len(set(labels) - {-1})
+    n_noise = int((labels == -1).sum())
+    logger.info(f"  → {n_found} clusters, {n_noise} noise points")
+    return labels
+
+
+def _run_agglomerative(
+    matrix: np.ndarray, n_clusters: int, linkage: str, random_state: int
+) -> np.ndarray:
+    if len(matrix) < n_clusters:
+        logger.warning(
+            f"Fewer records ({len(matrix)}) than n_clusters ({n_clusters}) — "
+            f"reducing to {len(matrix)}"
+        )
+        n_clusters = max(1, len(matrix))
+    logger.info(f"Agglomerative: k={n_clusters}, linkage={linkage}")
+    return AgglomerativeClustering(n_clusters=n_clusters, linkage=linkage).fit_predict(matrix)
+
+
+# ── Public API ─────────────────────────────────────────────────────────────────
+
 def fit_clusters(
     df: pd.DataFrame,
     mode: RepresentationMode = "embedding",
+    algorithm: ClusteringAlgorithm = "kmeans",
     n_clusters: int = 8,
+    min_cluster_size: int = 5,
+    linkage: str = "ward",
     use_umap: bool = True,
     add_2d_coords: bool = True,
     random_state: int = 42,
@@ -84,44 +149,46 @@ def fit_clusters(
     Parameters
     ----------
     df:
-        DataFrame with an 'embedding' or 'skill_uris' column depending on `mode`.
+        DataFrame with an 'embedding' or 'skill_uris' column.
     mode:
-        "embedding" uses the dense sentence-transformer vectors.
-        "skills"    uses a TF-IDF bag-of-ESCO-URIs representation.
+        "embedding" | "skills" — which representation to cluster on.
+    algorithm:
+        "kmeans"        — K-Means (needs n_clusters).
+        "hdbscan"       — Density-based; uses min_cluster_size; ignores n_clusters.
+        "agglomerative" — Hierarchical; needs n_clusters and linkage.
     n_clusters:
-        Number of K-Means clusters.
+        Target number of clusters (K-Means and Agglomerative only).
+    min_cluster_size:
+        Minimum points to form a core cluster (HDBSCAN only).
+    linkage:
+        Linkage criterion for Agglomerative: "ward" | "complete" | "average" | "single".
     use_umap:
-        If True and embedding dim > _UMAP_THRESHOLD, apply UMAP before K-Means.
+        Apply UMAP reduction before clustering when dim > 50.
     add_2d_coords:
-        If True, also compute 2-D UMAP coordinates for visualisation.
+        Compute 2-D UMAP coordinates for scatter-plot visualisation.
     random_state:
-        Seed for reproducibility.
+        Seed for K-Means and UMAP.
     """
-    if len(df) < n_clusters:
-        logger.warning(
-            f"Fewer records ({len(df)}) than n_clusters ({n_clusters}) — "
-            f"reducing n_clusters to {len(df)}"
-        )
-        n_clusters = max(1, len(df))
-
     logger.info(f"Extracting {mode} representation ({len(df)} records)…")
     matrix = _extract_embedding_matrix(df) if mode == "embedding" else _extract_skill_matrix(df)
 
-    # Dimensionality reduction before clustering
     cluster_input = matrix
     if use_umap and matrix.shape[1] > _UMAP_THRESHOLD:
         logger.info(f"UMAP reduction: {matrix.shape[1]}D → {_UMAP_N_COMPONENTS}D")
         cluster_input = _umap_reduce(matrix, _UMAP_N_COMPONENTS, random_state)
 
-    # K-Means
-    logger.info(f"K-Means clustering: k={n_clusters}")
-    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto")
-    labels = kmeans.fit_predict(cluster_input)
+    if algorithm == "kmeans":
+        labels = _run_kmeans(cluster_input, n_clusters, random_state)
+    elif algorithm == "hdbscan":
+        labels = _run_hdbscan(cluster_input, min_cluster_size)
+    elif algorithm == "agglomerative":
+        labels = _run_agglomerative(cluster_input, n_clusters, linkage, random_state)
+    else:
+        raise ValueError(f"Unknown algorithm '{algorithm}'. Choose: kmeans, hdbscan, agglomerative")
 
     result = df.copy()
     result["cluster_label"] = labels.astype(int)
 
-    # 2-D coordinates for visualisation
     if add_2d_coords and matrix.shape[1] > _UMAP_VIS_COMPONENTS:
         logger.info("Computing 2-D UMAP coordinates for visualisation…")
         coords_2d = _umap_reduce(matrix, _UMAP_VIS_COMPONENTS, random_state)
@@ -140,12 +207,12 @@ def _log_cluster_stats(df: pd.DataFrame) -> None:
         return
     for cid in sorted(df["cluster_label"].unique()):
         subset = df[df["cluster_label"] == cid]
-        from collections import Counter
         counter: Counter = Counter()
         for skills in subset["all_skills"].dropna():
             counter.update(skills)
+        tag = "(noise)" if cid == -1 else ""
         top5 = ", ".join(f"{s}({n})" for s, n in counter.most_common(5))
-        logger.info(f"  Cluster {cid} (n={len(subset)}): {top5 or '—'}")
+        logger.info(f"  Cluster {cid}{tag} (n={len(subset)}): {top5 or '—'}")
 
 
 def run_clustering(
@@ -153,14 +220,15 @@ def run_clustering(
     output_path: Path,
     source_type: str,
     mode: RepresentationMode = "embedding",
+    algorithm: ClusteringAlgorithm = "kmeans",
     n_clusters: int = 8,
+    min_cluster_size: int = 5,
+    linkage: str = "ward",
     use_umap: bool = True,
 ) -> pd.DataFrame:
     """
-    Load a parquet, cluster the records, save result with cluster columns.
-
-    If the parquet contains multiple source_types, only `source_type` rows are
-    clustered; other rows are passed through unchanged without cluster columns.
+    Load a parquet, cluster the records of one source_type, save with cluster columns.
+    Records of other source types are passed through unchanged.
     """
     logger.info(f"Loading {input_path}")
     df = pd.read_parquet(input_path)
@@ -169,7 +237,7 @@ def run_clustering(
         mask = df["source_type"] == source_type
         target = df[mask].copy()
         rest = df[~mask].copy()
-        logger.info(f"  Clustering {len(target)} '{source_type}' records (ignoring {len(rest)} others)")
+        logger.info(f"  Clustering {len(target)} '{source_type}' records")
     else:
         target = df.copy()
         rest = pd.DataFrame()
@@ -178,13 +246,17 @@ def run_clustering(
         logger.warning(f"No '{source_type}' records found in {input_path}")
         return df
 
-    clustered = fit_clusters(target, mode=mode, n_clusters=n_clusters, use_umap=use_umap)
+    clustered = fit_clusters(
+        target,
+        mode=mode,
+        algorithm=algorithm,
+        n_clusters=n_clusters,
+        min_cluster_size=min_cluster_size,
+        linkage=linkage,
+        use_umap=use_umap,
+    )
 
-    if not rest.empty:
-        result = pd.concat([clustered, rest], ignore_index=True)
-    else:
-        result = clustered
-
+    result = pd.concat([clustered, rest], ignore_index=True) if not rest.empty else clustered
     output_path.parent.mkdir(parents=True, exist_ok=True)
     result.to_parquet(output_path, index=False)
     logger.info(f"Saved → {output_path}")
