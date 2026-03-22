@@ -7,10 +7,18 @@ the full ESCO CSV download.  Skills are chosen to cover:
   - Multi-token skills (machine learning, data analysis)
   - The paper's example terms (Octave)
   - Skills used for implicit propagation checks
+
+A MockEmbeddingModel is injected so tests never touch the network.
+It uses keyword-based 16-dimensional embeddings that reproduce the
+similarity structure the implicit-extraction tests rely on:
+  - doc 0 (Python + ML)  ≈  doc 1 (Python + ML + Docker)
+  - doc 2 (Java + SQL)   ≈  doc 3 (Java + SQL + Agile)
+  - doc 4 (NLP + DL) is dissimilar to docs 0-3
 """
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 from src.skills.esco_loader import EscoIndex, EscoSkill
@@ -44,6 +52,88 @@ MOCK_SKILLS: list[dict] = [
 ]
 
 
+# ── Deterministic mock embedding model ────────────────────────────────────────
+
+class MockEmbeddingModel:
+    """
+    Network-free embedding model for tests.
+
+    Maps texts to 16-dimensional L2-normalised vectors using keyword presence.
+    Each keyword boosts a fixed dimension; this encodes domain similarity:
+
+      Dim  0 — python
+      Dim  1 — java
+      Dim  2 — sql / database
+      Dim  3 — machine / learning (shared by ML and "deep learning" at a lower weight)
+      Dim  4 — docker / container
+      Dim  5 — kubernetes
+      Dim  6 — agile / scrum
+      Dim  7 — natural / language / processing / nlp / text
+      Dim  8 — deep / neural
+      Dim  9 — cloud / aws / azure / gcp
+      Dim 10 — git / github / version
+      Dim 11 — octave
+      Dim 12 — pytorch / torch
+      Dim 13 — tensorflow
+      Dim 14 — rest / api
+      Dim 15 — data / analysis / analytics / engineering
+    """
+
+    DIM = 16
+
+    _KW: dict[str, int] = {
+        "python": 0,
+        "java": 1,
+        "sql": 2, "database": 2,
+        "machine": 3, "learning": 3,
+        "docker": 4, "container": 4, "containerisation": 4,
+        "kubernetes": 5, "k8s": 5,
+        "agile": 6, "scrum": 6,
+        "natural": 7, "language": 7, "processing": 7, "nlp": 7, "text": 7,
+        "deep": 8, "neural": 8,
+        "cloud": 9, "aws": 9, "azure": 9, "gcp": 9,
+        "git": 10, "github": 10, "version": 10,
+        "octave": 11,
+        "pytorch": 12, "torch": 12,
+        "tensorflow": 13,
+        "rest": 14, "api": 14, "restful": 14,
+        "data": 15, "analysis": 15, "analytics": 15, "engineering": 15,
+    }
+
+    def encode(
+        self,
+        texts: list[str],
+        *,
+        normalize_embeddings: bool = True,
+        batch_size: int = 256,
+        show_progress_bar: bool = False,
+    ) -> np.ndarray:
+        result = []
+        for text in texts:
+            vec = np.zeros(self.DIM, dtype=float)
+            lower = text.lower()
+            for kw, dim in self._KW.items():
+                if kw in lower:
+                    vec[dim] += 1.0
+            # Avoid zero vectors (e.g. for generic ESCO labels with no keyword match)
+            norm = np.linalg.norm(vec)
+            if norm < 1e-8:
+                # Spread uniformly so cosine similarity with others stays low
+                vec = np.full(self.DIM, 1.0 / self.DIM)
+                norm = np.linalg.norm(vec)
+            if normalize_embeddings:
+                vec = vec / norm
+            result.append(vec)
+        return np.array(result, dtype=np.float32)
+
+
+# ── Fixtures ───────────────────────────────────────────────────────────────────
+
+@pytest.fixture(scope="session")
+def mock_embedding_model() -> MockEmbeddingModel:
+    return MockEmbeddingModel()
+
+
 @pytest.fixture(scope="session")
 def mock_esco_index() -> EscoIndex:
     skills = [
@@ -60,11 +150,17 @@ def mock_esco_index() -> EscoIndex:
 
 
 @pytest.fixture(scope="session")
-def explicit_extractor(mock_esco_index: EscoIndex) -> ExplicitSkillExtractor:
-    """Build the explicit extractor once for the whole test session (slow init)."""
-    return ExplicitSkillExtractor(mock_esco_index)
+def explicit_extractor(
+    mock_esco_index: EscoIndex,
+    mock_embedding_model: MockEmbeddingModel,
+) -> ExplicitSkillExtractor:
+    """Build the explicit extractor once for the whole test session (no network)."""
+    return ExplicitSkillExtractor(mock_esco_index, embedding_model=mock_embedding_model)
 
 
 @pytest.fixture(scope="session")
-def implicit_extractor(explicit_extractor: ExplicitSkillExtractor) -> ImplicitSkillExtractor:
-    return ImplicitSkillExtractor(explicit_extractor)
+def implicit_extractor(
+    explicit_extractor: ExplicitSkillExtractor,
+    mock_embedding_model: MockEmbeddingModel,
+) -> ImplicitSkillExtractor:
+    return ImplicitSkillExtractor(explicit_extractor, embedding_model=mock_embedding_model)

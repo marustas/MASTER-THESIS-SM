@@ -59,14 +59,22 @@ class ImplicitSkillExtractor:
     def __init__(
         self,
         explicit_extractor: ExplicitSkillExtractor,
-        model_name: str = EMBEDDING_MODEL,
+        embedding_model: str | object = EMBEDDING_MODEL,
         top_k: int = DEFAULT_TOP_K,
         sim_threshold: float = DEFAULT_SIM_THRESHOLD,
+        # Legacy alias kept for backwards-compat
+        model_name: str | None = None,
     ):
         self._explicit_extractor = explicit_extractor
-        self._model = SentenceTransformer(model_name)
         self._top_k = top_k
         self._sim_threshold = sim_threshold
+
+        # model_name is a legacy positional alias; embedding_model takes priority
+        resolved = model_name if (model_name is not None and isinstance(embedding_model, str) and embedding_model == EMBEDDING_MODEL) else embedding_model
+        if isinstance(resolved, str):
+            self._model = SentenceTransformer(resolved)
+        else:
+            self._model = resolved  # injected (e.g. mock for tests)
 
         # Set after fit()
         self._corpus_embeddings: np.ndarray | None = None   # (N, dim), L2-normalised

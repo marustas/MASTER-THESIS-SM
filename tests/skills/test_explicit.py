@@ -81,15 +81,18 @@ class TestS2PosCommaRule:
         When a comma-separated list contains known skills,
         the PoS rule fires and assigns S2=1 to adjacent nouns.
         Verify the rule fires by checking the S2 scores directly.
+
+        MATLAB is intentionally absent from the mock ESCO index so it is not a
+        dict hit; Python and Java ARE hits and anchor the rule for MATLAB.
         """
         doc = explicit_extractor._nlp(
-            "Need candidates with ability to code in Python, Java, and Octave."
+            "Need candidates with ability to code in Python, Java, and MATLAB."
         )
         s3_hits = explicit_extractor._s3_dict(doc)
         dict_hit_surfaces = set(s3_hits.keys())
         s2_scores = explicit_extractor._s2_pos(doc, dict_hit_surfaces)
 
-        # At least one non-dict noun should have been boosted
+        # MATLAB should be boosted by the PoS rule because Python/Java anchor the list
         assert len(s2_scores) > 0, (
             "S2 PoS rule did not fire. No nouns were boosted. "
             f"Dict hits: {dict_hit_surfaces}"

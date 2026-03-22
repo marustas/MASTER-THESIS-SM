@@ -18,6 +18,7 @@ import pytest
 
 from src.skills.explicit_extractor import ExtractedSkill, ExplicitSkillExtractor
 from src.skills.implicit_extractor import ImplicitSkillExtractor
+from tests.skills.conftest import MockEmbeddingModel
 
 
 # ── Controlled corpus ──────────────────────────────────────────────────────────
@@ -71,10 +72,12 @@ CORPUS_EXPLICIT: list[list[ExtractedSkill]] = [
 @pytest.fixture(scope="module")
 def fitted_implicit(
     explicit_extractor: ExplicitSkillExtractor,
+    mock_embedding_model: MockEmbeddingModel,
 ) -> ImplicitSkillExtractor:
     """ImplicitSkillExtractor fitted on the controlled corpus."""
     extractor = ImplicitSkillExtractor(
         explicit_extractor,
+        embedding_model=mock_embedding_model,
         sim_threshold=0.50,  # lower threshold so the small corpus finds neighbours
         top_k=3,
     )
@@ -99,9 +102,9 @@ class TestFit:
         assert len(fitted_implicit._corpus_skill_sets) == len(CORPUS)
 
     def test_not_fitted_raises(
-        self, explicit_extractor: ExplicitSkillExtractor
+        self, explicit_extractor: ExplicitSkillExtractor, mock_embedding_model: MockEmbeddingModel
     ) -> None:
-        fresh = ImplicitSkillExtractor(explicit_extractor)
+        fresh = ImplicitSkillExtractor(explicit_extractor, embedding_model=mock_embedding_model)
         with pytest.raises(RuntimeError, match="fit\\(\\)"):
             fresh.extract("some text", explicit_uris=set())
 
@@ -241,14 +244,14 @@ class TestEdgeCases:
         assert result == []
 
     def test_high_threshold_returns_empty(
-        self, explicit_extractor: ExplicitSkillExtractor
+        self, explicit_extractor: ExplicitSkillExtractor, mock_embedding_model: MockEmbeddingModel
     ) -> None:
         """With threshold=0.99, no neighbours should be found in a small corpus."""
         extractor = ImplicitSkillExtractor(
-            explicit_extractor, sim_threshold=0.99, top_k=10
+            explicit_extractor, embedding_model=mock_embedding_model, sim_threshold=0.99, top_k=10
         )
         extractor.fit(CORPUS, explicit_skills_per_doc=CORPUS_EXPLICIT)
-        implicit = extractor.extract(CORPUS[0], explicit_uris={"esco:python"})
+        implicit = extractor.extract(CORPUS[0], explicit_uris={"esco:python"}, doc_idx=0)
         assert implicit == []
 
     def test_extract_batch_length(self, fitted_implicit: ImplicitSkillExtractor) -> None:
