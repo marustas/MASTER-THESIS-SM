@@ -54,7 +54,7 @@ CVBANKAS_BASE_URL = "https://en.cvbankas.lt"
 # Category IDs for IT/programming on CVbankas English site (padalinys parameter)
 # 76 = IT category on en.cvbankas.lt
 CVBANKAS_IT_CATEGORIES: list[int] = [76]
-CVBANKAS_MAX_PAGES: int = int(os.getenv("CVBANKAS_MAX_PAGES", "50"))
+CVBANKAS_MAX_PAGES: int = 7
 
 # Temporal filter: only collect ads posted within this many days
 MAX_POSTING_AGE_DAYS: int = int(os.getenv("MAX_POSTING_AGE_DAYS", "90"))

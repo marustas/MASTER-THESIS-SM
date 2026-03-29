@@ -38,7 +38,7 @@ from src.scraping.models import JobAd
 # ── CVbankas scraper ───────────────────────────────────────────────────────────
 
 class CVbankasJobScraper(BaseScraper):
-    """Scrapes IT job listings from en.cvbankas.lt using scroll-based pagination."""
+    """Scrapes IT job listings from en.cvbankas.lt using pagination."""
 
     SOURCE = "cvbankas"
 
