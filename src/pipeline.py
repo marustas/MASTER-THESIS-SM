@@ -92,6 +92,8 @@ def _run_step(step: int) -> None:
     elif step == 4:
         from src.skills.skill_mapper import run as _run
         _run()
+        from src.skills.skill_filter import run as _filter
+        _filter()
 
     elif step == 5:
         from src.embeddings.generator import run as _run

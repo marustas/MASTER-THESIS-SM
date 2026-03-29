@@ -73,6 +73,18 @@ _ALWAYS_KEEP_REUSE_LEVELS: frozenset[str] = frozenset({
     "cross-sector", "transversal",
 })
 
+# Cross-sector skills whose ESCO alt labels are single generic words that
+# cause systematic false positives in ICT job descriptions.
+# e.g. "logistics" has "transport" as alt label → matches network/data transport
+#      "energy"    has "fuel"      as alt label → matches performance/energy usage
+_CROSS_SECTOR_BLOCKLIST: frozenset[str] = frozenset({
+    "logistics",            # alt: "transport"
+    "energy",               # alt: "fuel"
+    "perform sporting activities",  # alt: "sport"
+    "provide first aid",    # alt: "first aid"
+    "cook",                 # alt: "cooking"
+})
+
 # ── ESCO reuse-level lookup (built once on first use) ─────────────────────────
 
 _uri_reuse_level: dict[str, str] = {}
@@ -102,21 +114,20 @@ def _is_ict_relevant(skill_detail: dict) -> bool:
     Return True if the skill should be kept based on domain relevance.
 
     cross-sector / transversal skills are always kept.
-    occupation-specific / sector-specific skills are kept only when any of
-    their labels contain an ICT keyword.
+    occupation-specific / sector-specific skills are kept only when the
+    preferred label contains an ICT keyword.
     """
-    reuse_level = (skill_detail.get("reuse_level") or "").lower().strip()
+    uri = skill_detail.get("esco_uri", "")
+    reuse_level = _get_uri_reuse_level().get(uri, "")
+
+    preferred = skill_detail.get("preferred_label", "")
+    if preferred in _CROSS_SECTOR_BLOCKLIST:
+        return False
 
     if reuse_level in _ALWAYS_KEEP_REUSE_LEVELS or not reuse_level:
         return True
 
-    # Check preferred label + alt labels for ICT keywords
-    labels_to_check = [skill_detail.get("preferred_label", "")]
-    # skill_details may not carry alt_labels; fall back gracefully
-    labels_to_check += skill_detail.get("alt_labels", [])
-
-    combined = " ".join(labels_to_check).lower()
-    return any(kw in combined for kw in _ICT_KEYWORDS)
+    return any(kw in preferred.lower() for kw in _ICT_KEYWORDS)
 
 
 # ── Frequency filter ───────────────────────────────────────────────────────────
