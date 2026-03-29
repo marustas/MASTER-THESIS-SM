@@ -31,8 +31,8 @@ class BaseScraper:
         self._browser = await self._playwright.chromium.launch(headless=self.headless)
         self._context = await self._browser.new_context(
             user_agent=USER_AGENT,
-            locale="lt-LT",
-            extra_http_headers={"Accept-Language": "lt-LT,lt;q=0.9,en;q=0.8"},
+            locale="en-US",
+            extra_http_headers={"Accept-Language": "en-US,en;q=0.9"},
         )
         self._context.set_default_timeout(PAGE_TIMEOUT)
         self._context.set_default_navigation_timeout(NAVIGATION_TIMEOUT)

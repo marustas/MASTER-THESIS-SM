@@ -1,13 +1,15 @@
 """
-Step 1a — LAMA BPO programme listing scraper.
+Step 1a — LAMA BPO programme listing scraper (English).
 
-Scrapes Bachelor-level CS/ICT/AI programmes from the LAMA BPO registry:
-  https://www.lamabpo.lt/pirmosios-pakopos-ir-vientisosios-studijos/programu-sarasas/
+Scrapes Bachelor-level CS/ICT/AI programmes from the LAMA BPO English registry:
+  https://lamabpo.lt/en/bachelors-studies/study-programmes/
 
 For each programme it captures:
   - name, institution, city, field group, field, study mode
-  - brief description from the registry detail page
-  - link to the university's own programme page (for Step 1b)
+  - brief description from the LAMA BPO listing row
+  - AIKOS link (national register) from the listing row
+  - extended description from the AIKOS detail page:
+      programme objective + learning outcomes + career paths
 
 Output: data/raw/programmes/lama_bpo_programmes.json
 """
@@ -17,7 +19,6 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from loguru import logger
 from playwright.async_api import Page
@@ -27,7 +28,6 @@ from src.scraping.config import (
     LAMA_BPO_BASE_URL,
     LAMA_BPO_PROGRAMMES_URL,
     RAW_PROGRAMMES_DIR,
-    REQUEST_DELAY,
     TARGET_FIELD_GROUPS,
     TARGET_FIELDS,
 )
@@ -35,7 +35,7 @@ from src.scraping.models import Programme
 
 
 class LamaBpoScraper(BaseScraper):
-    """Scrapes the LAMA BPO programme listing and detail pages."""
+    """Scrapes LAMA BPO programme listing and AIKOS detail pages."""
 
     # ── Public API ─────────────────────────────────────────────────────────────
 
@@ -44,16 +44,16 @@ class LamaBpoScraper(BaseScraper):
         Full scraping run:
           1. Load the listing page and read available filter options.
           2. Identify CS/ICT/AI relevant field groups and fields.
-          3. For each matching filter combination, collect programme card data.
-          4. Deduplicate and enrich with detail page data.
+          3. Collect programme rows for each matching filter value.
+          4. Deduplicate and enrich via AIKOS detail pages.
         Returns a list of Programme objects.
         """
-        logger.info("Starting LAMA BPO scrape")
+        logger.info("Starting LAMA BPO scrape (EN)")
         page = await self.fetch_page(LAMA_BPO_PROGRAMMES_URL)
 
         filter_options = await self._read_filter_options(page)
         logger.info(
-            f"Filter options found — field_groups: {len(filter_options['field_groups'])}, "
+            f"Filter options — field_groups: {len(filter_options['field_groups'])}, "
             f"fields: {len(filter_options['fields'])}"
         )
 
@@ -62,7 +62,7 @@ class LamaBpoScraper(BaseScraper):
         )
         target_fields = self._match_targets(filter_options["fields"], TARGET_FIELDS)
         logger.info(
-            f"Matched targets — field_groups: {target_field_groups}, fields: {target_fields}"
+            f"Matched — field_groups: {target_field_groups}, fields: {target_fields}"
         )
 
         raw_entries = await self._collect_programme_cards(
@@ -71,7 +71,7 @@ class LamaBpoScraper(BaseScraper):
         await page.close()
         logger.info(f"Collected {len(raw_entries)} raw programme entries")
 
-        programmes = await self._enrich_with_detail_pages(raw_entries)
+        programmes = await self._enrich_with_aikos(raw_entries)
         programmes = self._deduplicate(programmes)
         logger.info(f"Final programme count after dedup: {len(programmes)}")
         return programmes
@@ -79,57 +79,58 @@ class LamaBpoScraper(BaseScraper):
     # ── Filter helpers ─────────────────────────────────────────────────────────
 
     async def _read_filter_options(self, page: Page) -> dict[str, list[str]]:
-        """Extract all available option values from the filter dropdowns."""
+        """Extract option values from the Group of study field and Field of studies dropdowns."""
         await page.wait_for_load_state("networkidle")
 
-        field_groups: list[str] = await page.evaluate("""
-            () => {
-                const sel = document.querySelector('select[name*="krypcių"], select[name*="krypciu"], select[id*="krypciu"], select[id*="kryp"]');
-                if (!sel) return [];
-                return Array.from(sel.options)
+        # Dump all selects so we can identify them by position/content
+        all_selects: list[dict] = await page.evaluate("""
+            () => Array.from(document.querySelectorAll('select')).map((sel, i) => ({
+                index: i,
+                name: sel.name || sel.id || '',
+                options: Array.from(sel.options)
                     .map(o => o.text.trim())
-                    .filter(t => t.length > 0 && t !== '-');
-            }
+                    .filter(t => t && t !== '---' && t !== '-')
+            }))
         """)
 
-        fields: list[str] = await page.evaluate("""
-            () => {
-                const selects = Array.from(document.querySelectorAll('select'));
-                for (const sel of selects) {
-                    const name = (sel.name || sel.id || '').toLowerCase();
-                    if (name.includes('krypt') && name.includes('is')) {
-                        return Array.from(sel.options)
-                            .map(o => o.text.trim())
-                            .filter(t => t.length > 0 && t !== '-');
-                    }
-                }
-                return [];
-            }
-        """)
+        logger.debug(f"Selects on page: {json.dumps(all_selects, ensure_ascii=False)}")
 
-        # Fallback: dump all select options grouped by select index
-        if not field_groups and not fields:
-            all_selects: list[dict] = await page.evaluate("""
-                () => Array.from(document.querySelectorAll('select')).map((sel, i) => ({
-                    index: i,
-                    name: sel.name || sel.id || '',
-                    options: Array.from(sel.options).map(o => o.text.trim()).filter(t => t)
-                }))
-            """)
-            logger.debug(f"All selects on page: {json.dumps(all_selects, ensure_ascii=False)}")
+        # Try to identify the two relevant dropdowns by label keywords
+        field_groups: list[str] = []
+        fields: list[str] = []
+
+        group_keywords = ("group", "krypci", "krypcių")
+        field_keywords = ("field", "kryptis", "kryptys")
+
+        for sel in all_selects:
+            name_lower = sel["name"].lower()
+            opts = sel["options"]
+            if not opts:
+                continue
+            if any(k in name_lower for k in group_keywords):
+                field_groups = opts
+            elif any(k in name_lower for k in field_keywords):
+                fields = opts
+
+        # Fallback: assign by position if keyword match failed
+        if not field_groups and not fields and len(all_selects) >= 2:
+            field_groups = all_selects[0]["options"]
+            fields = all_selects[1]["options"]
+        elif not field_groups and all_selects:
+            field_groups = all_selects[0]["options"]
 
         return {"field_groups": field_groups, "fields": fields}
 
     @staticmethod
     def _match_targets(available: list[str], targets: list[str]) -> list[str]:
-        """Return items from `available` that contain any keyword from `targets`."""
+        """Return items from `available` whose text contains any target keyword."""
         matched = []
         for option in available:
             for target in targets:
                 if target.lower() in option.lower():
                     matched.append(option)
                     break
-        return matched if matched else available  # if no match, try all
+        return matched if matched else available  # no match → try all
 
     # ── Card collection ────────────────────────────────────────────────────────
 
@@ -140,8 +141,9 @@ class LamaBpoScraper(BaseScraper):
         fields: list[str],
     ) -> list[dict]:
         """
-        Iterate over filter combinations and scrape programme cards from the table.
-        Falls back to scraping without filters if filtering produces no results.
+        Iterate filter values and collect programme rows.
+        Prefers `fields` over `field_groups` for finer-grained filtering.
+        Falls back to unfiltered scrape if nothing is collected.
         """
         entries: dict[str, dict] = {}
 
@@ -152,9 +154,8 @@ class LamaBpoScraper(BaseScraper):
                 key = f"{entry.get('name', '')}|{entry.get('institution', '')}"
                 entries[key] = entry
 
-        # Fallback: scrape everything without filter
         if not entries:
-            logger.warning("No entries with filters — scraping without filter")
+            logger.warning("No entries matched filters — scraping without filter")
             batch = await self._apply_filter_and_scrape(page, filter_value=None)
             for entry in batch:
                 key = f"{entry.get('name', '')}|{entry.get('institution', '')}"
@@ -163,9 +164,9 @@ class LamaBpoScraper(BaseScraper):
         return list(entries.values())
 
     async def _apply_filter_and_scrape(
-        self, page: Page, filter_value: Optional[str]
+        self, page: Page, filter_value: str | None
     ) -> list[dict]:
-        """Apply a single filter value (or no filter) and return all table rows."""
+        """Apply a single dropdown filter value (or none) and return all table rows."""
         if filter_value:
             applied = await page.evaluate(
                 """
@@ -186,152 +187,209 @@ class LamaBpoScraper(BaseScraper):
                 filter_value,
             )
             if not applied:
-                logger.debug(f"Filter value not found on page: {filter_value!r}")
+                logger.debug(f"Filter value not applied: {filter_value!r}")
                 return []
             await page.wait_for_timeout(2000)
+            await page.wait_for_load_state("networkidle")
 
         return await self._extract_table_rows(page)
 
     async def _extract_table_rows(self, page: Page) -> list[dict]:
-        """Extract programme data from all visible table rows."""
+        """Extract programme data from all visible table rows including AIKOS links."""
         await page.wait_for_load_state("networkidle")
 
         rows: list[dict] = await page.evaluate("""
-            () => {
+            () => {{
                 const results = [];
                 const rows = document.querySelectorAll('table tbody tr, .program-row, .programme-item');
-                rows.forEach(row => {
+                rows.forEach(row => {{
                     const cells = Array.from(row.querySelectorAll('td, .cell'));
                     if (cells.length < 2) return;
 
-                    const link = row.querySelector('a');
-                    results.push({
-                        name: cells[0]?.innerText?.trim() || '',
+                    const progLink = cells[0]?.querySelector('a');
+                    const aikosLink = row.querySelector('a[href*="aikos.smm.lt"]');
+
+                    results.push({{
+                        name:        cells[0]?.innerText?.trim() || '',
                         institution: cells[1]?.innerText?.trim() || '',
-                        city: cells[2]?.innerText?.trim() || null,
-                        study_mode: cells[3]?.innerText?.trim() || null,
-                        lama_bpo_url: link ? link.href : null,
-                        raw_html: row.innerHTML,
-                    });
-                });
+                        city:        cells[2]?.innerText?.trim() || null,
+                        study_mode:  cells[3]?.innerText?.trim() || null,
+                        brief_description: cells[4]?.innerText?.trim() || null,
+                        lama_bpo_url: progLink ? progLink.href : null,
+                        aikos_url:    aikosLink ? aikosLink.href : null,
+                    }});
+                }});
                 return results.filter(r => r.name.length > 0);
-            }
+            }}
         """)
 
-        # If table structure differs, try a more generic extraction
         if not rows:
             rows = await self._extract_generic_entries(page)
 
         return rows
 
     async def _extract_generic_entries(self, page: Page) -> list[dict]:
-        """Fallback: find all links that look like programme detail pages."""
-        links: list[dict] = await page.evaluate(f"""
+        """Fallback: find all links pointing to programme or AIKOS pages."""
+        entries: list[dict] = await page.evaluate(f"""
             () => {{
-                const base = '{LAMA_BPO_BASE_URL}';
+                const aikos = Array.from(document.querySelectorAll('a[href*="aikos.smm.lt"]'))
+                    .map(a => ({{
+                        name: a.closest('tr')?.querySelector('td')?.innerText?.trim()
+                              || a.innerText.trim(),
+                        institution: '',
+                        lama_bpo_url: null,
+                        aikos_url: a.href,
+                        brief_description: null,
+                    }}))
+                    .filter(e => e.name.length > 0);
+
+                if (aikos.length > 0) return aikos;
+
+                // Last resort: any programme-looking link on the LAMA BPO domain
                 return Array.from(document.querySelectorAll('a[href]'))
-                    .filter(a => a.href.includes('/programa/') || a.href.includes('/studiju-programa/'))
+                    .filter(a => a.href.includes('{LAMA_BPO_BASE_URL}') &&
+                                 (a.href.includes('/program') || a.href.includes('/programme')))
                     .map(a => ({{
                         name: a.innerText.trim(),
                         institution: '',
                         lama_bpo_url: a.href,
+                        aikos_url: null,
+                        brief_description: null,
                     }}))
                     .filter(e => e.name.length > 0);
             }}
         """)
-        return links
+        return entries
 
-    # ── Detail page enrichment ─────────────────────────────────────────────────
+    # ── AIKOS enrichment ───────────────────────────────────────────────────────
 
-    async def _enrich_with_detail_pages(self, entries: list[dict]) -> list[Programme]:
-        """Visit each programme's LAMA BPO detail page to get brief description and university URL."""
+    async def _enrich_with_aikos(self, entries: list[dict]) -> list[Programme]:
+        """
+        For each raw entry, fetch the AIKOS page (if available) to build the
+        extended_description from programme objective, learning outcomes and
+        career paths.  Entries with neither a brief nor extended description
+        are excluded per the thesis methodology.
+        """
         programmes: list[Programme] = []
         for i, entry in enumerate(entries, 1):
-            url = entry.get("lama_bpo_url")
-            logger.info(f"[{i}/{len(entries)}] Enriching: {entry.get('name')} @ {entry.get('institution')}")
+            aikos_url = entry.get("aikos_url")
+            logger.info(
+                f"[{i}/{len(entries)}] {entry.get('name')} @ {entry.get('institution')}"
+            )
 
-            brief_description = None
-            university_url = None
+            extended_description: str | None = None
 
-            if url:
+            if aikos_url:
                 try:
-                    detail = await self._scrape_detail_page(url)
-                    brief_description = detail.get("brief_description")
-                    university_url = detail.get("university_url")
+                    extended_description = await self._scrape_aikos_page(aikos_url)
                 except Exception as exc:
-                    logger.warning(f"Detail page failed for {url}: {exc}")
+                    logger.warning(f"AIKOS page failed for {aikos_url}: {exc}")
 
             programme = Programme(
                 name=entry.get("name", ""),
                 institution=entry.get("institution", ""),
                 city=entry.get("city"),
-                field_group=entry.get("field_group"),
-                field=entry.get("field"),
                 study_mode=entry.get("study_mode"),
-                lama_bpo_url=url,
-                university_url=university_url,
-                brief_description=brief_description,
+                lama_bpo_url=entry.get("lama_bpo_url"),
+                aikos_url=aikos_url,
+                brief_description=entry.get("brief_description") or None,
+                extended_description=extended_description,
                 scraped_at=datetime.utcnow(),
             )
 
-            # Exclude programmes with no descriptive text at all (per thesis methodology)
             if not programme.brief_description and not programme.extended_description:
-                logger.debug(f"Excluding (no description): {programme.name} @ {programme.institution}")
+                logger.debug(f"Excluding (no description): {programme.name}")
                 continue
 
             programmes.append(programme)
 
         return programmes
 
-    async def _scrape_detail_page(self, url: str) -> dict:
-        """Extract brief description and university link from a LAMA BPO programme detail page."""
+    async def _scrape_aikos_page(self, url: str) -> str | None:
+        """
+        Fetch and return structured text from an AIKOS programme detail page.
+
+        Extracts (in order of appearance):
+          - Programme Objective
+          - Core Learning Outcomes
+          - Teaching Methods
+          - Career Paths
+
+        Returns a single string with labelled sections, or None if nothing useful
+        is found.
+        """
         page = await self.fetch_page(url)
         try:
             data: dict = await page.evaluate("""
                 () => {
-                    // Brief description — look for common content containers
-                    const descSelectors = [
-                        '.programme-description', '.program-description',
-                        '.studiju-programa-aprasymas', '.aprasymas',
-                        '[class*="description"]', '[class*="aprasymas"]',
-                        'article p', '.content p',
-                    ];
-                    let description = null;
-                    for (const sel of descSelectors) {
-                        const el = document.querySelector(sel);
-                        if (el && el.innerText.trim().length > 50) {
-                            description = el.innerText.trim();
-                            break;
+                    // Helper: return visible text of the first matching element
+                    const get = (...sels) => {
+                        for (const sel of sels) {
+                            const el = document.querySelector(sel);
+                            if (el) {
+                                const t = el.innerText.trim();
+                                if (t.length > 10) return t;
+                            }
                         }
-                    }
+                        return null;
+                    };
 
-                    // University programme URL — look for an external link
-                    const uniLinkSelectors = [
-                        'a[href*="vgtu.lt"]', 'a[href*="vu.lt"]', 'a[href*="ktu.lt"]',
-                        'a[href*="mykolas.lt"]', 'a[href*="ism.lt"]', 'a[href*="esf.lt"]',
-                        'a[href*=".lt"][class*="university"]',
-                        'a[href*=".lt"][class*="programa"]',
-                    ];
-                    let uniUrl = null;
-                    for (const sel of uniLinkSelectors) {
-                        const el = document.querySelector(sel);
-                        if (el) { uniUrl = el.href; break; }
-                    }
-                    // Generic fallback: any outbound .lt link
-                    if (!uniUrl) {
-                        const allLinks = Array.from(document.querySelectorAll('a[href]'));
-                        const ext = allLinks.find(a =>
-                            a.href.startsWith('http') &&
-                            !a.href.includes('lamabpo.lt') &&
-                            a.href.includes('.lt')
-                        );
-                        if (ext) uniUrl = ext.href;
-                    }
+                    // Helper: extract a named section by scanning heading+sibling text
+                    const section = (keyword) => {
+                        const els = Array.from(document.querySelectorAll('h1,h2,h3,h4,td,th,label,strong,b'));
+                        for (const el of els) {
+                            if (el.innerText.toLowerCase().includes(keyword.toLowerCase())) {
+                                // Try next sibling or parent's next sibling text
+                                const next = el.nextElementSibling || el.parentElement?.nextElementSibling;
+                                if (next) {
+                                    const t = next.innerText.trim();
+                                    if (t.length > 10) return t;
+                                }
+                                // Try same row's next cell (table layout)
+                                const row = el.closest('tr');
+                                if (row) {
+                                    const cells = Array.from(row.querySelectorAll('td'));
+                                    if (cells.length >= 2) return cells[cells.length - 1].innerText.trim();
+                                }
+                            }
+                        }
+                        return null;
+                    };
 
-                    return { brief_description: description, university_url: uniUrl };
+                    const objective = section('objective') || section('programme aim');
+                    const outcomes  = section('learning outcome') || section('competenc');
+                    const methods   = section('teaching method') || section('study method');
+                    const careers   = section('career') || section('employment');
+
+                    // Fallback: grab all visible text from the main content zone
+                    const body = get(
+                        '.ms-rtestate-field',
+                        '#contentBox',
+                        '.content-area',
+                        'main article',
+                        '.program-details',
+                        'article',
+                    );
+
+                    return { objective, outcomes, methods, careers, body };
                 }
             """)
-            return data
+
+            parts: list[str] = []
+            if data.get("objective"):
+                parts.append(f"Programme Objective:\n{data['objective']}")
+            if data.get("outcomes"):
+                parts.append(f"Learning Outcomes:\n{data['outcomes']}")
+            if data.get("methods"):
+                parts.append(f"Teaching Methods:\n{data['methods']}")
+            if data.get("careers"):
+                parts.append(f"Career Paths:\n{data['careers']}")
+
+            if not parts and data.get("body"):
+                parts.append(data["body"])
+
+            return "\n\n".join(parts) if parts else None
+
         finally:
             await page.close()
 

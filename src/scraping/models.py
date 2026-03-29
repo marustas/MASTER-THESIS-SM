@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -12,24 +11,25 @@ class Programme(BaseModel):
     # Core fields from LAMA BPO registry
     name: str
     institution: str
-    city: Optional[str] = None
-    field_group: Optional[str] = None  # Krypčių grupė
-    field: Optional[str] = None  # Kryptis
-    study_mode: Optional[str] = None  # Studijų forma (full-time / part-time)
-    degree: Optional[str] = None  # e.g. "Bakalauras"
-    duration_years: Optional[float] = None
-    credits_ects: Optional[int] = None
-    language: Optional[str] = None
-    state_funded_places: Optional[int] = None
-    fee_funded_places: Optional[int] = None
+    city: str | None = None
+    field_group: str | None = None  # Krypčių grupė
+    field: str | None = None  # Kryptis
+    study_mode: str | None = None  # Studijų forma (full-time / part-time)
+    degree: str | None = None  # e.g. "Bakalauras"
+    duration_years: float | None = None
+    credits_ects: int | None = None
+    language: str | None = None
+    state_funded_places: int | None = None
+    fee_funded_places: int | None = None
 
     # Links
-    lama_bpo_url: Optional[str] = None
-    university_url: Optional[str] = None
+    lama_bpo_url: str | None = None
+    university_url: str | None = None
+    aikos_url: str | None = None
 
     # Descriptions (dual representation per thesis methodology)
-    brief_description: Optional[str] = None       # From LAMA BPO registry
-    extended_description: Optional[str] = None    # Scraped from university website
+    brief_description: str | None = None       # From LAMA BPO registry
+    extended_description: str | None = None    # Scraped from university website
 
     # Metadata
     scraped_at: datetime = Field(default_factory=datetime.utcnow)
@@ -41,18 +41,18 @@ class JobAd(BaseModel):
 
     # Core fields (per thesis methodology Step 2)
     job_title: str
-    company: Optional[str] = None
-    description: Optional[str] = None
+    company: str | None = None
+    description: str | None = None
     required_skills: list[str] = Field(default_factory=list)  # explicitly listed skills
-    employer_sector: Optional[str] = None
-    location: Optional[str] = None
-    country: Optional[str] = None
-    employment_type: Optional[str] = None   # full-time / part-time / contract
-    remote: Optional[bool] = None
-    posting_date: Optional[str] = None      # raw string; normalised in preprocessing
+    employer_sector: str | None = None
+    location: str | None = None
+    country: str | None = None
+    employment_type: str | None = None   # full-time / part-time / contract
+    remote: bool | None = None
+    posting_date: str | None = None      # raw string; normalised in preprocessing
 
     # Source metadata
-    url: Optional[str] = None
+    url: str | None = None
     source: str                             # e.g. "cvbankas", "linkedin"
     scraped_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -63,7 +63,7 @@ class CourseModule(BaseModel):
     programme_name: str
     institution: str
     module_name: str
-    credits_ects: Optional[int] = None
-    description: Optional[str] = None
-    semester: Optional[int] = None
-    module_type: Optional[str] = None  # compulsory / elective
+    credits_ects: int | None = None
+    description: str | None = None
+    semester: int | None = None
+    module_type: str | None = None  # compulsory / elective

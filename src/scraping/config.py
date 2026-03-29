@@ -17,28 +17,25 @@ RAW_PROGRAMMES_DIR.mkdir(parents=True, exist_ok=True)
 RAW_JOB_ADS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── LAMA BPO ───────────────────────────────────────────────────────────────────
-LAMA_BPO_BASE_URL = "https://www.lamabpo.lt"
-LAMA_BPO_PROGRAMMES_URL = (
-    f"{LAMA_BPO_BASE_URL}/pirmosios-pakopos-ir-vientisosios-studijos/programu-sarasas/"
-)
+LAMA_BPO_BASE_URL = "https://lamabpo.lt"
+LAMA_BPO_PROGRAMMES_URL = f"{LAMA_BPO_BASE_URL}/en/bachelors-studies/study-programmes/"
+
+AIKOS_BASE_URL = "https://www.aikos.smm.lt"
 
 # Field group / field keywords used to filter CS/ICT/AI programmes.
-# These are matched case-insensitively against the Lithuanian dropdown values.
+# Matched case-insensitively against the English dropdown values on the EN page.
 TARGET_FIELD_GROUPS: list[str] = [
-    "informatika",
-    "informacinės technologijos",
-    "kompiuterija",
-    "dirbtinis intelektas",
+    "computing",
+    "information and communication",
 ]
 TARGET_FIELDS: list[str] = [
-    "informatika",
-    "programų sistemos",
-    "informacinės sistemos",
-    "kompiuterių inžinerija",
-    "kibernetinis saugumas",
-    "duomenų mokslas",
-    "dirbtinis intelektas",
-    "informacinės technologijos",
+    "information systems",
+    "software",
+    "computer",
+    "cybersecurity",
+    "data science",
+    "artificial intelligence",
+    "information technology",
 ]
 
 # ── Scraping behaviour ─────────────────────────────────────────────────────────
