@@ -41,6 +41,7 @@ from spacy.language import Language
 from src.preprocessing.deduplication import deduplicate
 from src.preprocessing.language import tag_language
 from src.preprocessing.text_cleaner import clean
+from src.preprocessing.translate import translate_lt_to_en
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 from src.scraping.config import DATA_DIR
@@ -125,9 +126,17 @@ def process_record(record: dict, *, text_fields: list[str], is_job_ad: bool = Fa
         return record
 
     lang_info = tag_language(cleaned, for_job_ads=is_job_ad)
+
+    # Translate Lithuanian job ads to English before tokenization so that
+    # downstream skill extraction and embeddings operate on English text.
+    if is_job_ad and lang_info["language"] == "lt":
+        cleaned = translate_lt_to_en(cleaned)
+        lang_info["language"] = "en"
+        lang_info["language_confidence"] = 1.0
+
     tokens = tokenize(cleaned, lang_info["language"])
 
-    record["cleaned_text"] = cleaned
+    record["cleaned_text"] = cleaned  # may be translated if was Lithuanian job ad
     record["tokens"] = tokens
     record.update(lang_info)
     return record
