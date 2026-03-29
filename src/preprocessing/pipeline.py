@@ -239,7 +239,7 @@ def run_job_ads(
 # ── CLI entry-point ────────────────────────────────────────────────────────────
 
 def run(
-    programmes_input: Path = DATA_DIR / "raw" / "programmes" / "lama_bpo_programmes_extended.json",
+    programmes_input: Path = DATA_DIR / "raw" / "programmes" / "lama_bpo_programmes.json",
     jobs_input: Path = DATA_DIR / "raw" / "job_ads" / "all_jobs.json",
 ) -> None:
     run_programmes(

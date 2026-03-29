@@ -21,6 +21,7 @@ dependencies = [
     # NLP & preprocessing
     "spacy>=3.7",
     "langdetect>=1.0.9",
+    "deep-translator>=1.11",
     "ftfy>=6.2",
     # ESCO ontology
     "rdflib>=7.0",
