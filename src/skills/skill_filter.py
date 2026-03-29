@@ -162,8 +162,11 @@ def _filter_skills(
 ) -> list[dict]:
     kept = []
     for s in skill_details:
+        is_explicit = s.get("explicit", False)
         label = s.get("preferred_label", "")
-        if label in stopwords:
+        # Frequency stopwords only apply to implicit skills — explicit skills
+        # are direct curriculum claims and must not be silenced by corpus IDF.
+        if not is_explicit and label in stopwords:
             continue
         if s.get("implicit") and s.get("confidence", 1.0) < min_implicit_conf:
             continue
