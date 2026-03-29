@@ -140,8 +140,11 @@ def align_symbolic(
     )
 
     def _safe_details(row: pd.Series) -> list[dict]:
+        import numpy as np
         details = row.get("skill_details", [])
-        return details if isinstance(details, list) else []
+        if isinstance(details, (list, np.ndarray)):
+            return list(details)
+        return []
 
     prog_skills: dict[int, dict[str, float]] = {
         idx: _build_weighted_skills(_safe_details(row))
