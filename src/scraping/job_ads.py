@@ -4,7 +4,7 @@ Step 2 — Job advertisement data collection.
 Scrapes ICT/AI job postings from CVbankas English site (en.cvbankas.lt).
 
 For each posting the following fields are extracted:
-  job_title, company, description, required_skills, employer_sector,
+  job_title, description, required_skills, employer_sector,
   location, country, employment_type, remote, posting_date, url, source
 
 Temporal filter: postings not older than MAX_POSTING_AGE_DAYS days.
@@ -64,16 +64,12 @@ class CVbankasJobScraper(BaseScraper):
                     () => Array.from(document.querySelectorAll('article[id^="job_ad_"]')).map(article => {
                         const link = article.querySelector('a.list_a');
                         const timeEl = article.querySelector('time');
-                        const companyEl = article.querySelector(
-                            '[class*="company"], [class*="darbdavys"], [class*="employer"]'
-                        );
                         const locationEl = article.querySelector(
                             '[class*="city"], [class*="miestas"], [class*="location"]'
                         );
                         return {
                             url: link ? link.href : null,
                             title: link ? link.innerText.trim().split('\\n')[0].trim() : '',
-                            company: companyEl ? companyEl.innerText.trim() : null,
                             location: locationEl ? locationEl.innerText.trim() : null,
                             posting_date: timeEl
                                 ? (timeEl.getAttribute('datetime') || timeEl.innerText.trim())
@@ -98,7 +94,6 @@ class CVbankasJobScraper(BaseScraper):
                 detail = await self._scrape_detail(card["url"])
                 jobs.append(JobAd(
                     job_title=card.get("title") or detail.get("title", ""),
-                    company=card.get("company"),
                     description=detail.get("description"),
                     required_skills=detail.get("skills", []),
                     employer_sector=detail.get("sector"),
@@ -185,7 +180,7 @@ class CVbankasJobScraper(BaseScraper):
         seen: set[str] = set()
         unique = []
         for job in jobs:
-            key = (job.url or f"{job.job_title}|{job.company}").lower()
+            key = (job.url or job.job_title).lower()
             if key not in seen:
                 seen.add(key)
                 unique.append(job)

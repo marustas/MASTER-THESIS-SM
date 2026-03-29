@@ -41,7 +41,6 @@ class JobAd(BaseModel):
 
     # Core fields (per thesis methodology Step 2)
     job_title: str
-    company: str | None = None
     description: str | None = None
     required_skills: list[str] = Field(default_factory=list)  # explicitly listed skills
     employer_sector: str | None = None
