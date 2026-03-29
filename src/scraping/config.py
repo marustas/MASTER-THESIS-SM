@@ -25,6 +25,7 @@ AIKOS_BASE_URL = "https://www.aikos.smm.lt"
 # Field group / field keywords used to filter CS/ICT/AI programmes.
 # Matched case-insensitively against the English dropdown values on the EN page.
 TARGET_FIELD_GROUPS: list[str] = [
+    "computer sciences",
     "computing",
     "information and communication",
 ]

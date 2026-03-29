@@ -95,29 +95,18 @@ class LamaBpoScraper(BaseScraper):
 
         logger.debug(f"Selects on page: {json.dumps(all_selects, ensure_ascii=False)}")
 
-        # Try to identify the two relevant dropdowns by label keywords
+        # The EN page uses name="field" for the broad study-field group
+        # and name="direction" for the specific field of studies.
         field_groups: list[str] = []
         fields: list[str] = []
 
-        group_keywords = ("group", "krypci", "krypcių")
-        field_keywords = ("field", "kryptis", "kryptys")
-
         for sel in all_selects:
-            name_lower = sel["name"].lower()
+            name = sel["name"]
             opts = sel["options"]
-            if not opts:
-                continue
-            if any(k in name_lower for k in group_keywords):
+            if name == "field":
                 field_groups = opts
-            elif any(k in name_lower for k in field_keywords):
+            elif name == "direction":
                 fields = opts
-
-        # Fallback: assign by position if keyword match failed
-        if not field_groups and not fields and len(all_selects) >= 2:
-            field_groups = all_selects[0]["options"]
-            fields = all_selects[1]["options"]
-        elif not field_groups and all_selects:
-            field_groups = all_selects[0]["options"]
 
         return {"field_groups": field_groups, "fields": fields}
 
@@ -147,7 +136,9 @@ class LamaBpoScraper(BaseScraper):
         """
         entries: dict[str, dict] = {}
 
-        filter_values = fields if fields else field_groups
+        # Prefer the broader group filter (e.g. "Computer Sciences" gets everything
+        # in one pass); fall back to individual direction values if no groups matched.
+        filter_values = field_groups if field_groups else fields
         for value in filter_values:
             batch = await self._apply_filter_and_scrape(page, value)
             for entry in batch:
@@ -189,8 +180,18 @@ class LamaBpoScraper(BaseScraper):
             if not applied:
                 logger.debug(f"Filter value not applied: {filter_value!r}")
                 return []
-            await page.wait_for_timeout(2000)
-            await page.wait_for_load_state("networkidle")
+
+            # Click a search/submit button if one exists after setting the filter
+            await page.evaluate("""
+                () => {
+                    const btn = document.querySelector(
+                        'button[type="submit"], input[type="submit"], '
+                        + 'button.search, button.filter, .search-btn, .btn-search'
+                    );
+                    if (btn) btn.click();
+                }
+            """)
+            await page.wait_for_timeout(3000)
 
         return await self._extract_table_rows(page)
 
@@ -199,28 +200,31 @@ class LamaBpoScraper(BaseScraper):
         await page.wait_for_load_state("networkidle")
 
         rows: list[dict] = await page.evaluate("""
-            () => {{
+            () => {
                 const results = [];
                 const rows = document.querySelectorAll('table tbody tr, .program-row, .programme-item');
-                rows.forEach(row => {{
+                rows.forEach(row => {
                     const cells = Array.from(row.querySelectorAll('td, .cell'));
-                    if (cells.length < 2) return;
+                    // Require at least 5 columns:
+                    // [0] field group  [1] direction  [2] institution  [3] city  [4] programme name
+                    if (cells.length < 5) return;
 
-                    const progLink = cells[0]?.querySelector('a');
                     const aikosLink = row.querySelector('a[href*="aikos.smm.lt"]');
+                    const nameText  = cells[4]?.innerText?.trim() || '';
+                    if (!nameText) return;
 
-                    results.push({{
-                        name:        cells[0]?.innerText?.trim() || '',
-                        institution: cells[1]?.innerText?.trim() || '',
-                        city:        cells[2]?.innerText?.trim() || null,
-                        study_mode:  cells[3]?.innerText?.trim() || null,
-                        brief_description: cells[4]?.innerText?.trim() || null,
-                        lama_bpo_url: progLink ? progLink.href : null,
-                        aikos_url:    aikosLink ? aikosLink.href : null,
-                    }});
-                }});
-                return results.filter(r => r.name.length > 0);
-            }}
+                    results.push({
+                        name:        nameText,
+                        institution: cells[2]?.innerText?.trim() || '',
+                        city:        cells[3]?.innerText?.trim() || null,
+                        field_group: cells[0]?.innerText?.trim() || null,
+                        field:       cells[1]?.innerText?.trim() || null,
+                        study_mode:  cells[5]?.innerText?.trim() || null,
+                        aikos_url:   aikosLink ? aikosLink.href : null,
+                    });
+                });
+                return results;
+            }
         """)
 
         if not rows:
@@ -289,10 +293,11 @@ class LamaBpoScraper(BaseScraper):
                 name=entry.get("name", ""),
                 institution=entry.get("institution", ""),
                 city=entry.get("city"),
+                field_group=entry.get("field_group"),
+                field=entry.get("field"),
                 study_mode=entry.get("study_mode"),
-                lama_bpo_url=entry.get("lama_bpo_url"),
                 aikos_url=aikos_url,
-                brief_description=entry.get("brief_description") or None,
+                brief_description=None,
                 extended_description=extended_description,
                 scraped_at=datetime.utcnow(),
             )
@@ -365,11 +370,20 @@ class LamaBpoScraper(BaseScraper):
                     const body = get(
                         '.ms-rtestate-field',
                         '#contentBox',
+                        '.ms-webpart-zone',
                         '.content-area',
+                        '#ctl00_PlaceHolderMain_ctl00',
                         'main article',
                         '.program-details',
                         'article',
-                    );
+                        'main',
+                    ) || (() => {
+                        // Last resort: all paragraph text on the page
+                        const paras = Array.from(document.querySelectorAll('p, li'))
+                            .map(el => el.innerText.trim())
+                            .filter(t => t.length > 30);
+                        return paras.length > 0 ? paras.join('\\n') : null;
+                    })();
 
                     return { objective, outcomes, methods, careers, body };
                 }
