@@ -50,26 +50,11 @@ USER_AGENT: str = os.getenv(
 )
 
 # ── Job advertisement sources ──────────────────────────────────────────────────
-CVBANKAS_BASE_URL = "https://www.cvbankas.lt"
-# Category IDs for IT/programming on CVbankas (padalinys parameter)
-# 2 = Informacinės technologijos (IT), confirmed from site category structure
-CVBANKAS_IT_CATEGORIES: list[int] = [2]
+CVBANKAS_BASE_URL = "https://en.cvbankas.lt"
+# Category IDs for IT/programming on CVbankas English site (padalinys parameter)
+# 76 = IT category on en.cvbankas.lt
+CVBANKAS_IT_CATEGORIES: list[int] = [76]
 CVBANKAS_MAX_PAGES: int = int(os.getenv("CVBANKAS_MAX_PAGES", "50"))
-
-LINKEDIN_JOBS_URL = "https://www.linkedin.com/jobs/search/"
-# LinkedIn geoId for Lithuania: 101464403; European Union: 91000002
-LINKEDIN_GEO_IDS: list[str] = ["101464403", "100565514", "101282230", "90010383"]  # LT, LV, EE, PL
-LINKEDIN_KEYWORDS: list[str] = [
-    "software engineer",
-    "software developer",
-    "data scientist",
-    "machine learning engineer",
-    "AI engineer",
-    "backend developer",
-    "full stack developer",
-    "data engineer",
-]
-LINKEDIN_MAX_PAGES: int = int(os.getenv("LINKEDIN_MAX_PAGES", "10"))
 
 # Temporal filter: only collect ads posted within this many days
 MAX_POSTING_AGE_DAYS: int = int(os.getenv("MAX_POSTING_AGE_DAYS", "90"))

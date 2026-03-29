@@ -1,21 +1,17 @@
 """
 Step 2 — Job advertisement data collection.
 
-Scrapes ICT/AI job postings from two sources:
-  1. CVbankas.lt  — primary Lithuanian market source (server-side rendered)
-  2. LinkedIn Jobs — EU/Baltic coverage (hybrid-rendered)
+Scrapes ICT/AI job postings from CVbankas English site (en.cvbankas.lt).
 
 For each posting the following fields are extracted:
   job_title, company, description, required_skills, employer_sector,
   location, country, employment_type, remote, posting_date, url, source
 
-Geographic filter: Lithuania + wider EU (Latvia, Estonia, Poland).
-Temporal filter:   postings not older than MAX_POSTING_AGE_DAYS days.
+Temporal filter: postings not older than MAX_POSTING_AGE_DAYS days.
 
 Output:
   data/raw/job_ads/cvbankas_jobs.json
-  data/raw/job_ads/linkedin_jobs.json
-  data/raw/job_ads/all_jobs.json       (merged, deduplicated)
+  data/raw/job_ads/all_jobs.json
 """
 
 from __future__ import annotations
@@ -24,21 +20,15 @@ import json
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 from bs4 import BeautifulSoup
 from loguru import logger
-from playwright.async_api import Page
 
 from src.scraping.base import BaseScraper
 from src.scraping.config import (
     CVBANKAS_BASE_URL,
     CVBANKAS_IT_CATEGORIES,
     CVBANKAS_MAX_PAGES,
-    LINKEDIN_GEO_IDS,
-    LINKEDIN_JOBS_URL,
-    LINKEDIN_KEYWORDS,
-    LINKEDIN_MAX_PAGES,
     MAX_POSTING_AGE_DAYS,
     RAW_JOB_ADS_DIR,
 )
@@ -65,7 +55,7 @@ class CVbankasJobScraper(BaseScraper):
         cutoff = datetime.utcnow() - timedelta(days=MAX_POSTING_AGE_DAYS)
 
         for page_num in range(1, CVBANKAS_MAX_PAGES + 1):
-            url = f"{CVBANKAS_BASE_URL}/?padalinys[]={category_id}&puslapis={page_num}"
+            url = f"{CVBANKAS_BASE_URL}/?padalinys[]={category_id}&page={page_num}"
             logger.info(f"CVbankas page {page_num}: {url}")
 
             try:
@@ -234,150 +224,6 @@ class CVbankasJobScraper(BaseScraper):
         return unique
 
 
-# ── LinkedIn scraper ───────────────────────────────────────────────────────────
-
-class LinkedInJobScraper(BaseScraper):
-    """Scrapes ICT/AI job listings from LinkedIn public job search (no login required)."""
-
-    SOURCE = "linkedin"
-
-    async def scrape_all(self) -> list[JobAd]:
-        jobs: list[JobAd] = []
-        for keyword in LINKEDIN_KEYWORDS:
-            for geo_id in LINKEDIN_GEO_IDS:
-                batch = await self._scrape_search(keyword, geo_id)
-                jobs.extend(batch)
-                logger.info(
-                    f"LinkedIn '{keyword}' geo={geo_id}: {len(batch)} jobs"
-                )
-        return self._deduplicate(jobs)
-
-    async def _scrape_search(self, keyword: str, geo_id: str) -> list[JobAd]:
-        jobs: list[JobAd] = []
-        cutoff = datetime.utcnow() - timedelta(days=MAX_POSTING_AGE_DAYS)
-
-        for page_num in range(LINKEDIN_MAX_PAGES):
-            start = page_num * 25
-            url = (
-                f"{LINKEDIN_JOBS_URL}?keywords={keyword.replace(' ', '%20')}"
-                f"&geoId={geo_id}&f_TPR=r{MAX_POSTING_AGE_DAYS * 86400}&start={start}"
-            )
-            logger.info(f"LinkedIn page {page_num + 1}: {keyword} / geo={geo_id}")
-
-            try:
-                page = await self.fetch_page(url, wait_for=".jobs-search__results-list, .job-search-card")
-                cards = await self._extract_cards(page)
-                await page.close()
-            except Exception as exc:
-                logger.warning(f"LinkedIn search page failed: {exc}")
-                break
-
-            if not cards:
-                logger.info("No more LinkedIn results")
-                break
-
-            for card in cards:
-                detail = await self._scrape_detail(card.get("url", ""))
-                job = JobAd(
-                    job_title=card.get("title", ""),
-                    company=card.get("company"),
-                    description=detail.get("description") or card.get("snippet"),
-                    required_skills=detail.get("skills", []),
-                    employer_sector=detail.get("sector"),
-                    location=card.get("location"),
-                    country=_infer_country(card.get("location", "")),
-                    employment_type=detail.get("employment_type"),
-                    remote=detail.get("remote"),
-                    posting_date=card.get("posting_date"),
-                    url=card.get("url"),
-                    source=self.SOURCE,
-                )
-                jobs.append(job)
-
-        return jobs
-
-    @staticmethod
-    async def _extract_cards(page: Page) -> list[dict]:
-        cards: list[dict] = await page.evaluate("""
-            () => {
-                const items = document.querySelectorAll(
-                    '.jobs-search__results-list li, .job-search-card, [class*="job-result-card"]'
-                );
-                return Array.from(items).map(item => {
-                    const titleEl = item.querySelector('h3 a, .job-search-card__title a, [class*="title"] a, a');
-                    const companyEl = item.querySelector('[class*="company"], h4 a, .job-search-card__company-name');
-                    const locationEl = item.querySelector('[class*="location"], .job-search-card__location');
-                    const dateEl = item.querySelector('time, [class*="date"]');
-
-                    return {
-                        title: titleEl?.innerText?.trim() || '',
-                        company: companyEl?.innerText?.trim() || null,
-                        location: locationEl?.innerText?.trim() || null,
-                        posting_date: dateEl?.getAttribute('datetime') || dateEl?.innerText?.trim() || null,
-                        url: titleEl?.href || null,
-                    };
-                }).filter(c => c.title.length > 0);
-            }
-        """)
-        return cards
-
-    async def _scrape_detail(self, url: str) -> dict:
-        if not url:
-            return {}
-        try:
-            page = await self.fetch_page(url, wait_for=".description__text, .show-more-less-html")
-            html = await page.content()
-            await page.close()
-        except Exception as exc:
-            logger.debug(f"LinkedIn detail failed {url}: {exc}")
-            return {}
-
-        soup = BeautifulSoup(html, "lxml")
-        for tag in soup.select("header, footer, nav, script, style"):
-            tag.decompose()
-
-        description = None
-        for sel in [
-            ".description__text",
-            ".show-more-less-html",
-            "[class*='description']",
-            "article",
-        ]:
-            el = soup.select_one(sel)
-            if el:
-                text = el.get_text(separator=" ", strip=True)
-                if len(text) > 100:
-                    description = text
-                    break
-
-        skills = _extract_skills_from_text(description or "")
-        remote = "remote" in (description or "").lower()
-
-        employment_el = soup.select_one(
-            ".job-criteria__text--criteria, [class*='employment-type'], [class*='job-type']"
-        )
-        sector_el = soup.select_one("[class*='industry'], [class*='sector']")
-
-        return {
-            "description": description,
-            "skills": skills,
-            "employment_type": employment_el.get_text(strip=True) if employment_el else None,
-            "sector": sector_el.get_text(strip=True) if sector_el else None,
-            "remote": remote,
-        }
-
-    @staticmethod
-    def _deduplicate(jobs: list[JobAd]) -> list[JobAd]:
-        seen: set[str] = set()
-        unique = []
-        for job in jobs:
-            key = (job.url or f"{job.job_title}|{job.company}").lower().split("?")[0]
-            if key not in seen:
-                seen.add(key)
-                unique.append(job)
-        return unique
-
-
 # ── Shared utilities ───────────────────────────────────────────────────────────
 
 # Curated list of common ICT/AI skills to extract from free text.
@@ -406,55 +252,16 @@ def _extract_skills_from_text(text: str) -> list[str]:
     return sorted(set(m.group(0).lower() for m in _SKILL_REGEX.finditer(text)))
 
 
-_COUNTRY_KEYWORDS: dict[str, str] = {
-    "lithuania": "Lithuania", "vilnius": "Lithuania", "kaunas": "Lithuania",
-    "latvia": "Latvia", "riga": "Latvia",
-    "estonia": "Estonia", "tallinn": "Estonia",
-    "poland": "Poland", "warsaw": "Poland", "krakow": "Poland",
-    "germany": "Germany", "berlin": "Germany",
-    "netherlands": "Netherlands", "amsterdam": "Netherlands",
-    "remote": None,
-}
-
-
-def _infer_country(location: str) -> Optional[str]:
-    loc_lower = location.lower()
-    for keyword, country in _COUNTRY_KEYWORDS.items():
-        if keyword in loc_lower:
-            return country
-    return None
-
-
 # ── CLI entry-point ────────────────────────────────────────────────────────────
 
 async def run(output_dir: Path = RAW_JOB_ADS_DIR) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    all_jobs: list[JobAd] = []
-
     async with CVbankasJobScraper() as scraper:
-        cvbankas_jobs = await scraper.scrape_all()
-    logger.info(f"CVbankas total: {len(cvbankas_jobs)} jobs")
-    _save(cvbankas_jobs, output_dir / "cvbankas_jobs.json")
-    all_jobs.extend(cvbankas_jobs)
-
-    async with LinkedInJobScraper() as scraper:
-        linkedin_jobs = await scraper.scrape_all()
-    logger.info(f"LinkedIn total: {len(linkedin_jobs)} jobs")
-    _save(linkedin_jobs, output_dir / "linkedin_jobs.json")
-    all_jobs.extend(linkedin_jobs)
-
-    # Merge and deduplicate across sources
-    seen: set[str] = set()
-    unique_all: list[JobAd] = []
-    for job in all_jobs:
-        key = (job.url or f"{job.job_title}|{job.company}").lower().split("?")[0]
-        if key not in seen:
-            seen.add(key)
-            unique_all.append(job)
-
-    _save(unique_all, output_dir / "all_jobs.json")
-    logger.info(f"All sources merged: {len(unique_all)} unique jobs")
+        jobs = await scraper.scrape_all()
+    logger.info(f"CVbankas total: {len(jobs)} jobs")
+    _save(jobs, output_dir / "cvbankas_jobs.json")
+    _save(jobs, output_dir / "all_jobs.json")
 
 
 def _save(jobs: list[JobAd], path: Path) -> None:
