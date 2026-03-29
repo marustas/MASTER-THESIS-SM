@@ -133,8 +133,42 @@ def _run_step(step: int) -> None:
 
 # ── Orchestration ──────────────────────────────────────────────────────────────
 
+def _preload_hf_models(steps: list[int]) -> None:
+    """
+    Download / warm-up HuggingFace models before any asyncio.run() call,
+    then switch HuggingFace Hub to offline mode.
+
+    huggingface_hub uses httpx internally.  After asyncio.run() closes its
+    event loop the httpx client is left in a broken state, causing
+    "Cannot send a request, as the client has been closed" on every
+    subsequent model-check or download attempt.  Pre-loading here ensures
+    models are cached; setting HF_HUB_OFFLINE=1 afterwards prevents any
+    further network calls so later steps load from disk only.
+    """
+    import os
+
+    needs_translation = any(s in steps for s in range(3, 13))
+    needs_sentence_transformer = any(s in steps for s in range(4, 13))
+
+    if needs_translation:
+        logger.info("Pre-loading translation model…")
+        from src.preprocessing.translate import translate_lt_to_en
+        translate_lt_to_en("testas")
+
+    if needs_sentence_transformer:
+        logger.info("Pre-loading sentence-transformer model…")
+        from sentence_transformers import SentenceTransformer
+        SentenceTransformer("all-MiniLM-L6-v2")
+
+    if needs_translation or needs_sentence_transformer:
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ["TRANSFORMERS_OFFLINE"] = "1"
+        logger.info("HuggingFace Hub set to offline mode (models cached)")
+
+
 def run_pipeline(steps: list[int], force: bool = False) -> None:
     """Run the given steps in order, skipping completed ones unless force=True."""
+    _preload_hf_models(steps)
     for step in steps:
         if not force and _step_done(step):
             logger.info(f"Step {step:2d} — skipped (output exists)")
