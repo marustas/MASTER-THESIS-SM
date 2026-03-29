@@ -1,0 +1,276 @@
+{
+  "total_records": 345,
+  "by_source_type": {
+    "job_ad": 299,
+    "programme": 46
+  },
+  "coverage": {
+    "explicit_skills": 1.0,
+    "implicit_skills": 1.0,
+    "embedding": 1.0,
+    "extended_description": 0.1333,
+    "language_supported": 1.0
+  },
+  "top_skills_overall": [
+    [
+      "computer technology",
+      252
+    ],
+    [
+      "English",
+      205
+    ],
+    [
+      "communication",
+      157
+    ],
+    [
+      "think creatively",
+      148
+    ],
+    [
+      "SQL",
+      121
+    ],
+    [
+      "think analytically",
+      110
+    ],
+    [
+      "computer science",
+      107
+    ],
+    [
+      "manage time",
+      104
+    ],
+    [
+      "Lithuanian",
+      103
+    ],
+    [
+      "plan",
+      95
+    ],
+    [
+      "assume responsibility",
+      84
+    ],
+    [
+      "cyber security",
+      82
+    ],
+    [
+      "troubleshoot",
+      79
+    ],
+    [
+      "make decisions",
+      77
+    ],
+    [
+      "lead others",
+      77
+    ],
+    [
+      "solve problems",
+      76
+    ],
+    [
+      "work in teams",
+      73
+    ],
+    [
+      "work independently",
+      73
+    ],
+    [
+      "business processes",
+      69
+    ],
+    [
+      "ICT project management methodologies",
+      69
+    ]
+  ],
+  "top_skills_programme": [
+    [
+      "computer science",
+      40
+    ],
+    [
+      "think creatively",
+      40
+    ],
+    [
+      "communication",
+      38
+    ],
+    [
+      "computer technology",
+      37
+    ],
+    [
+      "mathematics",
+      36
+    ],
+    [
+      "algorithms",
+      34
+    ],
+    [
+      "business communication",
+      32
+    ],
+    [
+      "data engineering",
+      32
+    ],
+    [
+      "electronic and telecommunication equipment",
+      32
+    ],
+    [
+      "NoSQL",
+      32
+    ],
+    [
+      "semantics",
+      32
+    ],
+    [
+      "advise others",
+      32
+    ],
+    [
+      "French",
+      32
+    ],
+    [
+      "business analytics",
+      31
+    ],
+    [
+      "geographic information systems",
+      31
+    ],
+    [
+      "solve problems",
+      31
+    ],
+    [
+      "database management systems",
+      31
+    ],
+    [
+      "address an audience",
+      31
+    ],
+    [
+      "computer programming",
+      29
+    ],
+    [
+      "Agile development",
+      29
+    ]
+  ],
+  "top_skills_job_ad": [
+    [
+      "computer technology",
+      215
+    ],
+    [
+      "English",
+      180
+    ],
+    [
+      "communication",
+      119
+    ],
+    [
+      "think creatively",
+      108
+    ],
+    [
+      "SQL",
+      100
+    ],
+    [
+      "think analytically",
+      83
+    ],
+    [
+      "manage time",
+      83
+    ],
+    [
+      "assume responsibility",
+      81
+    ],
+    [
+      "troubleshoot",
+      79
+    ],
+    [
+      "Lithuanian",
+      79
+    ],
+    [
+      "plan",
+      73
+    ],
+    [
+      "lead others",
+      68
+    ],
+    [
+      "computer science",
+      67
+    ],
+    [
+      "ICT project management methodologies",
+      66
+    ],
+    [
+      "work in teams",
+      62
+    ],
+    [
+      "cyber security",
+      62
+    ],
+    [
+      "business processes",
+      57
+    ],
+    [
+      "work independently",
+      56
+    ],
+    [
+      "Python (computer programming)",
+      52
+    ],
+    [
+      "accounting",
+      52
+    ]
+  ],
+  "skills_per_record": {
+    "mean": 0.0,
+    "median": 0.0,
+    "zero_skill_records": 345
+  },
+  "text_length": {
+    "mean": 3068.1,
+    "median": 2525.0,
+    "p10": 1357.8,
+    "p90": 5774.2,
+    "min": 32,
+    "max": 9634
+  },
+  "language_distribution": {
+    "en": 345
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "best_strategy": "hybrid",
+  "n_programmes": 46,
+  "n_job_ads": 299,
+  "top_n": 10,
+  "top1_agreement_rate": 0.0,
+  "spearman_means": {
+    "sym_sem": 0.3179424619166549,
+    "sym_hyb": 0.7654027434558001,
+    "sem_hyb": 0.7025084816535309
+  },
+  "n_market_trend_skills": 50,
+  "top_market_skills": [
+    "http://data.europa.eu/esco/skill/334e3e49-fb02-4051-809a-f06adfdc1c40",
+    "http://data.europa.eu/esco/skill/199f7919-5114-41b6-b6a5-41e0e4896ec1",
+    "http://data.europa.eu/esco/skill/bec4359e-cb92-468f-a997-8fb28e32fba9",
+    "http://data.europa.eu/esco/skill/4da171e5-779c-4983-a76f-91c16751e99f",
+    "http://data.europa.eu/esco/skill/9d2e926f-53d9-41f5-98f3-19dfaa687f3f",
+    "http://data.europa.eu/esco/skill/eab3bafa-eebb-47bf-85ce-e336c5019108",
+    "http://data.europa.eu/esco/skill/4f1b6304-f54a-42f0-9604-5427a28d240f",
+    "http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4",
+    "http://data.europa.eu/esco/skill/ecc18804-a466-40d9-98b4-fba5cd67dd4b",
+    "http://data.europa.eu/esco/skill/dc9a236c-c640-43c3-812f-269403591edb"
+  ]
+}

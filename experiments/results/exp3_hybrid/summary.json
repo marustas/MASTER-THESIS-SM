@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "semantic_top_n": 50,
+    "alpha": 0.5
+  },
+  "n_programmes": 46,
+  "n_jobs_total": 160,
+  "n_candidate_pairs": 2300,
+  "hybrid_score": {
+    "mean": 0.2869509918755873,
+    "median": 0.28694745484944567,
+    "max": 0.41548838359969004
+  },
+  "cosine_score": {
+    "mean": 0.4920300245285034,
+    "median": 0.4916626811027527
+  },
+  "weighted_jaccard": {
+    "mean": 0.08187194997099376,
+    "median": 0.08017857142857143
+  }
+}
