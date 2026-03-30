@@ -38,6 +38,19 @@ Map explicit skills to ESCO ontology. Extract implicit skills via document embed
 
 ---
 
+## Step 4b — Skill Quality Filtering [x]
+Post-process skill extraction output to remove noise before alignment:
+1. Domain filtering — discard ESCO skills from irrelevant categories (e.g. sports, logistics, energy)
+2. Frequency filtering — drop skills appearing in >80% of documents (uninformative)
+3. Confidence threshold — raise minimum implicit skill confidence
+
+Re-run steps 5–12 after filtering.
+
+**Output:** overwrites `programmes_with_skills.parquet` and `jobs_with_skills.parquet`
+**Module:** `src/skills/skill_filter.py`
+
+---
+
 ## Step 5 — Semantic Embedding Generation [x]
 Transformer-based dense embeddings for all programme descriptions (brief + extended)
 and job postings. Stored alongside symbolic representations.
@@ -66,7 +79,7 @@ Separately cluster job ads (labour-market demand groups).
 
 ---
 
-## Step 8 — Experiment 1: Skill-Based Symbolic Alignment [ ]
+## Step 8 — Experiment 1: Skill-Based Symbolic Alignment [x]
 Represent programmes + jobs as ESCO skill sets.
 Compute overlap/weighted similarity. Produce ranked job list per programme.
 Analyze skill gaps.
@@ -76,17 +89,19 @@ Analyze skill gaps.
 
 ---
 
-## Step 9 — Experiment 2: Semantic Text-Based Alignment [ ]
-Cosine similarity between programme and job embeddings.
-Ranked job lists per programme.
-Compare brief vs. extended descriptions for alignment accuracy.
+## Step 9 — Experiment 2: Semantic Text-Based Alignment [x]
+Cosine similarity and dot product between programme and job embeddings.
+Both metrics computed on the same embedding matrix; results stored as separate
+columns in rankings.parquet for direct comparison in Step 11.
+Run twice: once with `embedding` (combined), once with `embedding_brief` vs
+`embedding_extended` to measure effect of curricular detail.
 
 **Output:** `experiments/results/exp2_semantic/`
 **Module:** `src/alignment/semantic.py`
 
 ---
 
-## Step 10 — Experiment 3: Hybrid Alignment [ ]
+## Step 10 — Experiment 3: Hybrid Alignment [x]
 Embedding-based retrieval refined by skill-based overlap.
 Balances recall (semantic) with transparency (symbolic).
 
@@ -95,7 +110,7 @@ Balances recall (semantic) with transparency (symbolic).
 
 ---
 
-## Step 11 — Cross-Strategy Evaluation [ ]
+## Step 11 — Cross-Strategy Evaluation [x]
 Compare all 3 approaches: ranking consistency, stability, strategy agreement.
 Domain expert evaluation for meaningful skill overlap confirmation.
 
@@ -104,11 +119,101 @@ Domain expert evaluation for meaningful skill overlap confirmation.
 
 ---
 
-## Step 12 — Recommendations [ ]
+## Step 12 — Recommendations [x]
 Actionable curriculum enhancement recommendations:
 skill gaps, emerging market trends, best alignment approach for ongoing monitoring.
 
-**Output:** `notebooks/12_recommendations.ipynb`, final report section
+**Output:** `experiments/results/recommendations/`
+**Module:** `src/recommendations/generator.py`
+
+---
+
+## Step 13 — End-to-End Pipeline [x]
+Orchestrates all steps (1–12) in sequence.
+Skips completed steps unless --force is set.
+Supports --from N and --steps N,N,... flags.
+
+**Output:** all step outputs in order
+**Module:** `src/pipeline.py`
+
+---
+
+## Step 14 — Bug Fixes & Data Integrity [ ]
+Fix `skills_per_record` metric in `dataset_builder.py` — currently reports 0 for all 345 records.
+Root cause: parquet stores lists as numpy ndarray, `isinstance(x, list)` misses them.
+
+Note: `embedding_brief` is all zeros because the LAMA BPO source has no brief descriptions — not a bug.
+
+**Output:** corrected `data/dataset/stats.json`
+**Module:** `src/dataset_builder.py`
+
+---
+
+## Step 15 — Hybrid Alpha Sensitivity Analysis [ ]
+Sweep alpha ∈ [0.0, 0.1, 0.2, ... 1.0] for hybrid alignment.
+For each alpha, compute Spearman correlation with symbolic/semantic, Jaccard@10, and hybrid score distribution.
+Produce alpha sensitivity curve.
+
+**Output:** `experiments/results/sensitivity/alpha_sweep.parquet`, `alpha_sweep_summary.json`
+**Module:** `src/evaluation/sensitivity.py`
+
+---
+
+## Step 16 — Statistical Significance Testing [ ]
+1. Bootstrap confidence intervals (1000 resamples over 46 programmes) on Spearman correlations
+2. Wilcoxon signed-rank test on paired per-programme scores to test if strategy differences are significant
+3. Effect sizes (rank-biserial correlation)
+
+**Output:** `experiments/results/evaluation/significance.json`
+**Module:** `src/evaluation/significance.py`
+
+---
+
+## Step 17 — Consensus-Based IR Metrics [ ]
+Use cross-strategy agreement as proxy relevance: jobs in top-K of ≥2 strategies = "relevant".
+Compute Precision@K, NDCG@K, MRR, Coverage@K for each strategy against consensus set.
+
+**Output:** `experiments/results/evaluation/ir_metrics.json`
+**Module:** `src/evaluation/ir_metrics.py`
+
+---
+
+## Step 18 — Cluster-Stratified Alignment Analysis [ ]
+1. Programme-cluster × job-cluster contingency table + chi-squared test
+2. Per-cluster alignment score distributions (all 3 strategies)
+3. Cluster-specific skill gaps — which specializations have the largest market mismatch
+4. Strategy performance by cluster — does symbolic/semantic/hybrid vary by specialization
+
+**Output:** `experiments/results/evaluation/cluster_analysis.json`, `cluster_analysis.parquet`
+**Module:** `src/evaluation/cluster_analysis.py`
+
+---
+
+## Step 19 — BM25 Baseline [ ]
+Add TF-IDF/BM25 text retrieval baseline over cleaned_text.
+Rank job ads per programme by BM25 score. Include in cross-strategy evaluation as reference.
+
+**Output:** `experiments/results/exp0_bm25/`
+**Module:** `src/alignment/bm25_baseline.py`
+
+---
+
+## Step 20 — Extraction Ablation Study [ ]
+Remove S1/S2/S3/S4 modules one at a time from explicit extraction.
+Re-run symbolic alignment with each ablated skill set.
+Measure impact on weighted Jaccard and skill gap coverage.
+
+**Output:** `experiments/results/ablation/`
+**Module:** `src/evaluation/ablation.py`
+
+---
+
+## Step 21 — Bootstrap Ranking Stability [ ]
+Resample 80% of job ads 100 times. For each resample, re-run all 3 alignment strategies.
+Measure rank stability (Kendall tau between full and resampled rankings per programme).
+
+**Output:** `experiments/results/evaluation/stability.json`
+**Module:** `src/evaluation/stability.py`
 
 ---
 
