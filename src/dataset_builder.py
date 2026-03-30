@@ -151,7 +151,9 @@ def compute_stats(df: pd.DataFrame) -> dict:
             subset = df.loc[df["source_type"] == stype, "all_skills"]
             stats[f"top_skills_{stype}"] = _top_skills(subset)
 
-        skill_counts = df["all_skills"].apply(lambda x: len(x) if isinstance(x, list) else 0)
+        skill_counts = df["all_skills"].apply(
+            lambda x: len(x) if isinstance(x, (list, np.ndarray)) else 0
+        )
         stats["skills_per_record"] = {
             "mean": round(float(skill_counts.mean()), 2),
             "median": float(skill_counts.median()),

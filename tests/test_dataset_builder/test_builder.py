@@ -215,6 +215,23 @@ class TestComputeStats:
         assert "language_distribution" in stats
         assert "en" in stats["language_distribution"]
 
+    def test_skills_per_record_with_ndarray(self) -> None:
+        """Parquet stores lists as numpy arrays — skills_per_record must handle both."""
+        df = pd.DataFrame({
+            "all_skills": [
+                np.array(["Python", "Java"]),
+                np.array(["SQL"]),
+                np.array([]),
+            ],
+            "source_type": ["programme", "job_ad", "job_ad"],
+            "cleaned_text": ["a", "b", "c"],
+            "language": ["en", "en", "en"],
+        })
+        stats = compute_stats(df)
+        spr = stats["skills_per_record"]
+        assert spr["mean"] == 1.0
+        assert spr["zero_skill_records"] == 1
+
 
 # ── _coverage helper ───────────────────────────────────────────────────────────
 
