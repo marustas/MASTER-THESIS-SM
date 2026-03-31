@@ -138,7 +138,7 @@ Supports --from N and --steps N,N,... flags.
 
 ---
 
-## Step 14 — Bug Fixes & Data Integrity [ ]
+## Step 14 — Bug Fixes & Data Integrity [x]
 Fix `skills_per_record` metric in `dataset_builder.py` — currently reports 0 for all 345 records.
 Root cause: parquet stores lists as numpy ndarray, `isinstance(x, list)` misses them.
 
@@ -149,7 +149,7 @@ Note: `embedding_brief` is all zeros because the LAMA BPO source has no brief de
 
 ---
 
-## Step 15 — Hybrid Alpha Sensitivity Analysis [ ]
+## Step 15 — Hybrid Alpha Sensitivity Analysis [x]
 Sweep alpha ∈ [0.0, 0.1, 0.2, ... 1.0] for hybrid alignment.
 For each alpha, compute Spearman correlation with symbolic/semantic, Jaccard@10, and hybrid score distribution.
 Produce alpha sensitivity curve.
@@ -159,7 +159,7 @@ Produce alpha sensitivity curve.
 
 ---
 
-## Step 16 — Statistical Significance Testing [ ]
+## Step 16 — Statistical Significance Testing [x]
 1. Bootstrap confidence intervals (1000 resamples over 46 programmes) on Spearman correlations
 2. Wilcoxon signed-rank test on paired per-programme scores to test if strategy differences are significant
 3. Effect sizes (rank-biserial correlation)
@@ -169,7 +169,7 @@ Produce alpha sensitivity curve.
 
 ---
 
-## Step 17 — Consensus-Based IR Metrics [ ]
+## Step 17 — Consensus-Based IR Metrics [x]
 Use cross-strategy agreement as proxy relevance: jobs in top-K of ≥2 strategies = "relevant".
 Compute Precision@K, NDCG@K, MRR, Coverage@K for each strategy against consensus set.
 
@@ -178,7 +178,7 @@ Compute Precision@K, NDCG@K, MRR, Coverage@K for each strategy against consensus
 
 ---
 
-## Step 18 — Cluster-Stratified Alignment Analysis [ ]
+## Step 18 — Cluster-Stratified Alignment Analysis [x]
 1. Programme-cluster × job-cluster contingency table + chi-squared test
 2. Per-cluster alignment score distributions (all 3 strategies)
 3. Cluster-specific skill gaps — which specializations have the largest market mismatch
@@ -189,7 +189,7 @@ Compute Precision@K, NDCG@K, MRR, Coverage@K for each strategy against consensus
 
 ---
 
-## Step 19 — BM25 Baseline [ ]
+## Step 19 — BM25 Baseline [x]
 Add TF-IDF/BM25 text retrieval baseline over cleaned_text.
 Rank job ads per programme by BM25 score. Include in cross-strategy evaluation as reference.
 
@@ -214,6 +214,62 @@ Measure rank stability (Kendall tau between full and resampled rankings per prog
 
 **Output:** `experiments/results/evaluation/stability.json`
 **Module:** `src/evaluation/stability.py`
+
+---
+
+## Step 22 — Expanded Implicit Extraction Corpus [ ]
+Scrape additional (including expired/old) job ads to use as a larger neighbour corpus for implicit skill extraction.
+Old jobs are NOT included in the alignment dataset — only current 299 are used for matching.
+
+1. Scrape old/expired job listings into `data/raw/job_ads_auxiliary/`
+2. Preprocess and run explicit extraction on auxiliary jobs
+3. Fit implicit extractor on combined corpus (current 299 + auxiliary jobs)
+4. Re-extract implicit skills for current 299 jobs and 46 programmes
+5. Re-run steps 6–12 with enriched implicit skills
+
+**Rationale:** Gugnani & Misra (2020) used 1.1M JDs for neighbour search; 299 is too few for meaningful implicit propagation.
+
+**Output:** enriched `*_with_skills.parquet`, then re-run downstream pipeline
+**Module:** `src/scraping/job_ads.py`, `src/skills/skill_mapper.py`, `src/skills/implicit_extractor.py`
+
+---
+
+## Step 23 — IDF + ESCO Reuse-Level Skill Weighting [ ]
+Replace uniform skill weights in symbolic alignment with a two-factor weighting scheme:
+1. **ESCO `reuseLevel` tier:** transversal=0.3, cross-sector=0.5, sector-specific=0.8, occupation-specific=1.0
+2. **Corpus IDF factor:** multiply tier weight by `log(N / df(uri))` where N=total docs, df=docs containing URI
+
+Apply to `_build_weighted_skills` in symbolic alignment: final weight = tier_weight × idf_factor × (1.0 if explicit, 0.5 if implicit).
+Re-run symbolic + hybrid alignment and compare Jaccard/overlap distributions with uniform-weight baseline.
+
+**Rationale:** Current symbolic alignment treats all ESCO URIs equally. Generic skills ("communication", "teamwork") contribute the same overlap as specialised ones ("Kubernetes", "NLP"). This dilutes the signal — programmes and jobs share many generic skills, inflating Jaccard for poor matches and compressing the score range (mean Jaccard = 0.062). Weighting by specificity and corpus rarity should widen the score distribution and make top-ranked matches more meaningful.
+
+**Output:** `experiments/results/exp1_symbolic_weighted/`
+**Module:** `src/alignment/symbolic.py` (extended), `src/skills/skill_weights.py` (new)
+
+---
+
+## Step 24 — Finer Alpha Sweep [ ]
+Re-run hybrid alpha sensitivity analysis with step=0.01 (101 alpha values) instead of current step=0.1 (11 values).
+Focus on the region around the current optimum (±0.15) at step=0.005 for high-resolution curve.
+Report optimal alpha with bootstrap 95% CI.
+
+**Rationale:** The current 0.1 step sweep identifies the best alpha only within ±0.05 precision. The hybrid score is `α·cosine + (1-α)·jaccard`, and the sensitivity curve may have a narrow peak — especially after score normalisation or skill reweighting changes the Jaccard distribution. A finer sweep ensures the reported optimal alpha is not an artefact of coarse discretisation, and the bootstrap CI quantifies how stable this optimum is across programme subsets.
+
+**Output:** `experiments/results/sensitivity/alpha_sweep_fine.parquet`, `alpha_sweep_fine_summary.json`
+**Module:** `src/evaluation/sensitivity.py` (extended)
+
+---
+
+## Step 25 — Larger Embedding Model [ ]
+Replace `all-MiniLM-L6-v2` (384-dim, 22M params) with `all-mpnet-base-v2` (768-dim, 109M params).
+Re-generate embeddings for all programmes and job ads.
+Re-run semantic + hybrid alignment and compare cosine score distributions, Spearman correlations, and IR metrics against the MiniLM baseline.
+
+**Rationale:** `all-MiniLM-L6-v2` is optimised for speed over accuracy. On the STS benchmark it scores 0.788 Spearman, while `all-mpnet-base-v2` scores 0.838 — a 5-point gap. For a thesis with only 46×299 pairs, inference speed is irrelevant but embedding quality directly affects semantic alignment accuracy. A stronger model should produce more discriminative cosine scores (current mean=0.366, max=0.684), separating truly relevant matches from noise.
+
+**Output:** `data/processed/*/embeddings_mpnet.parquet`, `experiments/results/exp2_semantic_mpnet/`
+**Module:** `src/embeddings/generator.py` (parameterised model name)
 
 ---
 
