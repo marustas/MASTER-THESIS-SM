@@ -1,0 +1,150 @@
+{
+  "configs": {
+    "baseline": {
+      "weighted_jaccard_mean_all": 0.07254800589681487,
+      "weighted_jaccard_mean_top_n": 0.16132489536378117,
+      "overlap_coeff_mean_all": 0.26031824574130435,
+      "overlap_coeff_mean_top_n": 0.46157556009767997,
+      "mean_skills_programme": 25.195652173913043,
+      "mean_skills_job": 9.799331103678929,
+      "unique_gap_uris": 292,
+      "total_gap_entries": 6457,
+      "weights": {
+        "S1": 1,
+        "S2": 1,
+        "S3": 20,
+        "S4": 2
+      }
+    },
+    "no_S1_ner": {
+      "weighted_jaccard_mean_all": 0.07254800589681487,
+      "weighted_jaccard_mean_top_n": 0.16132489536378117,
+      "overlap_coeff_mean_all": 0.26031824574130435,
+      "overlap_coeff_mean_top_n": 0.46157556009767997,
+      "mean_skills_programme": 25.195652173913043,
+      "mean_skills_job": 9.799331103678929,
+      "unique_gap_uris": 292,
+      "total_gap_entries": 6457,
+      "weights": {
+        "S1": 0,
+        "S2": 1,
+        "S3": 20,
+        "S4": 2
+      }
+    },
+    "no_S2_pos": {
+      "weighted_jaccard_mean_all": 0.07254800589681487,
+      "weighted_jaccard_mean_top_n": 0.16132489536378117,
+      "overlap_coeff_mean_all": 0.26031824574130435,
+      "overlap_coeff_mean_top_n": 0.46157556009767997,
+      "mean_skills_programme": 25.195652173913043,
+      "mean_skills_job": 9.799331103678929,
+      "unique_gap_uris": 292,
+      "total_gap_entries": 6457,
+      "weights": {
+        "S1": 1,
+        "S2": 0,
+        "S3": 20,
+        "S4": 2
+      }
+    },
+    "no_S3_dict": {
+      "weighted_jaccard_mean_all": 0.06343832606456865,
+      "weighted_jaccard_mean_top_n": 0.11988918220869847,
+      "overlap_coeff_mean_all": 0.22866270842164957,
+      "overlap_coeff_mean_top_n": 0.3312849728400166,
+      "mean_skills_programme": 118.6304347826087,
+      "mean_skills_job": 50.525083612040135,
+      "unique_gap_uris": 1509,
+      "total_gap_entries": 46178,
+      "weights": {
+        "S1": 1,
+        "S2": 1,
+        "S3": 0,
+        "S4": 2
+      }
+    },
+    "no_S4_embed": {
+      "weighted_jaccard_mean_all": 0.07254800589681487,
+      "weighted_jaccard_mean_top_n": 0.16132489536378117,
+      "overlap_coeff_mean_all": 0.26031824574130435,
+      "overlap_coeff_mean_top_n": 0.46157556009767997,
+      "mean_skills_programme": 25.195652173913043,
+      "mean_skills_job": 9.799331103678929,
+      "unique_gap_uris": 292,
+      "total_gap_entries": 6457,
+      "weights": {
+        "S1": 1,
+        "S2": 1,
+        "S3": 20,
+        "S4": 0
+      }
+    }
+  },
+  "deltas": {
+    "no_S1_ner": {
+      "weighted_jaccard_mean_all": 0.0,
+      "weighted_jaccard_mean_all_pct": 0.0,
+      "weighted_jaccard_mean_top_n": 0.0,
+      "weighted_jaccard_mean_top_n_pct": 0.0,
+      "overlap_coeff_mean_all": 0.0,
+      "overlap_coeff_mean_all_pct": 0.0,
+      "overlap_coeff_mean_top_n": 0.0,
+      "overlap_coeff_mean_top_n_pct": 0.0,
+      "mean_skills_programme": 0.0,
+      "mean_skills_programme_pct": 0.0,
+      "mean_skills_job": 0.0,
+      "mean_skills_job_pct": 0.0,
+      "unique_gap_uris": 0,
+      "unique_gap_uris_pct": 0.0
+    },
+    "no_S2_pos": {
+      "weighted_jaccard_mean_all": 0.0,
+      "weighted_jaccard_mean_all_pct": 0.0,
+      "weighted_jaccard_mean_top_n": 0.0,
+      "weighted_jaccard_mean_top_n_pct": 0.0,
+      "overlap_coeff_mean_all": 0.0,
+      "overlap_coeff_mean_all_pct": 0.0,
+      "overlap_coeff_mean_top_n": 0.0,
+      "overlap_coeff_mean_top_n_pct": 0.0,
+      "mean_skills_programme": 0.0,
+      "mean_skills_programme_pct": 0.0,
+      "mean_skills_job": 0.0,
+      "mean_skills_job_pct": 0.0,
+      "unique_gap_uris": 0,
+      "unique_gap_uris_pct": 0.0
+    },
+    "no_S3_dict": {
+      "weighted_jaccard_mean_all": -0.00911,
+      "weighted_jaccard_mean_all_pct": -12.56,
+      "weighted_jaccard_mean_top_n": -0.041436,
+      "weighted_jaccard_mean_top_n_pct": -25.68,
+      "overlap_coeff_mean_all": -0.031656,
+      "overlap_coeff_mean_all_pct": -12.16,
+      "overlap_coeff_mean_top_n": -0.130291,
+      "overlap_coeff_mean_top_n_pct": -28.23,
+      "mean_skills_programme": 93.434783,
+      "mean_skills_programme_pct": 370.84,
+      "mean_skills_job": 40.725753,
+      "mean_skills_job_pct": 415.6,
+      "unique_gap_uris": 1217,
+      "unique_gap_uris_pct": 416.78
+    },
+    "no_S4_embed": {
+      "weighted_jaccard_mean_all": 0.0,
+      "weighted_jaccard_mean_all_pct": 0.0,
+      "weighted_jaccard_mean_top_n": 0.0,
+      "weighted_jaccard_mean_top_n_pct": 0.0,
+      "overlap_coeff_mean_all": 0.0,
+      "overlap_coeff_mean_all_pct": 0.0,
+      "overlap_coeff_mean_top_n": 0.0,
+      "overlap_coeff_mean_top_n_pct": 0.0,
+      "mean_skills_programme": 0.0,
+      "mean_skills_programme_pct": 0.0,
+      "mean_skills_job": 0.0,
+      "mean_skills_job_pct": 0.0,
+      "unique_gap_uris": 0,
+      "unique_gap_uris_pct": 0.0
+    }
+  }
+}
