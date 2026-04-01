@@ -76,6 +76,7 @@ class ExplicitSkillExtractor:
         esco_index: EscoIndex,
         nlp_model: str = "en_core_web_sm",
         embedding_model: str | object = EMBEDDING_MODEL,
+        module_weights: dict[str, float] | None = None,
     ):
         """
         Parameters
@@ -84,7 +85,23 @@ class ExplicitSkillExtractor:
             Either a model name string (downloads from HuggingFace) or any
             object with an `.encode(texts, *, normalize_embeddings, ...) -> np.ndarray`
             interface.  Pass a mock in tests to avoid network access.
+        module_weights:
+            Optional override for ensemble weights.  Keys: "S1", "S2", "S3", "S4".
+            Missing keys fall back to paper defaults.  Set a weight to 0 to
+            disable that module (used by ablation study).
         """
+        if module_weights is not None:
+            self._w_ner = module_weights.get("S1", _W_NER)
+            self._w_pos = module_weights.get("S2", _W_POS)
+            self._w_dict = module_weights.get("S3", _W_DICT)
+            self._w_embed = module_weights.get("S4", _W_EMBED)
+        else:
+            self._w_ner = _W_NER
+            self._w_pos = _W_POS
+            self._w_dict = _W_DICT
+            self._w_embed = _W_EMBED
+        self._w_total = self._w_ner + self._w_pos + self._w_dict + self._w_embed
+
         self._index = esco_index
         self._nlp = self._load_nlp(nlp_model)
         self._phrase_matcher = self._build_phrase_matcher()
@@ -268,8 +285,8 @@ class ExplicitSkillExtractor:
             s4_sim, best_uri, best_label = s4_results.get(candidate, (0.0, "", ""))
 
             relevance = (
-                _W_NER * s1 + _W_POS * s2 + _W_DICT * s3 + _W_EMBED * s4_sim
-            ) / _W_TOTAL
+                self._w_ner * s1 + self._w_pos * s2 + self._w_dict * s3 + self._w_embed * s4_sim
+            ) / self._w_total
 
             if relevance < _RELEVANCE_THRESHOLD:
                 continue
