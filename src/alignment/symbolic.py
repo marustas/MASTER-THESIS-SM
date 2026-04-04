@@ -252,10 +252,12 @@ def align_symbolic_weighted(
     df: pd.DataFrame,
     top_n: int = 20,
     esco_csv_path: Path | None = None,
+    idf_cap: float | None = 3.0,
+    use_tiers: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Like ``align_symbolic`` but uses IDF × ESCO reuse-level tier weights
-    instead of uniform 1.0 / 0.5.
+    Like ``align_symbolic`` but uses capped IDF weights instead of
+    uniform 1.0 / 0.5.
 
     Parameters
     ----------
@@ -265,6 +267,11 @@ def align_symbolic_weighted(
         Top-N jobs per programme for skill gap analysis.
     esco_csv_path:
         Path to ESCO skills CSV.  ``None`` → default path.
+    idf_cap:
+        Upper bound on per-URI IDF.  Default 3.0 prevents a single rare
+        skill from dominating.  ``None`` disables capping.
+    use_tiers:
+        If True, also multiply by ESCO reuse-level tier weight.
 
     Returns
     -------
@@ -277,8 +284,11 @@ def align_symbolic_weighted(
     programmes = df[df["source_type"] == "programme"]
     jobs = df[df["source_type"] == "job_ad"]
 
+    mode = "IDF + tier" if use_tiers else "IDF-only"
+    cap_str = f"cap={idf_cap}" if idf_cap is not None else "uncapped"
     logger.info(
-        f"Weighted symbolic alignment: {len(programmes)} programmes × {len(jobs)} job ads"
+        f"Weighted symbolic alignment ({mode}, {cap_str}): "
+        f"{len(programmes)} programmes × {len(jobs)} job ads"
     )
 
     def _safe_details(row: pd.Series) -> list[dict]:
@@ -302,11 +312,17 @@ def align_symbolic_weighted(
 
     # ── Build weighted skill vectors ──────────────────────────────────────
     prog_skills: dict[int, dict[str, float]] = {
-        idx: _build_tiered_skills(_safe_details(row), uri_reuse, uri_idfs)
+        idx: _build_tiered_skills(
+            _safe_details(row), uri_reuse, uri_idfs,
+            idf_cap=idf_cap, use_tiers=use_tiers,
+        )
         for idx, row in programmes.iterrows()
     }
     job_skills: dict[int, dict[str, float]] = {
-        idx: _build_tiered_skills(_safe_details(row), uri_reuse, uri_idfs)
+        idx: _build_tiered_skills(
+            _safe_details(row), uri_reuse, uri_idfs,
+            idf_cap=idf_cap, use_tiers=use_tiers,
+        )
         for idx, row in jobs.iterrows()
     }
 

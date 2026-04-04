@@ -1,19 +1,19 @@
 """
-Step 23 — IDF + ESCO reuse-level skill weighting.
+Step 23 — IDF-based skill weighting for symbolic alignment.
 
-Provides two weighting factors that replace the uniform skill weights
-in symbolic alignment:
+Replaces the uniform 1.0 / 0.5 weights with corpus-IDF weighting
+so that rare, informative skills contribute more than ubiquitous ones.
 
-1. **Reuse-level tier weight** — maps ESCO ``reuseLevel`` to a weight
-   reflecting specificity:
-     transversal = 0.3, cross-sector = 0.5,
-     sector-specific = 0.8, occupation-specific = 1.0
+**Default configuration (IDF-only, cap=3.0):**
 
-2. **Corpus IDF factor** — ``log(1 + N / df(uri))`` where N = total
-   documents and df = number of documents containing the URI.
+    weight(uri) = min(idf(uri), 3.0) × (1.0 if explicit, 0.5 if implicit)
 
-Final per-skill weight:
-    tier_weight(uri) × idf_factor(uri) × (1.0 if explicit, 0.5 if implicit)
+The IDF cap prevents a single rare skill from dominating the Jaccard
+score.  Tier weighting (ESCO ``reuseLevel``) is available but disabled
+by default — experiments showed IDF-only with cap=3.0 gives the best
+trade-off between discriminative power (CoV +18%) and ranking quality
+(only 4 of 46 programmes get a semantically worse top-1 match, vs 10
+when tier weighting is active).
 
 Usage:
     python -m src.skills.skill_weights
@@ -41,6 +41,10 @@ REUSE_TIER_WEIGHTS: dict[str, float] = {
 }
 
 DEFAULT_TIER_WEIGHT: float = 0.5  # fallback for missing/unknown reuse level
+
+# ── IDF defaults ─────────────────────────────────────────────────────────────
+
+DEFAULT_IDF_CAP: float = 3.0  # prevent single rare skill from dominating
 
 
 def build_reuse_level_map(
@@ -101,20 +105,29 @@ def build_weighted_skills(
     uri_reuse_levels: dict[str, str],
     uri_idfs: dict[str, float],
     default_idf: float = 1.0,
+    idf_cap: float | None = DEFAULT_IDF_CAP,
+    use_tiers: bool = False,
 ) -> dict[str, float]:
     """
-    Build {esco_uri: weight} using tier × IDF × explicit/implicit factors.
+    Build {esco_uri: weight} using IDF × explicit/implicit factors.
 
     Parameters
     ----------
     skill_details:
         Row's skill_details list (dicts with esco_uri, explicit, implicit).
     uri_reuse_levels:
-        {uri: reuse_level_string} from ESCO CSV.
+        {uri: reuse_level_string} from ESCO CSV.  Only used when
+        *use_tiers* is True.
     uri_idfs:
         {uri: idf_value} from ``compute_corpus_idf``.
     default_idf:
         Fallback IDF for URIs not in the corpus (neutral = 1.0).
+    idf_cap:
+        Upper bound on IDF value.  ``None`` disables capping.
+    use_tiers:
+        If True, multiply by ESCO reuse-level tier weight.  Disabled by
+        default — experiments showed tier weighting over-penalises
+        transversal skills and creates too many false reranking.
     """
     weights: dict[str, float] = {}
     for skill in skill_details:
@@ -122,8 +135,10 @@ def build_weighted_skills(
         if not uri:
             continue
 
-        t_w = tier_weight(uri_reuse_levels.get(uri))
+        t_w = tier_weight(uri_reuse_levels.get(uri)) if use_tiers else 1.0
         idf = uri_idfs.get(uri, default_idf)
+        if idf_cap is not None:
+            idf = min(idf, idf_cap)
         expl_impl = 1.0 if skill.get("explicit", False) else 0.5
 
         w = t_w * idf * expl_impl
