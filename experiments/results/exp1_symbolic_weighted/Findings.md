@@ -304,20 +304,104 @@ Two genuinely questionable cases:
 
 In both cases the weighting correctly identified more specific overlaps, but the trade-off was too aggressive — the lost generic overlap was still partially informative.
 
-## 9. Conclusions
+## 9. Root cause analysis of worse cases
 
-1. **The weighting achieves its primary goal: higher discriminative power.** CoV increased from 0.530 to 0.712 (+34%), the highest of all four strategies. This means the score gap between good and poor matches is relatively wider, making top-ranked results more trustworthy.
+Three distinct failure patterns were identified across the 10 worse cases in the initial (tier + uncapped IDF) configuration:
 
-2. **Generic skills are correctly downweighted.** "English" (weight 0.30) contributes 19.5× less than "distributed computing" (weight 4.68). Under uniform weighting, sharing "English" and "work in teams" inflated Jaccard for every pair equally — now it does not.
+### Pattern A: "Data engineer magnet" (5 cases: 302, 307, 308, 312, 318)
 
-3. **Top-1 changes are net positive.** Of 24 changed top-1 matches: 11 improved by semantic cosine, 3 were neutral, 10 were worse. However, the "worse" cases consistently trade transversal overlap for sector-specific overlap — not a clear degradation but a different notion of relevance.
+Job 7 ("Vyr. duomenų inžinierius") has a tight cluster of high-IDF sector-specific skills — `data warehouse` (w=2.38), `data models` (1.95), `data storage` (2.05), `data engineering` (1.06), `perform warehousing operations` (1.03) — totalling ~8-10 weight from just 4-5 skills. Any programme mentioning even a few data-related terms got pulled toward this job.
 
-4. **Two cases show genuine over-correction.** "Information Technologies" (308) lost a strong .NET match for a less-related data engineer, and "Software Engineering" (342) went from 15 shared skills to only 6. In both cases the weighting over-valued a small number of specific skills relative to a large amount of partially informative generic overlap.
+The lost skills were almost entirely transversal: "think analytically" (0.43), "manage time" (0.44), "Lithuanian" (0.44). Individually negligible, but 5-8 of them collectively represented meaningful signal under uniform weighting.
 
-5. **Rankings are moderately reshuffled, not revolutionised.** Spearman rho = 0.908 (overall), top-20 overlap = 68.3% (mean). The broad structure is preserved; the changes are concentrated in the top tier where they matter most.
+**Root cause:** Uncapped IDF over-amplifies niche clusters. "Data warehouse" (IDF=5.16) gets 6× the weight of "computer technology" (IDF=0.86).
 
-6. **Cross-strategy agreement is unchanged.** Weighted↔semantic correlation (0.333) is marginally higher than uniform↔semantic (0.318), but the difference is not significant (Wilcoxon p=0.772 on top-10 overlap). The symbolic and semantic strategies capture fundamentally different signals.
+### Pattern B: "Specificity over breadth" (3 cases: 315, 317, 342)
 
-7. **Absolute scores are lower**, which means the hybrid formula `α·cosine + (1-α)·jaccard` will need re-tuning. The Jaccard component now operates in a different range (~0.03 mean vs ~0.06), so the optimal alpha will shift toward giving Jaccard more weight. This motivates Step 24 (finer alpha sweep).
+The new match has fewer shared skills overall but a few high-weight sector-specific ones.
 
-8. **The 1,818 additional skill gap entries** (16,359 → 18,177) indicate that the weighting reveals gaps previously hidden by generic skill overlap. When transversal skills no longer mask mismatches, more specific gaps become visible.
+- **315** (Computer games): Lost 9 skills (total w=9.94). Gained 3: "Unity" (3.40), "digital game creation systems" (3.26), "Android" (2.00). New total is actually lower (-0.50) but wins on Jaccard because the *denominator* (union) is also much smaller.
+- **342** (Software Engineering): Lost 12 skills (w=14.14 total) for 3 gained ("C#" 2.22, "Android" 2.00, "Java" 1.93, total=9.92). A net -4.23 in weight but a smaller union.
+
+**Root cause:** Jaccard = intersection/union. When the new match has far fewer total skills, the union shrinks, letting a smaller but purer intersection win.
+
+### Pattern C: "Marginal swap" (2 cases: 336, 337)
+
+- **337**: The only lost skill is "English" (w=0.30). A rounding-level swap.
+- **336**: Lost 8 transversal for 8 cross-sector. Real but marginal difference.
+
+**Root cause:** Near-ties broken differently when transversal skills lose weight.
+
+## 10. Parameter tuning experiments
+
+Tested 11 configurations to find the best trade-off between discriminative power (CoV) and ranking quality (fewer worse cases):
+
+| Config | J (all) | J (top-20) | CoV | Changes | Better | Neutral | Worse | rho(uni) | rho(sem) |
+|--------|---------|------------|-----|---------|--------|---------|-------|----------|----------|
+| uniform (baseline) | 0.062 | 0.130 | 0.529 | 0 | - | - | - | 1.000 | 0.318 |
+| tier 0.3/0.5/0.8/1.0 uncapped | 0.031 | 0.083 | **0.711** | 24 | 11 | 3 | **10** | 0.908 | 0.333 |
+| **IDF cap 3.0 (no tier)** | **0.038** | **0.092** | **0.622** | **14** | **7** | **3** | **4** | **0.960** | **0.327** |
+| IDF cap 2.5 (no tier) | 0.041 | 0.098 | 0.619 | 15 | 8 | 3 | 4 | 0.964 | 0.327 |
+| IDF uncapped (no tier) | 0.036 | 0.088 | 0.625 | 16 | 9 | 3 | 4 | 0.958 | 0.328 |
+| tier 0.5/0.7/0.9/1.0 no IDF | 0.056 | 0.121 | 0.553 | 9 | 5 | 1 | 3 | 0.985 | 0.333 |
+| tier 0.3/0.5/0.8/1.0 cap 3.0 | 0.033 | 0.087 | 0.707 | 23 | 11 | 3 | 9 | — | — |
+| tier 0.5/0.6/0.8/1.0 cap 3.0 | 0.035 | 0.089 | 0.657 | 21 | 9 | 3 | 9 | 0.945 | 0.331 |
+| tier 0.6/0.7/0.8/1.0 cap 3.0 | 0.036 | 0.090 | 0.642 | 16 | 7 | 3 | 6 | 0.950 | 0.331 |
+| IDF only (no tier, no cap) | 0.036 | 0.088 | 0.625 | 16 | 9 | 3 | 4 | 0.958 | 0.328 |
+| tier only (0.3/0.5/0.8/1.0) | 0.052 | 0.118 | 0.580 | 19 | 10 | 2 | 7 | 0.964 | 0.337 |
+
+### Key observations
+
+1. **Tier weighting is the main source of worse cases.** Every config with tier weights produces 6-10 worse cases. Removing tiers drops worse cases to 3-4 regardless of IDF cap.
+
+2. **IDF cap prevents the "data engineer magnet" pattern** but does not prevent the "specificity over breadth" pattern — that is inherent to the Jaccard formula when skill-set sizes differ.
+
+3. **IDF cap 3.0 (no tier)** is the best balance:
+   - CoV = 0.622 (+18% over uniform) — meaningful improvement
+   - Only 4 worse cases (vs 10 with tiers) — half the degradation
+   - rho(uniform) = 0.960 — rankings are stable
+   - rho(semantic) = 0.327 — similar cross-strategy signal
+
+4. **The 4 remaining worse cases** under IDF cap 3.0 are all multimedia programmes with marginal cosine differences:
+   - Multimedia and Internet Technologies (cos 0.384→0.304)
+   - Information Systems Engineering (cos 0.434→0.417)
+   - Multimedia technology (cos 0.497→0.416)
+   - Multimedia Technologies (cos 0.381→0.323)
+
+### Decision
+
+**Adopted IDF cap 3.0 with no tier weighting as the default configuration.**
+
+- `use_tiers=False` (default) — tier weighting available but disabled
+- `idf_cap=3.0` (default) — prevents single rare skill from dominating
+- Tier weighting remains configurable via `use_tiers=True` for reporting
+
+**Rationale:** Tier weighting over-penalises transversal skills that, while generic, still carry signal (e.g. "think analytically" is a real competence). IDF alone achieves the core goal — down-weighting ubiquitous skills — without the aggressive reranking caused by tier weights.
+
+## 11. Final results (IDF cap 3.0, no tier)
+
+| Metric | Uniform | Weighted (final) | Delta |
+|--------|---------|-------------------|-------|
+| Jaccard mean (all) | 0.062 | 0.038 | -0.024 |
+| Jaccard mean (top-20) | 0.130 | 0.092 | -0.038 |
+| Overlap coeff mean | 0.305 | 0.224 | -0.081 |
+| CoV | 0.529 | 0.622 | +0.093 |
+| Top-1 changes | — | 14/46 | — |
+| Better / Neutral / Worse | — | 7 / 3 / 4 | — |
+| rho(uniform) | 1.000 | 0.960 | — |
+| rho(semantic) | 0.318 | 0.327 | +0.009 |
+| Skill gap entries | 16,359 | 17,416 | +1,057 |
+
+## 12. Conclusions
+
+1. **IDF-only weighting with cap=3.0 is the adopted configuration.** It improves discriminative power (CoV +18%) while keeping worse cases to 4 (vs 10 with tier weighting). The cap prevents niche skill clusters from dominating.
+
+2. **Tier weighting over-corrects.** Down-weighting transversal skills to 0.3 causes 10 worse cases because skills like "think analytically" and "solve problems" are real competences, not pure noise. The IDF already handles the frequency problem — adding tier weights double-penalises common-but-meaningful skills.
+
+3. **The 4 remaining worse cases are multimedia programmes** where the weighting promotes programming-specific matches over broadly-relevant ones. These are inherent to the Jaccard formula's sensitivity to skill-set size differences and cannot be eliminated by parameter tuning alone.
+
+4. **Rankings are stable.** Spearman rho = 0.960 with uniform baseline. The changes are concentrated in the top tier — 14 of 46 programmes get a different top-1 match, with 7 improving and only 4 getting worse by semantic cosine.
+
+5. **Cross-strategy signal is preserved.** Weighted↔semantic correlation (0.327) is nearly identical to uniform↔semantic (0.318). The weighting does not change the fundamental relationship between symbolic and semantic strategies.
+
+6. **Absolute scores are lower** (~0.038 mean vs ~0.062), which means the hybrid alpha will need re-tuning in Step 24.
