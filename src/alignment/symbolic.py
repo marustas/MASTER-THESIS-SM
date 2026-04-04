@@ -36,6 +36,11 @@ import pandas as pd
 from loguru import logger
 
 from src.scraping.config import DATA_DIR
+from src.skills.skill_weights import (
+    build_reuse_level_map,
+    build_weighted_skills as _build_tiered_skills,
+    compute_corpus_idf,
+)
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
@@ -241,20 +246,136 @@ def _compute_summary(
     }
 
 
-# ── Pipeline entry point ───────────────────────────────────────────────────────
+# ── Weighted alignment (Step 23) ──────────────────────────────────────────────
 
-def run_symbolic_alignment(
-    dataset_path: Path = DATASET_PATH,
-    output_dir: Path = RESULTS_DIR / "exp1_symbolic",
+def align_symbolic_weighted(
+    df: pd.DataFrame,
     top_n: int = 20,
+    esco_csv_path: Path | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Like ``align_symbolic`` but uses IDF × ESCO reuse-level tier weights
+    instead of uniform 1.0 / 0.5.
+
+    Parameters
+    ----------
+    df:
+        Unified dataset (same schema as ``align_symbolic``).
+    top_n:
+        Top-N jobs per programme for skill gap analysis.
+    esco_csv_path:
+        Path to ESCO skills CSV.  ``None`` → default path.
+
+    Returns
+    -------
+    rankings, skill_gaps — same schema as ``align_symbolic``.
+    """
+    from src.skills.esco_loader import ESCO_CSV_PATH as _DEFAULT_CSV
+
+    csv_path = esco_csv_path or _DEFAULT_CSV
+
+    programmes = df[df["source_type"] == "programme"]
+    jobs = df[df["source_type"] == "job_ad"]
+
+    logger.info(
+        f"Weighted symbolic alignment: {len(programmes)} programmes × {len(jobs)} job ads"
+    )
+
+    def _safe_details(row: pd.Series) -> list[dict]:
+        import numpy as np
+        details = row.get("skill_details", [])
+        if isinstance(details, (list, np.ndarray)):
+            return list(details)
+        return []
+
+    # ── Build reuse-level map ─────────────────────────────────────────────
+    uri_reuse = build_reuse_level_map(csv_path)
+    logger.info(f"  Reuse-level map: {len(uri_reuse)} URIs")
+
+    # ── Compute corpus IDF over all documents ─────────────────────────────
+    all_uri_lists: list[list[str]] = []
+    for _, row in df.iterrows():
+        details = _safe_details(row)
+        all_uri_lists.append([s.get("esco_uri", "") for s in details if s.get("esco_uri")])
+    uri_idfs = compute_corpus_idf(all_uri_lists)
+    logger.info(f"  IDF computed for {len(uri_idfs)} URIs")
+
+    # ── Build weighted skill vectors ──────────────────────────────────────
+    prog_skills: dict[int, dict[str, float]] = {
+        idx: _build_tiered_skills(_safe_details(row), uri_reuse, uri_idfs)
+        for idx, row in programmes.iterrows()
+    }
+    job_skills: dict[int, dict[str, float]] = {
+        idx: _build_tiered_skills(_safe_details(row), uri_reuse, uri_idfs)
+        for idx, row in jobs.iterrows()
+    }
+
+    has_prog_name = "name" in programmes.columns
+    has_job_title = "job_title" in jobs.columns
+
+    records = []
+    for p_idx, p_ws in prog_skills.items():
+        p_name = programmes.at[p_idx, "name"] if has_prog_name else str(p_idx)
+        for j_idx, j_ws in job_skills.items():
+            j_title = jobs.at[j_idx, "job_title"] if has_job_title else str(j_idx)
+            records.append({
+                "programme_id": p_idx,
+                "job_id": j_idx,
+                "programme_name": p_name,
+                "job_title": j_title,
+                "weighted_jaccard": weighted_jaccard(p_ws, j_ws),
+                "overlap_coeff": overlap_coefficient(p_ws, j_ws),
+            })
+
+    rankings = (
+        pd.DataFrame(records)
+        .sort_values(["programme_id", "weighted_jaccard"], ascending=[True, False])
+        .reset_index(drop=True)
+    )
+
+    # ── Skill gap analysis ────────────────────────────────────────────────
+    gap_records = []
+    for p_idx, p_ws in prog_skills.items():
+        top_job_ids = (
+            rankings[rankings["programme_id"] == p_idx]
+            .head(top_n)["job_id"]
+            .tolist()
+        )
+        for j_idx in top_job_ids:
+            j_ws = job_skills[j_idx]
+            for uri, j_weight in j_ws.items():
+                p_weight = p_ws.get(uri, 0.0)
+                if j_weight > p_weight:
+                    gap_records.append({
+                        "programme_id": p_idx,
+                        "job_id": j_idx,
+                        "gap_uri": uri,
+                        "gap_weight": round(j_weight - p_weight, 4),
+                    })
+
+    skill_gaps = (
+        pd.DataFrame(gap_records)
+        if gap_records
+        else pd.DataFrame(columns=["programme_id", "job_id", "gap_uri", "gap_weight"])
+    )
+
+    logger.info(
+        f"  → {len(rankings)} pairs scored, "
+        f"{len(skill_gaps)} skill-gap entries (top-{top_n} per programme)"
+    )
+    return rankings, skill_gaps
+
+
+# ── Pipeline entry points ─────────────────────────────────────────────────────
+
+def _persist_results(
+    rankings: pd.DataFrame,
+    skill_gaps: pd.DataFrame,
+    output_dir: Path,
+    top_n: int,
 ) -> None:
-    """Load dataset, run symbolic alignment, persist results."""
-    logger.info(f"Loading dataset from {dataset_path}…")
-    df = pd.read_parquet(dataset_path)
-
+    """Write rankings, skill gaps and summary to *output_dir*."""
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    rankings, skill_gaps = align_symbolic(df, top_n=top_n)
 
     rankings_path = output_dir / "rankings.parquet"
     gaps_path = output_dir / "skill_gaps.parquet"
@@ -272,5 +393,30 @@ def run_symbolic_alignment(
     logger.info(f"Summary → {summary_path}")
 
 
+def run_symbolic_alignment(
+    dataset_path: Path = DATASET_PATH,
+    output_dir: Path = RESULTS_DIR / "exp1_symbolic",
+    top_n: int = 20,
+) -> None:
+    """Load dataset, run uniform-weight symbolic alignment, persist results."""
+    logger.info(f"Loading dataset from {dataset_path}…")
+    df = pd.read_parquet(dataset_path)
+    rankings, skill_gaps = align_symbolic(df, top_n=top_n)
+    _persist_results(rankings, skill_gaps, output_dir, top_n)
+
+
+def run_symbolic_alignment_weighted(
+    dataset_path: Path = DATASET_PATH,
+    output_dir: Path = RESULTS_DIR / "exp1_symbolic_weighted",
+    top_n: int = 20,
+) -> None:
+    """Load dataset, run IDF + tier weighted symbolic alignment, persist results."""
+    logger.info(f"Loading dataset from {dataset_path}…")
+    df = pd.read_parquet(dataset_path)
+    rankings, skill_gaps = align_symbolic_weighted(df, top_n=top_n)
+    _persist_results(rankings, skill_gaps, output_dir, top_n)
+
+
 if __name__ == "__main__":
     run_symbolic_alignment()
+    run_symbolic_alignment_weighted()
