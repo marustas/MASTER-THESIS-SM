@@ -19,6 +19,7 @@ import pytest
 from src.alignment.symbolic import (
     _build_weighted_skills,
     align_symbolic,
+    align_symbolic_weighted,
     overlap_coefficient,
     run_symbolic_alignment,
     weighted_jaccard,
@@ -283,3 +284,86 @@ class TestRunSymbolicAlignment:
         assert len(rankings) == 2  # 1 programme × 2 jobs
         for col in ("programme_id", "job_id", "weighted_jaccard", "overlap_coeff"):
             assert col in rankings.columns
+
+
+# ── align_symbolic_weighted ──────────────────────────────────────────────────
+
+class TestAlignSymbolicWeighted:
+    """Tests for IDF + reuse-level tier weighted alignment."""
+
+    def _make_simple_df(self):
+        return _make_df(
+            programmes=[
+                [_skill("esco:python"), _skill("esco:ml", explicit=False, implicit=True)],
+                [_skill("esco:java")],
+            ],
+            jobs=[
+                [_skill("esco:python"), _skill("esco:ml")],
+                [_skill("esco:java"), _skill("esco:sql", explicit=False, implicit=True)],
+                [_skill("esco:docker")],
+            ],
+        )
+
+    def test_output_shape_same_as_uniform(self):
+        df = self._make_simple_df()
+        rankings, gaps = align_symbolic_weighted(df, top_n=2)
+        assert len(rankings) == 6  # 2 programmes × 3 jobs
+
+    def test_ranking_columns_present(self):
+        df = self._make_simple_df()
+        rankings, _ = align_symbolic_weighted(df, top_n=2)
+        for col in ("programme_id", "job_id", "weighted_jaccard", "overlap_coeff"):
+            assert col in rankings.columns
+
+    def test_scores_non_negative(self):
+        df = self._make_simple_df()
+        rankings, _ = align_symbolic_weighted(df, top_n=2)
+        assert (rankings["weighted_jaccard"] >= 0.0).all()
+        assert (rankings["overlap_coeff"] >= 0.0).all()
+
+    def test_no_overlap_scores_zero(self):
+        df = self._make_simple_df()
+        rankings, _ = align_symbolic_weighted(df, top_n=2)
+        prog1_id = df[df["source_type"] == "programme"].index[1]
+        job2_id = df[df["source_type"] == "job_ad"].index[2]
+        row = rankings[
+            (rankings["programme_id"] == prog1_id) & (rankings["job_id"] == job2_id)
+        ].iloc[0]
+        assert row["weighted_jaccard"] == pytest.approx(0.0)
+
+    def test_sorted_descending_within_programme(self):
+        df = self._make_simple_df()
+        rankings, _ = align_symbolic_weighted(df, top_n=3)
+        for p_id in rankings["programme_id"].unique():
+            scores = rankings[rankings["programme_id"] == p_id]["weighted_jaccard"].tolist()
+            assert scores == sorted(scores, reverse=True)
+
+    def test_skill_gaps_produced(self):
+        df = self._make_simple_df()
+        _, gaps = align_symbolic_weighted(df, top_n=3)
+        assert len(gaps) > 0
+        for col in ("programme_id", "job_id", "gap_uri", "gap_weight"):
+            assert col in gaps.columns
+
+    def test_empty_skills_handled(self):
+        df = _make_df(programmes=[[]], jobs=[[]])
+        rankings, gaps = align_symbolic_weighted(df, top_n=5)
+        assert len(rankings) == 1
+        assert rankings["weighted_jaccard"].iloc[0] == 0.0
+
+    def test_weights_differ_from_uniform(self):
+        """Weighted scores should generally differ from uniform scores."""
+        df = self._make_simple_df()
+        uniform_r, _ = align_symbolic(df, top_n=3)
+        weighted_r, _ = align_symbolic_weighted(df, top_n=3)
+        # Merge on (programme_id, job_id) and compare
+        merged = uniform_r.merge(
+            weighted_r,
+            on=["programme_id", "job_id"],
+            suffixes=("_uniform", "_weighted"),
+        )
+        nonzero = merged[merged["weighted_jaccard_uniform"] > 0]
+        if len(nonzero) > 0:
+            # At least some scores should differ (weights are not uniform)
+            diffs = (nonzero["weighted_jaccard_uniform"] - nonzero["weighted_jaccard_weighted"]).abs()
+            assert diffs.max() > 0.0
