@@ -378,7 +378,40 @@ Tested 11 configurations to find the best trade-off between discriminative power
 
 **Rationale:** Tier weighting over-penalises transversal skills that, while generic, still carry signal (e.g. "think analytically" is a real competence). IDF alone achieves the core goal — down-weighting ubiquitous skills — without the aggressive reranking caused by tier weights.
 
-## 11. Final results (IDF cap 3.0, no tier)
+## 11. Three-way comparison: Uniform vs Tier vs IDF cap3
+
+For all 14 programmes where IDF cap3 changed the top-1 match, compared against both the original uniform baseline and the tier-weighted (0.3/0.5/0.8/1.0 uncapped) variant.
+
+| Programme | Uniform top-1 (cos) | Tier top-1 (cos) | IDF cap3 top-1 (cos) | Cap3 verdict | Tier agrees with |
+|-----------|---------------------|-------------------|----------------------|-------------|------------------|
+| Information Systems (301) | IT syst. testuotojas (.391) | Vyr. duomenų inžinierius (.382) | AI Analyst (.383) | NEUTRAL | neither |
+| Marketing Technologies (303) | Vyr. duomenų inžinierius (.421) | =uniform (.421) | Vyr. duomenų analitikas (.414) | NEUTRAL | uniform |
+| Informatics (310) | IT syst. kib. saugumo admin (.472) | IT syst. admin/inžinierius (.570) | IT sistemų admin (.544) | **BETTER** | neither |
+| Media Technologies (316) | IT System Administrator (.294) | Sistemų specialistas (.427) | Sistemų specialistas (.427) | **BETTER** | cap3 |
+| Multimedia & Internet Tech (317) | AI Engineer/Data Scientist (.384) | Gameplay Programmer (.304) | Gameplay Programmer (.304) | WORSE | cap3 |
+| IS Engineering (325) | Vyr. duomenų inžinierius (.434) | =uniform (.434) | AI Analyst (.417) | WORSE | uniform |
+| IS Engineering (327) | IT syst. kib. saugumo admin (.462) | IT sistemų admin (.533) | IT sistemų admin (.533) | **BETTER** | cap3 |
+| IS Engineering (328) | IRT specialistas SOC (.501) | Vyr. duomenų analitikas (.506) | Vyr. duomenų analitikas (.506) | NEUTRAL | cap3 |
+| IS Technology (329) | IT syst. kib. saugumo admin (.533) | IT sistemų admin (.619) | IT sistemų admin (.619) | **BETTER** | cap3 |
+| Multimedia technology (336) | Verslo aplikacijų ekspertas (.497) | Vyr. duomenų analitikas (.395) | AI Analyst (.416) | WORSE | neither |
+| Multimedia Technologies (337) | AI Analyst (.381) | People data analyst (.323) | People data analyst (.323) | WORSE | cap3 |
+| Software Systems (340) | Vyr. duomenų inžinierius (.396) | AI Engineer/Data Scientist (.482) | AI Engineer/Data Scientist (.482) | **BETTER** | cap3 |
+| Software Engineering (342) | IT syst. kib. saugumo admin (.512) | Full Stack programuotojas (.467) | IT syst. admin/inžinierius (.559) | **BETTER** | neither |
+| Software Engineering (344) | IT Project Manager (.338) | Vyr. duomenų analitikas (.370) | AI Analyst (.372) | **BETTER** | neither |
+
+### Observations
+
+**IDF cap3 fixed 6 of tier's 10 worse cases.** The "data engineer magnet" programmes (307, 308, 312, 318) and "specificity over breadth" cases (315, 342 partially) are completely gone — these programmes now keep their uniform top-1 or find a better match.
+
+**Case 342 (Software Engineering) is the clearest win.** Tier pushed it to "Full Stack programuotojas" (6 shared skills, cos=0.467). IDF cap3 found "IT syst. admin/inžinierius" (14 shared skills, cos=0.559) — better than both uniform and tier.
+
+**IDF cap3 and tier agree on 8 of 14 cases.** In 5 of those (316, 327, 329, 340, and 328) both improve over or match uniform. The two approaches diverge most when tier over-penalises transversal skills.
+
+**4 cap3 worse cases are all marginal.** Cosine drops of 0.017–0.080, with new matches still sharing 10-13 skills. None show the dramatic over-correction (15→6 shared skills) seen with tier weighting.
+
+**"Neither" agreement (4 cases)** means IDF cap3 found a third option that neither uniform nor tier selected — in 3 of those 4 cases (310, 342, 344), the cap3 choice is the best of the three by semantic cosine.
+
+## 12. Final results (IDF cap 3.0, no tier)
 
 | Metric | Uniform | Weighted (final) | Delta |
 |--------|---------|-------------------|-------|
