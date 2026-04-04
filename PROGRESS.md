@@ -198,7 +198,7 @@ Rank job ads per programme by BM25 score. Include in cross-strategy evaluation a
 
 ---
 
-## Step 20 — Extraction Ablation Study [ ]
+## Step 20 — Extraction Ablation Study [x]
 Remove S1/S2/S3/S4 modules one at a time from explicit extraction.
 Re-run symbolic alignment with each ablated skill set.
 Measure impact on weighted Jaccard and skill gap coverage.
@@ -208,7 +208,7 @@ Measure impact on weighted Jaccard and skill gap coverage.
 
 ---
 
-## Step 21 — Bootstrap Ranking Stability [ ]
+## Step 21 — Bootstrap Ranking Stability [x]
 Resample 80% of job ads 100 times. For each resample, re-run all 3 alignment strategies.
 Measure rank stability (Kendall tau between full and resampled rankings per programme).
 
