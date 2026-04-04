@@ -1,0 +1,42 @@
+{
+  "symbolic": {
+    "mean_tau": 0.9897346146026174,
+    "std_tau": 0.0170433141186052,
+    "median_tau": 0.9936711086108082,
+    "ci_95_lower": 0.9575243486515944,
+    "ci_95_upper": 0.996062023135614,
+    "n_tau_values": 4600,
+    "n_resamples": 100,
+    "sample_fraction": 0.8
+  },
+  "semantic": {
+    "mean_tau": 1.0,
+    "std_tau": 0.0,
+    "median_tau": 1.0,
+    "ci_95_lower": 1.0,
+    "ci_95_upper": 1.0,
+    "n_tau_values": 4600,
+    "n_resamples": 100,
+    "sample_fraction": 0.8
+  },
+  "hybrid": {
+    "mean_tau": 1.0,
+    "std_tau": 4.52161502131026e-17,
+    "median_tau": 1.0,
+    "ci_95_lower": 0.9999999999999999,
+    "ci_95_upper": 1.0,
+    "n_tau_values": 4600,
+    "n_resamples": 100,
+    "sample_fraction": 0.8
+  },
+  "bm25": {
+    "mean_tau": 0.0,
+    "std_tau": 0.0,
+    "median_tau": 0.0,
+    "ci_95_lower": 0.0,
+    "ci_95_upper": 0.0,
+    "n_tau_values": 0,
+    "n_resamples": 100,
+    "sample_fraction": 0.8
+  }
+}

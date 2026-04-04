@@ -234,7 +234,7 @@ Old jobs are NOT included in the alignment dataset — only current 299 are used
 
 ---
 
-## Step 23 — IDF + ESCO Reuse-Level Skill Weighting [ ]
+## Step 23 — IDF + ESCO Reuse-Level Skill Weighting [x]
 Replace uniform skill weights in symbolic alignment with a two-factor weighting scheme:
 1. **ESCO `reuseLevel` tier:** transversal=0.3, cross-sector=0.5, sector-specific=0.8, occupation-specific=1.0
 2. **Corpus IDF factor:** multiply tier weight by `log(N / df(uri))` where N=total docs, df=docs containing URI

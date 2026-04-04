@@ -43,7 +43,7 @@ STRATEGIES: dict[str, dict] = {
     },
     "semantic": {
         "fn": lambda df: align_semantic(df, top_n=20),
-        "score_col": "cosine_score",
+        "score_col": "cosine_combined",
     },
     "hybrid": {
         "fn": lambda df: align_hybrid(df),
