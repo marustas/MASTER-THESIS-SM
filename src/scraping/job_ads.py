@@ -224,7 +224,40 @@ async def run(output_dir: Path = RAW_JOB_ADS_DIR) -> None:
         jobs = await scraper.scrape_all()
     logger.info(f"CVbankas total: {len(jobs)} jobs")
     _save(jobs, output_dir / "cvbankas_jobs.json")
-    _save(jobs, output_dir / "all_jobs.json")
+
+    _merge_all_jobs(output_dir)
+
+
+def _merge_all_jobs(output_dir: Path) -> None:
+    """Merge CVbankas + LinkedIn jobs into all_jobs.json, deduplicating by title."""
+    import json as _json
+
+    all_jobs: list[JobAd] = []
+
+    cvbankas_path = output_dir / "cvbankas_jobs.json"
+    if cvbankas_path.exists():
+        with open(cvbankas_path, encoding="utf-8") as f:
+            all_jobs.extend(JobAd(**j) for j in _json.load(f))
+
+    linkedin_path = output_dir / "linkedin_jobs.json"
+    if linkedin_path.exists():
+        with open(linkedin_path, encoding="utf-8") as f:
+            all_jobs.extend(JobAd(**j) for j in _json.load(f))
+
+    # Deduplicate by normalised title
+    seen: set[str] = set()
+    unique: list[JobAd] = []
+    for job in all_jobs:
+        key = job.job_title.strip().lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(job)
+
+    logger.info(
+        f"Merged {len(all_jobs)} total jobs → {len(unique)} unique "
+        f"(CVbankas + LinkedIn)"
+    )
+    _save(unique, output_dir / "all_jobs.json")
 
 
 def _save(jobs: list[JobAd], path: Path) -> None:
