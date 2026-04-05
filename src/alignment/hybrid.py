@@ -9,19 +9,24 @@ Two-stage pipeline that balances recall with transparency:
       Semantic search provides high recall at low cost.
 
   Stage 2 — Refinement (symbolic):
-      Re-score each candidate with the weighted Jaccard similarity over ESCO
-      skill-URI sets (explicit weight 1.0, implicit weight 0.5 per E3).
-      Symbolic scoring adds interpretability and skill-level precision.
+      Re-score each candidate with programme_recall over ESCO skill-URI
+      sets — the fraction of job-demanded skill weight the programme covers.
+      This is asymmetric by design: it answers "how much of what the job
+      requires does the programme provide?"
 
-  Hybrid score:
-      hybrid_score = α · cosine_score + (1 − α) · weighted_jaccard
+  Hybrid score (per-programme min-max normalised):
+      hybrid_score = α · norm(cosine) + (1 − α) · norm(programme_recall)
+
+      Both components are min-max normalised within each programme's
+      candidate set to ensure they contribute equally regardless of their
+      raw scale.
 
       α (``alpha``) defaults to 0.5.  Varying α between 0 and 1 gives a
-      continuum from fully symbolic to fully semantic — explored in Step 11.
+      continuum from fully symbolic to fully semantic.
 
 Output  (experiments/results/exp3_hybrid/):
   rankings.parquet  — top-``semantic_top_n`` job ads per programme with
-                      cosine_score, weighted_jaccard, hybrid_score columns;
+                      cosine_score, programme_recall, hybrid_score columns;
                       sorted by (programme_id asc, hybrid_score desc)
   summary.json      — aggregate statistics and parameter record
 
@@ -63,13 +68,13 @@ def align_hybrid(
                      and ``skill_details``.
     semantic_top_n : number of candidates retrieved per programme in Stage 1.
     alpha          : weight of cosine_score in the hybrid formula
-                     (1 − alpha applied to weighted_jaccard).
+                     (1 − alpha applied to programme_recall).
 
     Returns
     -------
     rankings : pd.DataFrame
         Columns: programme_id, job_id, programme_name, job_title,
-                 cosine_score, weighted_jaccard, hybrid_score.
+                 cosine_score, programme_recall, hybrid_score.
         One row per (programme, candidate) pair — at most
         ``semantic_top_n`` rows per programme.
         Sorted by (programme_id asc, hybrid_score desc).
@@ -98,20 +103,29 @@ def align_hybrid(
     )
 
     # ── Stage 2: symbolic refinement ──────────────────────────────────────────
-    logger.info("Stage 2: symbolic refinement…")
+    logger.info("Stage 2: symbolic refinement (programme_recall)…")
     sym, _ = align_symbolic(df, top_n=semantic_top_n)
-    sym = sym[["programme_id", "job_id", "weighted_jaccard"]]
+    sym = sym[["programme_id", "job_id", "programme_recall"]]
 
     merged = candidates.merge(sym, on=["programme_id", "job_id"], how="left")
-    merged["weighted_jaccard"] = merged["weighted_jaccard"].fillna(0.0)
+    merged["programme_recall"] = merged["programme_recall"].fillna(0.0)
+
+    # ── Per-programme min-max normalisation ────────────────────────────────────
+    def _minmax(series: pd.Series) -> pd.Series:
+        lo, hi = series.min(), series.max()
+        return (series - lo) / (hi - lo) if hi > lo else pd.Series(0.0, index=series.index)
+
+    merged["cosine_norm"] = merged.groupby("programme_id")["cosine_score"].transform(_minmax)
+    merged["recall_norm"] = merged.groupby("programme_id")["programme_recall"].transform(_minmax)
 
     # ── Hybrid score ───────────────────────────────────────────────────────────
     merged["hybrid_score"] = (
-        alpha * merged["cosine_score"] + (1.0 - alpha) * merged["weighted_jaccard"]
+        alpha * merged["cosine_norm"] + (1.0 - alpha) * merged["recall_norm"]
     )
 
     rankings = (
-        merged.sort_values(["programme_id", "hybrid_score"], ascending=[True, False])
+        merged.drop(columns=["cosine_norm", "recall_norm"])
+        .sort_values(["programme_id", "hybrid_score"], ascending=[True, False])
         .reset_index(drop=True)
     )
 
@@ -139,9 +153,9 @@ def _compute_summary(rankings: pd.DataFrame, semantic_top_n: int, alpha: float) 
             "mean":   float(rankings["cosine_score"].mean()),
             "median": float(rankings["cosine_score"].median()),
         },
-        "weighted_jaccard": {
-            "mean":   float(rankings["weighted_jaccard"].mean()),
-            "median": float(rankings["weighted_jaccard"].median()),
+        "programme_recall": {
+            "mean":   float(rankings["programme_recall"].mean()),
+            "median": float(rankings["programme_recall"].median()),
         },
     }
 

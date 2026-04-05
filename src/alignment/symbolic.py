@@ -108,6 +108,34 @@ def overlap_coefficient(w_a: dict[str, float], w_b: dict[str, float]) -> float:
     return intersection / min_total if min_total > 0.0 else 0.0
 
 
+def programme_recall(
+    w_prog: dict[str, float],
+    w_job: dict[str, float],
+) -> float:
+    """
+    Asymmetric recall: fraction of job-demanded skill weight the programme covers.
+
+        recall = sum(min(w_p[u], w_j[u])) / sum(w_j)
+
+    Answers: "how much of what the job requires does the programme provide?"
+
+    Properties:
+      - A programme covering all of a job's skills scores 1.0 regardless of
+        how many extra skills the programme has.
+      - A programme missing a job-critical skill is penalised proportionally
+        to that skill's weight.
+      - Jobs with few skills are not over-rewarded — they still need to match
+        the programme's skills to achieve a high score.
+
+    Returns 0.0 when the job has no skills.
+    """
+    if not w_job:
+        return 0.0
+    shared = sum(min(w_prog.get(u, 0.0), w_job[u]) for u in w_job)
+    total_job = sum(w_job.values())
+    return shared / total_job if total_job > 0.0 else 0.0
+
+
 # ── Alignment ──────────────────────────────────────────────────────────────────
 
 def align_symbolic(
@@ -175,6 +203,7 @@ def align_symbolic(
                 "job_title": j_title,
                 "weighted_jaccard": weighted_jaccard(p_ws, j_ws),
                 "overlap_coeff": overlap_coefficient(p_ws, j_ws),
+                "programme_recall": programme_recall(p_ws, j_ws),
             })
 
     rankings = (
@@ -341,6 +370,7 @@ def align_symbolic_weighted(
                 "job_title": j_title,
                 "weighted_jaccard": weighted_jaccard(p_ws, j_ws),
                 "overlap_coeff": overlap_coefficient(p_ws, j_ws),
+                "programme_recall": programme_recall(p_ws, j_ws),
             })
 
     rankings = (

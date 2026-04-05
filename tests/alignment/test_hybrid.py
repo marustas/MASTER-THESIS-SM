@@ -3,9 +3,9 @@ Tests for src/alignment/hybrid.py.
 
 Covers:
   - align_hybrid: output columns, row count ≤ semantic_top_n per programme,
-                  hybrid_score formula, sort order, alpha boundary values,
-                  invalid alpha raises ValueError
-  - hybrid_score is between cosine and jaccard extremes for alpha=0 and alpha=1
+                  hybrid_score formula with per-programme min-max normalisation,
+                  sort order, alpha boundary values, invalid alpha raises ValueError
+  - hybrid_score uses normalised cosine and programme_recall
   - run_hybrid_alignment: output files written, rankings shape
 """
 
@@ -77,7 +77,7 @@ class TestAlignHybrid:
         df = _make_df(2, 4)
         rankings = align_hybrid(df, semantic_top_n=3)
         for col in ("programme_id", "job_id", "cosine_score",
-                    "weighted_jaccard", "hybrid_score"):
+                    "programme_recall", "hybrid_score"):
             assert col in rankings.columns
 
     def test_rows_capped_at_semantic_top_n(self):
@@ -99,37 +99,50 @@ class TestAlignHybrid:
             scores = rankings[rankings["programme_id"] == p_id]["hybrid_score"].tolist()
             assert scores == sorted(scores, reverse=True)
 
-    def test_hybrid_score_formula(self):
-        df = _make_df(2, 4)
+    def test_hybrid_score_uses_normalised_components(self):
+        """Hybrid score = α·norm(cosine) + (1-α)·norm(recall), both min-max per programme."""
+        df = _make_df(2, 5)
         alpha = 0.6
-        rankings = align_hybrid(df, semantic_top_n=4, alpha=alpha)
-        expected = (
-            alpha * rankings["cosine_score"]
-            + (1 - alpha) * rankings["weighted_jaccard"]
-        )
-        pd.testing.assert_series_equal(
-            rankings["hybrid_score"].round(6),
-            expected.round(6),
-            check_names=False,
-        )
+        rankings = align_hybrid(df, semantic_top_n=5, alpha=alpha)
+        for p_id in rankings["programme_id"].unique():
+            grp = rankings[rankings["programme_id"] == p_id]
+            cos = grp["cosine_score"]
+            rec = grp["programme_recall"]
+            # normalise
+            cos_lo, cos_hi = cos.min(), cos.max()
+            rec_lo, rec_hi = rec.min(), rec.max()
+            cos_n = (cos - cos_lo) / (cos_hi - cos_lo) if cos_hi > cos_lo else 0.0
+            rec_n = (rec - rec_lo) / (rec_hi - rec_lo) if rec_hi > rec_lo else 0.0
+            expected = alpha * cos_n + (1 - alpha) * rec_n
+            pd.testing.assert_series_equal(
+                grp["hybrid_score"].reset_index(drop=True).round(6),
+                expected.reset_index(drop=True).round(6),
+                check_names=False,
+            )
 
-    def test_alpha_zero_hybrid_equals_jaccard(self):
-        df = _make_df(2, 4)
-        rankings = align_hybrid(df, semantic_top_n=4, alpha=0.0)
-        pd.testing.assert_series_equal(
-            rankings["hybrid_score"].round(6),
-            rankings["weighted_jaccard"].round(6),
-            check_names=False,
-        )
+    def test_hybrid_score_in_0_1_after_normalisation(self):
+        df = _make_df(3, 8)
+        rankings = align_hybrid(df, semantic_top_n=5)
+        assert (rankings["hybrid_score"] >= -1e-9).all()
+        assert (rankings["hybrid_score"] <= 1.0 + 1e-9).all()
 
-    def test_alpha_one_hybrid_equals_cosine(self):
+    def test_alpha_one_hybrid_equals_normalised_cosine(self):
         df = _make_df(2, 4)
         rankings = align_hybrid(df, semantic_top_n=4, alpha=1.0)
-        pd.testing.assert_series_equal(
-            rankings["hybrid_score"].astype("float64").round(6),
-            rankings["cosine_score"].astype("float64").round(6),
-            check_names=False,
-        )
+        # With alpha=1, hybrid = norm(cosine); top per programme should be 1.0
+        for p_id in rankings["programme_id"].unique():
+            grp = rankings[rankings["programme_id"] == p_id]
+            if len(grp) > 1:
+                assert grp["hybrid_score"].iloc[0] == pytest.approx(1.0, abs=1e-6)
+
+    def test_alpha_zero_hybrid_equals_normalised_recall(self):
+        df = _make_df(2, 4)
+        rankings = align_hybrid(df, semantic_top_n=4, alpha=0.0)
+        # With alpha=0, hybrid = norm(recall); top per programme should be 1.0
+        for p_id in rankings["programme_id"].unique():
+            grp = rankings[rankings["programme_id"] == p_id]
+            if len(grp) > 1:
+                assert grp["hybrid_score"].iloc[0] == pytest.approx(1.0, abs=1e-6)
 
     def test_invalid_alpha_raises(self):
         df = _make_df(2, 3)
@@ -138,17 +151,11 @@ class TestAlignHybrid:
         with pytest.raises(ValueError, match="alpha"):
             align_hybrid(df, alpha=-0.1)
 
-    def test_hybrid_score_in_valid_range(self):
-        df = _make_df(3, 6)
-        rankings = align_hybrid(df, semantic_top_n=5)
-        assert (rankings["hybrid_score"] >= -1.0).all()
-        assert (rankings["hybrid_score"] <= 1.0 + 1e-5).all()
-
     def test_no_skills_runs_without_error(self):
         df = _make_df(2, 4, with_skills=False)
         rankings = align_hybrid(df, semantic_top_n=3)
         assert len(rankings) > 0
-        assert (rankings["weighted_jaccard"] == 0.0).all()
+        assert (rankings["programme_recall"] == 0.0).all()
 
 
 # ── run_hybrid_alignment ───────────────────────────────────────────────────────

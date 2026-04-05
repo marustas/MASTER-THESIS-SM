@@ -21,6 +21,7 @@ from src.alignment.symbolic import (
     align_symbolic,
     align_symbolic_weighted,
     overlap_coefficient,
+    programme_recall,
     run_symbolic_alignment,
     weighted_jaccard,
 )
@@ -154,6 +155,69 @@ class TestOverlapCoefficient:
         a = {"esco:python": 1.0}
         b = {"esco:java": 1.0}
         assert overlap_coefficient(a, b) == pytest.approx(0.0)
+
+
+# ── programme_recall ──────────────────────────────────────────────────────
+
+class TestProgrammeRecall:
+    def test_empty_job_returns_zero(self):
+        assert programme_recall({"esco:python": 1.0}, {}) == 0.0
+
+    def test_empty_programme_returns_zero(self):
+        assert programme_recall({}, {"esco:python": 1.0}) == 0.0
+
+    def test_both_empty_returns_zero(self):
+        assert programme_recall({}, {}) == 0.0
+
+    def test_perfect_coverage_returns_one(self):
+        prog = {"esco:python": 1.0, "esco:ml": 0.5, "esco:extra": 1.0}
+        job = {"esco:python": 1.0, "esco:ml": 0.5}
+        assert programme_recall(prog, job) == pytest.approx(1.0)
+
+    def test_no_overlap_returns_zero(self):
+        prog = {"esco:python": 1.0}
+        job = {"esco:java": 1.0}
+        assert programme_recall(prog, job) == pytest.approx(0.0)
+
+    def test_partial_coverage(self):
+        prog = {"esco:python": 1.0}
+        job = {"esco:python": 1.0, "esco:ml": 1.0}
+        # shared = min(1,1) = 1; total_job = 2 → recall = 0.5
+        assert programme_recall(prog, job) == pytest.approx(0.5)
+
+    def test_programme_extra_skills_do_not_penalise(self):
+        """Programme having more skills than the job doesn't reduce recall."""
+        prog = {"esco:python": 1.0, "esco:ml": 1.0, "esco:docker": 1.0}
+        job = {"esco:python": 1.0}
+        assert programme_recall(prog, job) == pytest.approx(1.0)
+
+    def test_asymmetric(self):
+        """programme_recall(A, B) != programme_recall(B, A) in general."""
+        a = {"esco:python": 1.0}
+        b = {"esco:python": 1.0, "esco:ml": 1.0}
+        assert programme_recall(a, b) != programme_recall(b, a)
+
+    def test_partial_weight_match(self):
+        prog = {"esco:python": 0.5}
+        job = {"esco:python": 1.0}
+        # shared = min(0.5, 1.0) = 0.5; total_job = 1.0 → recall = 0.5
+        assert programme_recall(prog, job) == pytest.approx(0.5)
+
+    def test_present_in_align_symbolic_output(self):
+        df = _make_df(
+            programmes=[[_skill("esco:python")]],
+            jobs=[[_skill("esco:python"), _skill("esco:ml")]],
+        )
+        rankings, _ = align_symbolic(df, top_n=1)
+        assert "programme_recall" in rankings.columns
+
+    def test_present_in_align_symbolic_weighted_output(self):
+        df = _make_df(
+            programmes=[[_skill("esco:python")]],
+            jobs=[[_skill("esco:python"), _skill("esco:ml")]],
+        )
+        rankings, _ = align_symbolic_weighted(df, top_n=1)
+        assert "programme_recall" in rankings.columns
 
 
 # ── align_symbolic ─────────────────────────────────────────────────────────────
