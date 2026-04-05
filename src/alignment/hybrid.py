@@ -43,7 +43,7 @@ import pandas as pd
 from loguru import logger
 
 from src.alignment.semantic import align_semantic
-from src.alignment.symbolic import align_symbolic
+from src.alignment.symbolic import align_symbolic_weighted
 from src.scraping.config import DATA_DIR
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
@@ -102,9 +102,9 @@ def align_hybrid(
         .reset_index(drop=True)
     )
 
-    # ── Stage 2: symbolic refinement ──────────────────────────────────────────
-    logger.info("Stage 2: symbolic refinement (programme_recall)…")
-    sym, _ = align_symbolic(df, top_n=semantic_top_n)
+    # ── Stage 2: symbolic refinement (IDF-weighted programme recall) ────────
+    logger.info("Stage 2: symbolic refinement (IDF-weighted programme_recall)…")
+    sym, _ = align_symbolic_weighted(df, top_n=semantic_top_n)
     sym = sym[["programme_id", "job_id", "programme_recall"]]
 
     merged = candidates.merge(sym, on=["programme_id", "job_id"], how="left")
