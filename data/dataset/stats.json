@@ -14,15 +14,15 @@
   "top_skills_overall": [
     [
       "computer technology",
-      303
+      304
     ],
     [
       "English",
-      241
+      242
     ],
     [
       "communication",
-      205
+      206
     ],
     [
       "think creatively",
@@ -30,67 +30,67 @@
     ],
     [
       "SQL",
-      155
+      169
+    ],
+    [
+      "manage time",
+      164
+    ],
+    [
+      "computer science",
+      142
     ],
     [
       "Lithuanian",
       139
     ],
     [
-      "ICT project management methodologies",
+      "lead others",
       132
     ],
     [
-      "computer science",
+      "assume responsibility",
+      131
+    ],
+    [
+      "troubleshoot",
+      130
+    ],
+    [
+      "Python (computer programming)",
+      129
+    ],
+    [
+      "think analytically",
       128
     ],
     [
       "plan",
-      125
-    ],
-    [
-      "lead others",
-      125
-    ],
-    [
-      "think analytically",
-      124
-    ],
-    [
-      "Python (computer programming)",
-      120
-    ],
-    [
-      "troubleshoot",
-      118
-    ],
-    [
-      "assume responsibility",
-      114
-    ],
-    [
-      "manage time",
-      110
+      128
     ],
     [
       "work independently",
+      104
+    ],
+    [
+      "computer programming",
+      99
+    ],
+    [
+      "DevOps",
+      98
+    ],
+    [
+      "tools for software configuration management",
       98
     ],
     [
       "make decisions",
-      92
+      96
     ],
     [
-      "computer programming",
-      92
-    ],
-    [
-      "DevOps",
-      88
-    ],
-    [
-      "JavaScript",
-      85
+      "cyber security",
+      95
     ]
   ],
   "top_skills_programme": [
@@ -178,15 +178,15 @@
   "top_skills_job_ad": [
     [
       "computer technology",
-      266
+      267
     ],
     [
       "English",
-      216
+      217
     ],
     [
       "communication",
-      167
+      168
     ],
     [
       "think creatively",
@@ -194,78 +194,78 @@
     ],
     [
       "SQL",
-      134
+      148
     ],
     [
-      "ICT project management methodologies",
-      129
+      "manage time",
+      143
     ],
     [
       "troubleshoot",
-      118
+      130
+    ],
+    [
+      "assume responsibility",
+      128
     ],
     [
       "Python (computer programming)",
-      116
+      125
     ],
     [
       "lead others",
-      116
+      123
     ],
     [
       "Lithuanian",
       115
     ],
     [
-      "assume responsibility",
-      111
-    ],
-    [
       "plan",
-      103
-    ],
-    [
-      "think analytically",
-      97
-    ],
-    [
-      "manage time",
-      89
+      106
     ],
     [
       "computer science",
-      88
+      102
     ],
     [
-      "DevOps",
-      87
+      "think analytically",
+      101
     ],
     [
       "tools for software configuration management",
-      82
+      98
+    ],
+    [
+      "DevOps",
+      97
     ],
     [
       "work independently",
-      81
+      87
     ],
     [
       "perform cleaning duties",
-      77
+      80
     ],
     [
-      "make decisions",
-      67
+      "cyber security",
+      75
+    ],
+    [
+      "Java (computer programming)",
+      72
     ]
   ],
   "skills_per_record": {
-    "mean": 20.28,
-    "median": 14.0,
+    "mean": 22.12,
+    "median": 15.0,
     "zero_skill_records": 1
   },
   "text_length": {
-    "mean": 3284.8,
+    "mean": 3284.7,
     "median": 2854.5,
-    "p10": 1477.0,
+    "p10": 1477.5,
     "p90": 5800.0,
     "min": 32,
     "max": 9634
