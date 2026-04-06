@@ -228,6 +228,19 @@ async def run(output_dir: Path = RAW_JOB_ADS_DIR) -> None:
     _merge_all_jobs(output_dir)
 
 
+_NON_IT_TITLE_PATTERNS: list[str] = [
+    "teacher", "teaching", "ppc specialist", "seo specialist",
+    "account executive", "lead generation specialist",
+    "head of treasury", "communications projects manager",
+]
+
+
+def _is_non_it(job: JobAd) -> bool:
+    """Return True if the job title matches a known non-IT pattern."""
+    title = job.job_title.strip().lower()
+    return any(pat in title for pat in _NON_IT_TITLE_PATTERNS)
+
+
 def _merge_all_jobs(output_dir: Path) -> None:
     """Merge CVbankas + LinkedIn jobs into all_jobs.json, deduplicating by title."""
     import json as _json
@@ -244,6 +257,13 @@ def _merge_all_jobs(output_dir: Path) -> None:
         with open(linkedin_path, encoding="utf-8") as f:
             all_jobs.extend(JobAd(**j) for j in _json.load(f))
 
+    # Filter non-IT jobs
+    before = len(all_jobs)
+    all_jobs = [j for j in all_jobs if not _is_non_it(j)]
+    removed = before - len(all_jobs)
+    if removed:
+        logger.info(f"Removed {removed} non-IT jobs by title filter")
+
     # Deduplicate by normalised title
     seen: set[str] = set()
     unique: list[JobAd] = []
@@ -254,8 +274,8 @@ def _merge_all_jobs(output_dir: Path) -> None:
             unique.append(job)
 
     logger.info(
-        f"Merged {len(all_jobs)} total jobs → {len(unique)} unique "
-        f"(CVbankas + LinkedIn)"
+        f"Merged {before} total jobs → {len(unique)} unique "
+        f"(CVbankas + LinkedIn, after dedup + filter)"
     )
     _save(unique, output_dir / "all_jobs.json")
 
