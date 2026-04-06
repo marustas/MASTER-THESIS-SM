@@ -217,20 +217,41 @@ Measure rank stability (Kendall tau between full and resampled rankings per prog
 
 ---
 
-## Step 22 — Expanded Implicit Extraction Corpus [ ]
-Scrape additional (including expired/old) job ads to use as a larger neighbour corpus for implicit skill extraction.
-Old jobs are NOT included in the alignment dataset — only current 299 are used for matching.
+## Step 22 — Expanded Job Corpus (LinkedIn) [x]
+Scrape additional IT/CS job ads from LinkedIn to expand the job corpus beyond CVbankas.
+Industry filters: SOFTWARE_DEVELOPMENT, TECHNOLOGY_INTERNET, IT_SERVICES.
+Location: Lithuania. Merged with CVbankas jobs, deduplicated by title.
 
-1. Scrape old/expired job listings into `data/raw/job_ads_auxiliary/`
-2. Preprocess and run explicit extraction on auxiliary jobs
-3. Fit implicit extractor on combined corpus (current 299 + auxiliary jobs)
-4. Re-extract implicit skills for current 299 jobs and 46 programmes
-5. Re-run steps 6–12 with enriched implicit skills
+**Result:** 122 LinkedIn + 275 CVbankas = 397 unique jobs (was 299).
+LinkedIn jobs are richer: mean 19.2 skills vs 13.6 for CVbankas, higher implicit ratio (44.4% vs 39.4%).
+Added 43 new ESCO URIs, 8 of which match programme skills.
 
-**Rationale:** Gugnani & Misra (2020) used 1.1M JDs for neighbour search; 299 is too few for meaningful implicit propagation.
+**Output:** `data/raw/job_ads/linkedin_jobs.json`, merged `all_jobs.json`
+**Module:** `src/scraping/linkedin.py` (new), `src/scraping/job_ads.py` (merge logic)
 
-**Output:** enriched `*_with_skills.parquet`, then re-run downstream pipeline
-**Module:** `src/scraping/job_ads.py`, `src/skills/skill_mapper.py`, `src/skills/implicit_extractor.py`
+---
+
+## Step 22b — Generalist Job Penalty [ ]
+Address generalist job descriptions dominating top rankings across many programmes.
+A single broad IT job (e.g. "Systems Administrator") can rank top-1 for 11+ programmes
+because its vague language produces high cosine with all programmes and its many extracted
+skills inflate programme_recall.
+
+Approach: add a **job specificity factor** that down-weights jobs proportionally to how many
+programmes they match well. Jobs that are equally similar to all programmes carry less
+discriminative signal and should be penalised.
+
+1. Compute per-job inverse programme frequency: `ipf(j) = log(N_prog / count_top_k(j))`
+   where `count_top_k(j)` = number of programmes for which job j appears in top-K candidates
+2. Multiply hybrid score by normalised IPF so generalist jobs are dampened
+3. Re-run hybrid alignment and evaluate ranking stability, CoV, top-1 diversity
+
+**Rationale:** After LinkedIn expansion, "Kompiuterinių sistemų administratorius" ranks top-1
+for 11/46 programmes, "Software helpdesk – junior IT Analyst" appears in top-5 for 32/46.
+These generalist jobs reduce ranking diversity and mask programme-specific matches.
+
+**Output:** updated hybrid rankings with specificity-adjusted scores
+**Module:** `src/alignment/hybrid.py` (extended)
 
 ---
 
