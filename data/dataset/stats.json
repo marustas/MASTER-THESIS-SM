@@ -1,32 +1,32 @@
 {
-  "total_records": 443,
+  "total_records": 436,
   "by_source_type": {
-    "job_ad": 397,
+    "job_ad": 390,
     "programme": 46
   },
   "coverage": {
     "explicit_skills": 1.0,
     "implicit_skills": 1.0,
     "embedding": 1.0,
-    "extended_description": 0.1038,
+    "extended_description": 0.1055,
     "language_supported": 1.0
   },
   "top_skills_overall": [
     [
       "computer technology",
-      306
+      303
     ],
     [
       "English",
-      247
+      241
     ],
     [
       "communication",
-      208
+      205
     ],
     [
       "think creatively",
-      195
+      193
     ],
     [
       "SQL",
@@ -34,7 +34,7 @@
     ],
     [
       "Lithuanian",
-      141
+      139
     ],
     [
       "ICT project management methodologies",
@@ -42,23 +42,23 @@
     ],
     [
       "computer science",
-      131
-    ],
-    [
-      "lead others",
-      129
-    ],
-    [
-      "think analytically",
-      127
+      128
     ],
     [
       "plan",
       125
     ],
     [
+      "lead others",
+      125
+    ],
+    [
+      "think analytically",
+      124
+    ],
+    [
       "Python (computer programming)",
-      121
+      120
     ],
     [
       "troubleshoot",
@@ -66,31 +66,31 @@
     ],
     [
       "assume responsibility",
-      116
+      114
     ],
     [
       "manage time",
-      112
+      110
     ],
     [
       "work independently",
-      100
+      98
     ],
     [
       "make decisions",
-      93
+      92
     ],
     [
       "computer programming",
-      93
+      92
     ],
     [
       "DevOps",
-      89
+      88
     ],
     [
-      "cyber security",
-      87
+      "JavaScript",
+      85
     ]
   ],
   "top_skills_programme": [
@@ -178,19 +178,19 @@
   "top_skills_job_ad": [
     [
       "computer technology",
-      269
+      266
     ],
     [
       "English",
-      222
+      216
     ],
     [
       "communication",
-      170
+      167
     ],
     [
       "think creatively",
-      155
+      153
     ],
     [
       "SQL",
@@ -201,24 +201,24 @@
       129
     ],
     [
-      "lead others",
-      120
-    ],
-    [
       "troubleshoot",
       118
     ],
     [
       "Python (computer programming)",
-      117
+      116
+    ],
+    [
+      "lead others",
+      116
     ],
     [
       "Lithuanian",
-      117
+      115
     ],
     [
       "assume responsibility",
-      113
+      111
     ],
     [
       "plan",
@@ -226,51 +226,51 @@
     ],
     [
       "think analytically",
-      100
+      97
     ],
     [
       "manage time",
-      91
+      89
     ],
     [
       "computer science",
-      91
-    ],
-    [
-      "DevOps",
       88
     ],
     [
-      "work independently",
-      83
+      "DevOps",
+      87
     ],
     [
       "tools for software configuration management",
       82
     ],
     [
+      "work independently",
+      81
+    ],
+    [
       "perform cleaning duties",
-      80
+      77
     ],
     [
       "make decisions",
-      68
+      67
     ]
   ],
   "skills_per_record": {
-    "mean": 20.15,
+    "mean": 20.28,
     "median": 14.0,
-    "zero_skill_records": 2
+    "zero_skill_records": 1
   },
   "text_length": {
-    "mean": 3269.0,
-    "median": 2843.0,
-    "p10": 1466.4,
-    "p90": 5760.4,
+    "mean": 3284.8,
+    "median": 2854.5,
+    "p10": 1477.0,
+    "p90": 5800.0,
     "min": 32,
     "max": 9634
   },
   "language_distribution": {
-    "en": 443
+    "en": 436
   }
 }
