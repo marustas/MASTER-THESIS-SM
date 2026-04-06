@@ -14,6 +14,7 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "lxml>=5.0",
     "playwright>=1.44",
+    "linkedin-jobs-scraper>=5.0",
     # Data handling
     "pandas>=2.2",
     "numpy>=1.26",
@@ -28,7 +29,7 @@ dependencies = [
     # Embeddings & transformers
     "sentence-transformers>=3.0",
     "torch>=2.2",
-    "transformers>=4.40",
+    "transformers>=4.40,<5",
     # Clustering
     "scikit-learn>=1.4",
     "umap-learn>=0.5",
