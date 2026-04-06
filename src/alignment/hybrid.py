@@ -37,8 +37,10 @@ Usage:
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from loguru import logger
 
@@ -58,6 +60,7 @@ def align_hybrid(
     df: pd.DataFrame,
     semantic_top_n: int = 50,
     alpha: float = 0.5,
+    ipf_top_k: int = 10,
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -69,6 +72,9 @@ def align_hybrid(
     semantic_top_n : number of candidates retrieved per programme in Stage 1.
     alpha          : weight of cosine_score in the hybrid formula
                      (1 − alpha applied to programme_recall).
+    ipf_top_k      : top-K threshold for inverse programme frequency.
+                     Jobs appearing in top-K for many programmes are
+                     down-weighted.  Set to 0 to disable.
 
     Returns
     -------
@@ -122,6 +128,44 @@ def align_hybrid(
     merged["hybrid_score"] = (
         alpha * merged["cosine_norm"] + (1.0 - alpha) * merged["recall_norm"]
     )
+
+    # ── Inverse programme frequency (generalist penalty) ─────────────────────
+    if ipf_top_k > 0:
+        # Rank within each programme by initial hybrid score
+        merged["_rank"] = merged.groupby("programme_id")["hybrid_score"].rank(
+            ascending=False, method="first",
+        )
+        # Count how many programmes each job appears in top-K for
+        top_k_mask = merged["_rank"] <= ipf_top_k
+        job_prog_count = (
+            merged.loc[top_k_mask]
+            .groupby("job_id")["programme_id"]
+            .nunique()
+            .rename("_prog_count")
+        )
+        merged = merged.merge(job_prog_count, on="job_id", how="left")
+        merged["_prog_count"] = merged["_prog_count"].fillna(1.0)
+
+        # IPF = log(1 + N_prog / count) — smoothed, min-max normalised to [floor, 1]
+        # The floor prevents generalist jobs from being obliterated — they
+        # remain available for niche programmes that lack domain-specific jobs.
+        ipf_floor = 0.3
+        merged["_ipf"] = np.log1p(n_prog / merged["_prog_count"])
+        ipf_lo, ipf_hi = merged["_ipf"].min(), merged["_ipf"].max()
+        if ipf_hi > ipf_lo:
+            raw_norm = (merged["_ipf"] - ipf_lo) / (ipf_hi - ipf_lo)
+            merged["_ipf_norm"] = ipf_floor + (1.0 - ipf_floor) * raw_norm
+        else:
+            merged["_ipf_norm"] = 1.0
+
+        merged["hybrid_score"] = merged["hybrid_score"] * merged["_ipf_norm"]
+
+        n_penalised = (merged["_prog_count"] > 1).sum()
+        logger.info(
+            f"  IPF penalty (top-{ipf_top_k}): "
+            f"{int(job_prog_count[job_prog_count > 1].count())} generalist jobs penalised"
+        )
+        merged = merged.drop(columns=["_rank", "_prog_count", "_ipf", "_ipf_norm"])
 
     rankings = (
         merged.drop(columns=["cosine_norm", "recall_norm"])

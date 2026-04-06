@@ -103,7 +103,8 @@ class TestAlignHybrid:
         """Hybrid score = α·norm(cosine) + (1-α)·norm(recall), both min-max per programme."""
         df = _make_df(2, 5)
         alpha = 0.6
-        rankings = align_hybrid(df, semantic_top_n=5, alpha=alpha)
+        # Disable IPF to test the base formula in isolation
+        rankings = align_hybrid(df, semantic_top_n=5, alpha=alpha, ipf_top_k=0)
         for p_id in rankings["programme_id"].unique():
             grp = rankings[rankings["programme_id"] == p_id]
             cos = grp["cosine_score"]
@@ -128,7 +129,7 @@ class TestAlignHybrid:
 
     def test_alpha_one_hybrid_equals_normalised_cosine(self):
         df = _make_df(2, 4)
-        rankings = align_hybrid(df, semantic_top_n=4, alpha=1.0)
+        rankings = align_hybrid(df, semantic_top_n=4, alpha=1.0, ipf_top_k=0)
         # With alpha=1, hybrid = norm(cosine); top per programme should be 1.0
         for p_id in rankings["programme_id"].unique():
             grp = rankings[rankings["programme_id"] == p_id]
@@ -137,7 +138,7 @@ class TestAlignHybrid:
 
     def test_alpha_zero_hybrid_equals_normalised_recall(self):
         df = _make_df(2, 4)
-        rankings = align_hybrid(df, semantic_top_n=4, alpha=0.0)
+        rankings = align_hybrid(df, semantic_top_n=4, alpha=0.0, ipf_top_k=0)
         # With alpha=0, hybrid = norm(recall); top per programme should be 1.0
         for p_id in rankings["programme_id"].unique():
             grp = rankings[rankings["programme_id"] == p_id]
@@ -156,6 +157,66 @@ class TestAlignHybrid:
         rankings = align_hybrid(df, semantic_top_n=3)
         assert len(rankings) > 0
         assert (rankings["programme_recall"] == 0.0).all()
+
+
+# ── IPF (inverse programme frequency) ─────────────────────────────────────
+
+class TestIPF:
+    def test_ipf_disabled_matches_base_formula(self):
+        """ipf_top_k=0 should give same results as raw normalised formula."""
+        df = _make_df(3, 8)
+        rankings = align_hybrid(df, semantic_top_n=5, ipf_top_k=0)
+        assert (rankings["hybrid_score"] >= -1e-9).all()
+        assert (rankings["hybrid_score"] <= 1.0 + 1e-9).all()
+
+    def test_ipf_penalises_generalist_jobs(self):
+        """A job appearing in top-K for all programmes should score lower with IPF."""
+        # Use same embedding for all programmes so one job matches all equally
+        rows = []
+        shared_emb = _emb(42, 8)
+        shared_skills = [_skill("esco:common")]
+        for i in range(4):
+            rows.append({
+                "source_type": "programme",
+                "embedding": shared_emb,
+                "name": f"Prog{i}",
+                "skill_details": shared_skills,
+            })
+        # Generalist job: same embedding & skill as all programmes
+        rows.append({
+            "source_type": "job_ad",
+            "embedding": shared_emb,
+            "job_title": "Generalist",
+            "skill_details": shared_skills,
+        })
+        # Specialist job: different embedding
+        rows.append({
+            "source_type": "job_ad",
+            "embedding": _emb(99, 8),
+            "job_title": "Specialist",
+            "skill_details": [_skill("esco:niche")],
+        })
+        df = pd.DataFrame(rows)
+
+        with_ipf = align_hybrid(df, semantic_top_n=2, ipf_top_k=1)
+        without_ipf = align_hybrid(df, semantic_top_n=2, ipf_top_k=0)
+
+        # The generalist job should have a lower score with IPF than without
+        gen_with = with_ipf[with_ipf["job_title"] == "Generalist"]["hybrid_score"].mean()
+        gen_without = without_ipf[without_ipf["job_title"] == "Generalist"]["hybrid_score"].mean()
+        assert gen_with < gen_without
+
+    def test_ipf_preserves_sort_order(self):
+        df = _make_df(3, 8)
+        rankings = align_hybrid(df, semantic_top_n=5, ipf_top_k=5)
+        for p_id in rankings["programme_id"].unique():
+            scores = rankings[rankings["programme_id"] == p_id]["hybrid_score"].tolist()
+            assert scores == sorted(scores, reverse=True)
+
+    def test_ipf_scores_non_negative(self):
+        df = _make_df(3, 8)
+        rankings = align_hybrid(df, semantic_top_n=5, ipf_top_k=3)
+        assert (rankings["hybrid_score"] >= -1e-9).all()
 
 
 # ── run_hybrid_alignment ───────────────────────────────────────────────────────
