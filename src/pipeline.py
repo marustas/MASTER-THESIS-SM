@@ -88,6 +88,13 @@ def _run_step(step: int) -> None:
     elif step == 3:
         from src.preprocessing.pipeline import run as _run
         _run()
+        # Preprocess auxiliary corpus if raw file exists
+        aux_raw = DATA_DIR / "raw" / "job_ads" / "auxiliary_jobs.json"
+        if aux_raw.exists():
+            from src.preprocessing.pipeline import run_auxiliary_jobs
+            run_auxiliary_jobs(input_path=aux_raw)
+        else:
+            logger.info("No auxiliary_jobs.json found — skipping auxiliary preprocessing")
 
     elif step == 4:
         from src.skills.skill_mapper import run as _run

@@ -236,6 +236,53 @@ def run_job_ads(
     return df
 
 
+# ── Auxiliary corpus preprocessing ─────────────────────────────────────────────
+
+def run_auxiliary_jobs(
+    input_path: Path = DATA_DIR / "raw" / "job_ads" / "auxiliary_jobs.json",
+    output_path: Path = PROCESSED_JOB_ADS_DIR / "auxiliary_preprocessed.parquet",
+) -> pd.DataFrame:
+    """
+    Preprocess auxiliary job ads (used only for implicit skill extraction fitting).
+
+    Same pipeline as main job ads: clean, detect language, translate, tokenize, dedup.
+    """
+    logger.info(f"Preprocessing auxiliary job ads from {input_path}")
+    with open(input_path, encoding="utf-8") as f:
+        records: list[dict] = json.load(f)
+    logger.info(f"Loaded {len(records)} auxiliary job ad records")
+
+    processed = []
+    for i, rec in enumerate(records, 1):
+        rec = process_record(
+            rec,
+            text_fields=["description", "job_title"],
+            is_job_ad=True,
+        )
+        processed.append(rec)
+        if i % 200 == 0:
+            logger.info(f"  Auxiliary job ads processed: {i}/{len(records)}")
+
+    dedup = deduplicate(
+        processed,
+        text_field="cleaned_text",
+        key_field="url",
+        near_duplicate=True,
+    )
+
+    valid = [
+        r for r in dedup.kept
+        if r.get("cleaned_text") and r.get("language_supported")
+    ]
+    logger.info(f"Auxiliary job ads after dedup + language filter: {len(valid)}")
+
+    df = pd.DataFrame(valid)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(output_path, index=False)
+    logger.info(f"Saved → {output_path}")
+    return df
+
+
 # ── CLI entry-point ────────────────────────────────────────────────────────────
 
 def run(
