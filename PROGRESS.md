@@ -231,27 +231,19 @@ Added 43 new ESCO URIs, 8 of which match programme skills.
 
 ---
 
-## Step 22b — Generalist Job Penalty [ ]
+## Step 22b — Generalist Job Penalty & Hybrid Redesign [x]
 Address generalist job descriptions dominating top rankings across many programmes.
-A single broad IT job (e.g. "Systems Administrator") can rank top-1 for 11+ programmes
-because its vague language produces high cosine with all programmes and its many extracted
-skills inflate programme_recall.
 
-Approach: add a **job specificity factor** that down-weights jobs proportionally to how many
-programmes they match well. Jobs that are equally similar to all programmes carry less
-discriminative signal and should be penalised.
+Changes applied:
+1. **Asymmetric programme_recall** replaced symmetric weighted Jaccard — measures fraction of job-demanded skill weight the programme covers
+2. **Per-programme min-max normalisation** — cosine and recall normalised to [0,1] within each programme's candidate set
+3. **Inverse Programme Frequency (IPF)** — `log(1 + N_prog / count_top_k(j))` with floor=0.3, penalises generalist jobs
+4. **Auxiliary corpus** — 617 EU-wide LinkedIn jobs for implicit skill extractor fitting (not alignment)
 
-1. Compute per-job inverse programme frequency: `ipf(j) = log(N_prog / count_top_k(j))`
-   where `count_top_k(j)` = number of programmes for which job j appears in top-K candidates
-2. Multiply hybrid score by normalised IPF so generalist jobs are dampened
-3. Re-run hybrid alignment and evaluate ranking stability, CoV, top-1 diversity
+**Results:** Unique top-1 jobs: 13/35 → 35/46. Score CoV: 0.12 → 0.50. Top-5 generalist jobs (freq>5): 13 → 5.
 
-**Rationale:** After LinkedIn expansion, "Kompiuterinių sistemų administratorius" ranks top-1
-for 11/46 programmes, "Software helpdesk – junior IT Analyst" appears in top-5 for 32/46.
-These generalist jobs reduce ranking diversity and mask programme-specific matches.
-
-**Output:** updated hybrid rankings with specificity-adjusted scores
-**Module:** `src/alignment/hybrid.py` (extended)
+**Output:** `experiments/results/exp3_hybrid/FINDINGS.md`
+**Module:** `src/alignment/hybrid.py`, `src/scraping/linkedin_auxiliary.py`, `src/skills/skill_mapper.py`
 
 ---
 
