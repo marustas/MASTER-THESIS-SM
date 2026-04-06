@@ -262,15 +262,26 @@ Re-run symbolic + hybrid alignment and compare Jaccard/overlap distributions wit
 
 ---
 
-## Step 24 — Finer Alpha Sweep [ ]
-Re-run hybrid alpha sensitivity analysis with step=0.01 (101 alpha values) instead of current step=0.1 (11 values).
-Focus on the region around the current optimum (±0.15) at step=0.005 for high-resolution curve.
-Report optimal alpha with bootstrap 95% CI.
+## Step 24 — Hybrid Formula Tuning [ ]
+Systematic comparison of hybrid scoring formula variants to improve ranking stability and match quality.
 
-**Rationale:** The current 0.1 step sweep identifies the best alpha only within ±0.05 precision. The hybrid score is `α·cosine + (1-α)·jaccard`, and the sensitivity curve may have a narrow peak — especially after score normalisation or skill reweighting changes the Jaccard distribution. A finer sweep ensures the reported optimal alpha is not an artefact of coarse discretisation, and the bootstrap CI quantifies how stable this optimum is across programme subsets.
+Variants tested:
+1. **Baseline** — current formula: `α·minmax(cos) + (1-α)·minmax(recall) × IPF`
+2. **Rank normalisation** — replace per-programme min-max with rank-based normalisation (`1 - rank/N`)
+3. **Agreement boost** — add term rewarding agreement between semantic and symbolic signals: `(1 - |norm(cos) - norm(recall)|)`
+4. **Rank + agreement** — combine both changes
 
-**Output:** `experiments/results/sensitivity/alpha_sweep_fine.parquet`, `alpha_sweep_fine_summary.json`
-**Module:** `src/evaluation/sensitivity.py` (extended)
+Evaluation metrics per variant:
+- Top-1 diversity (unique jobs / programmes)
+- Top-5 Kendall tau stability (bootstrap 80% resample)
+- Score CoV and discriminability
+- Cross-strategy Spearman correlations
+- Alpha sensitivity (sweep 0.0–1.0 at step=0.05)
+
+**Rationale:** Min-max normalisation is sensitive to outliers within each programme's candidate set. Rank normalisation is more robust. The agreement boost was previously rejected (Pearson=-0.03 on old data), but the auxiliary corpus changed the implicit skill landscape — worth re-evaluating.
+
+**Output:** `experiments/results/sensitivity/formula_variants.json`
+**Module:** `src/evaluation/formula_tuning.py` (new)
 
 ---
 
