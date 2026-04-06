@@ -1,96 +1,96 @@
 {
-  "total_records": 345,
+  "total_records": 443,
   "by_source_type": {
-    "job_ad": 299,
+    "job_ad": 397,
     "programme": 46
   },
   "coverage": {
     "explicit_skills": 1.0,
     "implicit_skills": 1.0,
     "embedding": 1.0,
-    "extended_description": 0.1333,
+    "extended_description": 0.1038,
     "language_supported": 1.0
   },
   "top_skills_overall": [
     [
       "computer technology",
-      252
+      306
     ],
     [
       "English",
-      205
+      247
     ],
     [
       "communication",
-      157
+      208
     ],
     [
       "think creatively",
-      148
+      195
     ],
     [
       "SQL",
-      121
-    ],
-    [
-      "think analytically",
-      110
-    ],
-    [
-      "computer science",
-      107
-    ],
-    [
-      "manage time",
-      104
+      155
     ],
     [
       "Lithuanian",
-      103
-    ],
-    [
-      "plan",
-      95
-    ],
-    [
-      "assume responsibility",
-      84
-    ],
-    [
-      "cyber security",
-      82
-    ],
-    [
-      "troubleshoot",
-      79
-    ],
-    [
-      "make decisions",
-      77
-    ],
-    [
-      "lead others",
-      77
-    ],
-    [
-      "solve problems",
-      76
-    ],
-    [
-      "work in teams",
-      73
-    ],
-    [
-      "work independently",
-      73
-    ],
-    [
-      "business processes",
-      69
+      141
     ],
     [
       "ICT project management methodologies",
-      69
+      132
+    ],
+    [
+      "computer science",
+      131
+    ],
+    [
+      "lead others",
+      129
+    ],
+    [
+      "think analytically",
+      127
+    ],
+    [
+      "plan",
+      125
+    ],
+    [
+      "Python (computer programming)",
+      121
+    ],
+    [
+      "troubleshoot",
+      118
+    ],
+    [
+      "assume responsibility",
+      116
+    ],
+    [
+      "manage time",
+      112
+    ],
+    [
+      "work independently",
+      100
+    ],
+    [
+      "make decisions",
+      93
+    ],
+    [
+      "computer programming",
+      93
+    ],
+    [
+      "DevOps",
+      89
+    ],
+    [
+      "cyber security",
+      87
     ]
   ],
   "top_skills_programme": [
@@ -178,99 +178,99 @@
   "top_skills_job_ad": [
     [
       "computer technology",
-      215
+      269
     ],
     [
       "English",
-      180
+      222
     ],
     [
       "communication",
-      119
+      170
     ],
     [
       "think creatively",
-      108
+      155
     ],
     [
       "SQL",
-      100
-    ],
-    [
-      "think analytically",
-      83
-    ],
-    [
-      "manage time",
-      83
-    ],
-    [
-      "assume responsibility",
-      81
-    ],
-    [
-      "troubleshoot",
-      79
-    ],
-    [
-      "Lithuanian",
-      79
-    ],
-    [
-      "plan",
-      73
-    ],
-    [
-      "lead others",
-      68
-    ],
-    [
-      "computer science",
-      67
+      134
     ],
     [
       "ICT project management methodologies",
-      66
+      129
     ],
     [
-      "work in teams",
-      62
+      "lead others",
+      120
     ],
     [
-      "cyber security",
-      62
-    ],
-    [
-      "business processes",
-      57
-    ],
-    [
-      "work independently",
-      56
+      "troubleshoot",
+      118
     ],
     [
       "Python (computer programming)",
-      52
+      117
     ],
     [
-      "accounting",
-      52
+      "Lithuanian",
+      117
+    ],
+    [
+      "assume responsibility",
+      113
+    ],
+    [
+      "plan",
+      103
+    ],
+    [
+      "think analytically",
+      100
+    ],
+    [
+      "manage time",
+      91
+    ],
+    [
+      "computer science",
+      91
+    ],
+    [
+      "DevOps",
+      88
+    ],
+    [
+      "work independently",
+      83
+    ],
+    [
+      "tools for software configuration management",
+      82
+    ],
+    [
+      "perform cleaning duties",
+      80
+    ],
+    [
+      "make decisions",
+      68
     ]
   ],
   "skills_per_record": {
-    "mean": 0.0,
-    "median": 0.0,
-    "zero_skill_records": 345
+    "mean": 20.15,
+    "median": 14.0,
+    "zero_skill_records": 2
   },
   "text_length": {
-    "mean": 3068.1,
-    "median": 2525.0,
-    "p10": 1357.8,
-    "p90": 5774.2,
+    "mean": 3269.0,
+    "median": 2843.0,
+    "p10": 1466.4,
+    "p90": 5760.4,
     "min": 32,
     "max": 9634
   },
   "language_distribution": {
-    "en": 345
+    "en": 443
   }
 }
