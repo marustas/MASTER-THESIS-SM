@@ -1,0 +1,78 @@
+{
+  "models": {
+    "all-MiniLM-L6-v2": {
+      "dim": 384,
+      "params": "22M",
+      "sts_spearman": 0.788
+    },
+    "all-mpnet-base-v2": {
+      "dim": 768,
+      "params": "109M",
+      "sts_spearman": 0.838
+    }
+  },
+  "semantic": {
+    "all-MiniLM-L6-v2": {
+      "cosine_mean": 0.344298,
+      "cosine_std": 0.103196,
+      "cosine_median": 0.348325,
+      "cosine_max": 0.684061,
+      "cosine_min": -0.035175,
+      "cosine_p90": 0.472839,
+      "cosine_p10": 0.214691,
+      "cosine_iqr": 0.130432,
+      "cosine_cov": 0.2997
+    },
+    "all-mpnet-base-v2": {
+      "cosine_mean": 0.425838,
+      "cosine_std": 0.088314,
+      "cosine_median": 0.423418,
+      "cosine_max": 0.742293,
+      "cosine_min": 0.106013,
+      "cosine_p90": 0.543405,
+      "cosine_p10": 0.314281,
+      "cosine_iqr": 0.118994,
+      "cosine_cov": 0.2074
+    }
+  },
+  "hybrid": {
+    "all-MiniLM-L6-v2": {
+      "hybrid_mean": 0.163142,
+      "hybrid_std": 0.085438,
+      "hybrid_max": 0.635912,
+      "hybrid_cov": 0.5237,
+      "top1_diversity": 0.8913,
+      "unique_top1": 41,
+      "n_programmes": 46,
+      "top5_gt5": 3,
+      "top5_max_freq": 7,
+      "top1_mean": 0.38585
+    },
+    "all-mpnet-base-v2": {
+      "hybrid_mean": 0.182015,
+      "hybrid_std": 0.095246,
+      "hybrid_max": 0.723645,
+      "hybrid_cov": 0.5233,
+      "top1_diversity": 0.8478,
+      "unique_top1": 39,
+      "n_programmes": 46,
+      "top5_gt5": 7,
+      "top5_max_freq": 8,
+      "top1_mean": 0.420775
+    }
+  },
+  "cross_model_agreement": {
+    "semantic_top1": {
+      "top1_agreement": 1,
+      "top1_agreement_rate": 0.0217,
+      "n_programmes": 46
+    },
+    "hybrid_top1": {
+      "top1_agreement": 1,
+      "top1_agreement_rate": 0.0217,
+      "n_programmes": 46
+    },
+    "spearman_semantic_top20": 0.0461,
+    "spearman_hybrid_top20": 0.2242
+  }
+}

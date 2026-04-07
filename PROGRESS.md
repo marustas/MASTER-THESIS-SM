@@ -285,15 +285,22 @@ Not applied (no improvement):
 
 ---
 
-## Step 25 — Larger Embedding Model [ ]
-Replace `all-MiniLM-L6-v2` (384-dim, 22M params) with `all-mpnet-base-v2` (768-dim, 109M params).
-Re-generate embeddings for all programmes and job ads.
-Re-run semantic + hybrid alignment and compare cosine score distributions, Spearman correlations, and IR metrics against the MiniLM baseline.
+## Step 25 — Larger Embedding Model [x]
+Compared `all-MiniLM-L6-v2` (384-dim, 22M params) against `all-mpnet-base-v2` (768-dim, 109M params).
+Re-generated embeddings for all 46 programmes and 390 job ads with MPNet.
+Re-ran semantic + hybrid alignment and compared against MiniLM baseline.
 
-**Rationale:** `all-MiniLM-L6-v2` is optimised for speed over accuracy. On the STS benchmark it scores 0.788 Spearman, while `all-mpnet-base-v2` scores 0.838 — a 5-point gap. For a thesis with only 46×299 pairs, inference speed is irrelevant but embedding quality directly affects semantic alignment accuracy. A stronger model should produce more discriminative cosine scores (current mean=0.366, max=0.684), separating truly relevant matches from noise.
+**Result — MiniLM retained.** MPNet's +5-point STS benchmark advantage did not translate to better alignment:
+- Semantic CoV: 0.300 (MiniLM) vs 0.207 (MPNet) — MiniLM scores are more discriminative
+- Hybrid top-1 diversity: 41/46 (MiniLM) vs 39/46 (MPNet) — MiniLM produces more diverse matches
+- Top-5 generalists: 3 (MiniLM) vs 7 (MPNet) — MPNet reintroduces generalist dominance
+- Cross-model top-1 agreement: 1/46 (2%) — almost entirely different rankings
+- Cross-model Spearman (top-20): 0.05 (semantic), 0.22 (hybrid) — near-random overlap
 
-**Output:** `data/processed/*/embeddings_mpnet.parquet`, `experiments/results/exp2_semantic_mpnet/`
-**Module:** `src/embeddings/generator.py` (parameterised model name)
+MiniLM's wider cosine score spread gives the hybrid formula more signal to differentiate matches,
+which matters more than raw embedding quality on a small 46×390 corpus.
+
+**Output:** `experiments/results/evaluation/embedding_comparison.json`
 
 ---
 
