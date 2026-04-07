@@ -21,7 +21,7 @@ Two-stage pipeline that balances recall with transparency:
       candidate set to ensure they contribute equally regardless of their
       raw scale.
 
-      α (``alpha``) defaults to 0.5.  Varying α between 0 and 1 gives a
+      α (``alpha``) defaults to 0.6.  Varying α between 0 and 1 gives a
       continuum from fully symbolic to fully semantic.
 
 Output  (experiments/results/exp3_hybrid/):
@@ -59,8 +59,8 @@ RESULTS_DIR = DATA_DIR.parent / "experiments" / "results"
 def align_hybrid(
     df: pd.DataFrame,
     semantic_top_n: int = 50,
-    alpha: float = 0.5,
-    ipf_top_k: int = 10,
+    alpha: float = 0.6,
+    ipf_top_k: int = 20,
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -210,7 +210,7 @@ def run_hybrid_alignment(
     dataset_path: Path = DATASET_PATH,
     output_dir: Path = RESULTS_DIR / "exp3_hybrid",
     semantic_top_n: int = 50,
-    alpha: float = 0.5,
+    alpha: float = 0.6,
 ) -> None:
     """Load dataset, run hybrid alignment, persist results."""
     logger.info(f"Loading dataset from {dataset_path}…")
