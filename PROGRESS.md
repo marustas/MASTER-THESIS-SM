@@ -262,26 +262,26 @@ Re-run symbolic + hybrid alignment and compare Jaccard/overlap distributions wit
 
 ---
 
-## Step 24 — Hybrid Formula Tuning [ ]
-Systematic comparison of hybrid scoring formula variants to improve ranking stability and match quality.
+## Step 24 — Hybrid Formula Tuning [x]
+Systematic comparison of hybrid scoring formula variants across 5 aspects (α sweep 0.0–1.0, step=0.05):
 
-Variants tested:
-1. **Baseline** — current formula: `α·minmax(cos) + (1-α)·minmax(recall) × IPF`
-2. **Rank normalisation** — replace per-programme min-max with rank-based normalisation (`1 - rank/N`)
-3. **Agreement boost** — add term rewarding agreement between semantic and symbolic signals: `(1 - |norm(cos) - norm(recall)|)`
-4. **Rank + agreement** — combine both changes
+1. **Normalisation** — minmax vs rank-based. Min-max wins (diversity 0.89 vs 0.85).
+2. **Agreement boost** (β=0.0–0.3) — hurts diversity and increases generalists. Discarded.
+3. **Combination function** — linear vs geometric vs harmonic. Linear wins (0.89 vs 0.83/0.87). Discarded.
+4. **IPF parameters** — swept ipf_top_k ∈ {0,5,10,15,20}, ipf_floor ∈ {0.1,0.3,0.5}. **k=20, floor=0.3 applied** (same diversity, generalists 6→3, max_freq 11→7).
+5. **Candidate pool** — swept semantic_top_n ∈ {20,30,50,75,100}. top_n=50 kept (sufficient).
 
-Evaluation metrics per variant:
-- Top-1 diversity (unique jobs / programmes)
-- Top-5 Kendall tau stability (bootstrap 80% resample)
-- Score CoV and discriminability
-- Cross-strategy Spearman correlations
-- Alpha sensitivity (sweep 0.0–1.0 at step=0.05)
+Applied changes:
+- α: 0.50 → **0.60** (more weight to semantic signal)
+- IPF top_k: 10 → **20** (wider generalist penalty window)
 
-**Rationale:** Min-max normalisation is sensitive to outliers within each programme's candidate set. Rank normalisation is more robust. The agreement boost was previously rejected (Pearson=-0.03 on old data), but the auxiliary corpus changed the implicit skill landscape — worth re-evaluating.
+Not applied (no improvement):
+- Rank normalisation, agreement boost, geometric/harmonic combination, semantic_top_n change, IPF floor change
+
+**Result:** Top-1 diversity 35/46 (0.76) → 41/46 (0.89). Top-5 generalists: 5→3. Max top-5 freq: 13→7.
 
 **Output:** `experiments/results/sensitivity/formula_variants.json`
-**Module:** `src/evaluation/formula_tuning.py` (new)
+**Module:** `src/evaluation/formula_tuning.py` (new), `src/alignment/hybrid.py` (updated defaults)
 
 ---
 
