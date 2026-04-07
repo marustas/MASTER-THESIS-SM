@@ -78,13 +78,11 @@ def export() -> None:
             "job_url",
             "hybrid_score",
             "cosine_score",
-            "weighted_jaccard",
             "top_skill_gaps",
         ]
     ].rename(
         columns={
             "cosine_score": "semantic_score",
-            "weighted_jaccard": "symbolic_score",
         }
     )
 
