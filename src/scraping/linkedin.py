@@ -62,6 +62,7 @@ LINKEDIN_INDUSTRIES: list[IndustryFilters] = [
     IndustryFilters.SOFTWARE_DEVELOPMENT,
     IndustryFilters.TECHNOLOGY_INTERNET,
     IndustryFilters.IT_SERVICES,
+    IndustryFilters.COMPUTER_GAMES
 ]
 
 LINKEDIN_LIMIT_PER_QUERY: int = 50

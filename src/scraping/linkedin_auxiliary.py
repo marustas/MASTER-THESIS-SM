@@ -71,6 +71,7 @@ AUXILIARY_INDUSTRIES: list[IndustryFilters] = [
     IndustryFilters.SOFTWARE_DEVELOPMENT,
     IndustryFilters.TECHNOLOGY_INTERNET,
     IndustryFilters.IT_SERVICES,
+    IndustryFilters.COMPUTER_GAMES
 ]
 
 # Keep per-query limit low to avoid timeouts; we generate
