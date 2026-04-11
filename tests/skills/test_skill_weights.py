@@ -19,6 +19,7 @@ from src.skills.skill_weights import (
     REUSE_TIER_WEIGHTS,
     build_weighted_skills,
     compute_corpus_idf,
+    compute_median_idf,
     tier_weight,
 )
 
@@ -77,6 +78,24 @@ class TestComputeCorpusIdf:
         corpus = [["uri:common", "uri:rare"]] + [["uri:common"]] * 9
         result = compute_corpus_idf(corpus)
         assert result["uri:rare"] > result["uri:common"]
+
+
+# ── compute_median_idf ──────────────────────────────────────────────────────
+
+class TestComputeMedianIdf:
+    def test_empty_returns_zero(self):
+        assert compute_median_idf({}) == 0.0
+
+    def test_single_value(self):
+        assert compute_median_idf({"uri:a": 2.5}) == pytest.approx(2.5)
+
+    def test_odd_count(self):
+        idfs = {"a": 1.0, "b": 3.0, "c": 5.0}
+        assert compute_median_idf(idfs) == pytest.approx(3.0)
+
+    def test_even_count(self):
+        idfs = {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0}
+        assert compute_median_idf(idfs) == pytest.approx(2.5)
 
 
 # ── build_weighted_skills ────────────────────────────────────────────────────
