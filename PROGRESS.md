@@ -285,6 +285,19 @@ Not applied (no improvement):
 
 ---
 
+## Step 26 — Match Quality Refinement [x]
+Refine `programme_recall` before normalisation with three multiplicative terms:
+1. **Specificity ratio** — `log(1 + mean_idf_matched) / log(1 + mean_idf_all_job)`, clamped [0.5, 2.0]
+2. **Generic penalty** — `1 - γ·generic_frac` where generic_frac = IDF weight of below-median matched URIs
+3. **Coherence boost** — `1 + δ·mean_pairwise_cosine` over matched skill embeddings (≥3 skills)
+
+Backward compatible: γ=0, δ=0 → quality_multiplier=1.0 → identical to previous formula.
+
+**Output:** integrated into `src/alignment/hybrid.py`
+**Module:** `src/alignment/hybrid.py` (new `compute_match_quality()`), `src/skills/skill_weights.py` (new `compute_median_idf()`)
+
+---
+
 ## Step 25 — Larger Embedding Model [x]
 Compared `all-MiniLM-L6-v2` (384-dim, 22M params) against `all-mpnet-base-v2` (768-dim, 109M params).
 Re-generated embeddings for all 46 programmes and 390 job ads with MPNet.
