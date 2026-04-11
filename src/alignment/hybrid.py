@@ -207,27 +207,24 @@ def align_hybrid(
         uri_idfs = compute_corpus_idf(all_uri_lists)
         median_idf = compute_median_idf(uri_idfs)
 
-        # Build URI sets per row (index → set of URIs)
-        prog_rows = df[df["source_type"] == "programme"].reset_index(drop=True)
-        job_rows = df[df["source_type"] == "job_ad"].reset_index(drop=True)
-
+        # Build URI sets per row — use original df index as key because
+        # align_semantic uses df.reset_index(drop=False) and stores the
+        # original index as programme_id / job_id.
         prog_uri_map: dict[int, list[str]] = {}
-        for idx, row in prog_rows.iterrows():
-            pid = idx  # programme_id is positional index in align_semantic
+        for idx, row in df[df["source_type"] == "programme"].iterrows():
             details = row.get("skill_details", [])
             if not isinstance(details, (list, np.ndarray)):
                 details = []
-            prog_uri_map[pid] = [
+            prog_uri_map[idx] = [
                 s.get("esco_uri", "") for s in details if s.get("esco_uri")
             ]
 
         job_uri_map: dict[int, list[str]] = {}
-        for idx, row in job_rows.iterrows():
-            jid = idx  # job_id is positional index
+        for idx, row in df[df["source_type"] == "job_ad"].iterrows():
             details = row.get("skill_details", [])
             if not isinstance(details, (list, np.ndarray)):
                 details = []
-            job_uri_map[jid] = [
+            job_uri_map[idx] = [
                 s.get("esco_uri", "") for s in details if s.get("esco_uri")
             ]
 
