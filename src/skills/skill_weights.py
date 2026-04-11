@@ -98,6 +98,17 @@ def compute_corpus_idf(
     }
 
 
+def compute_median_idf(uri_idfs: dict[str, float]) -> float:
+    """Return the median IDF value across all URIs.  Returns 0.0 if empty."""
+    if not uri_idfs:
+        return 0.0
+    vals = sorted(uri_idfs.values())
+    n = len(vals)
+    if n % 2 == 1:
+        return vals[n // 2]
+    return (vals[n // 2 - 1] + vals[n // 2]) / 2.0
+
+
 # ── Combined weight builder ──────────────────────────────────────────────────
 
 def build_weighted_skills(
