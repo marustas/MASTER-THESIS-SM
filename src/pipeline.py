@@ -71,7 +71,7 @@ def _step_done(step: int) -> bool:
             return False
         schema = pq.read_schema(DATASET_PATH)
         return "cluster_label" in schema.names
-    return _SENTINEL[step].exists()
+    return step != 2 and _SENTINEL[step].exists()
 
 
 # ── Step runners ───────────────────────────────────────────────────────────────

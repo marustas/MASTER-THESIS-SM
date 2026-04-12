@@ -10,8 +10,9 @@ For each posting the following fields are extracted:
 Temporal filter: postings not older than MAX_POSTING_AGE_DAYS days.
 
 Output:
-  data/raw/job_ads/cvbankas_jobs.json
-  data/raw/job_ads/all_jobs.json
+    data/raw/job_ads/cvbankas_jobs.json
+    data/raw/job_ads/linkedin_jobs.json
+    data/raw/job_ads/all_jobs.json
 """
 
 from __future__ import annotations
@@ -221,9 +222,23 @@ async def run(output_dir: Path = RAW_JOB_ADS_DIR) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     async with CVbankasJobScraper() as scraper:
-        jobs = await scraper.scrape_all()
-    logger.info(f"CVbankas total: {len(jobs)} jobs")
-    _save(jobs, output_dir / "cvbankas_jobs.json")
+        jobs_new = await scraper.scrape_all()
+
+    cvbankas_path = output_dir / "cvbankas_jobs.json"
+    jobs_existing = _load_jobs(cvbankas_path)
+    jobs = _deduplicate_by_identity([*jobs_existing, *jobs_new])
+    logger.info(
+        f"CVbankas mined {len(jobs_new)} jobs; merged with existing {len(jobs_existing)} "
+        f"-> {len(jobs)} total"
+    )
+    _save(jobs, cvbankas_path)
+
+    try:
+        from src.scraping.linkedin import scrape_linkedin
+
+        scrape_linkedin(output_path=output_dir / "linkedin_jobs.json")
+    except RuntimeError as exc:
+        logger.info(f"LinkedIn scrape skipped: {exc}")
 
     _merge_all_jobs(output_dir)
 
@@ -242,20 +257,16 @@ def _is_non_it(job: JobAd) -> bool:
 
 
 def _merge_all_jobs(output_dir: Path) -> None:
-    """Merge CVbankas + LinkedIn jobs into all_jobs.json, deduplicating by title."""
+    """Merge CVbankas + LinkedIn jobs into all_jobs.json without title collapse."""
     import json as _json
 
     all_jobs: list[JobAd] = []
 
     cvbankas_path = output_dir / "cvbankas_jobs.json"
-    if cvbankas_path.exists():
-        with open(cvbankas_path, encoding="utf-8") as f:
-            all_jobs.extend(JobAd(**j) for j in _json.load(f))
+    all_jobs.extend(_load_jobs(cvbankas_path))
 
     linkedin_path = output_dir / "linkedin_jobs.json"
-    if linkedin_path.exists():
-        with open(linkedin_path, encoding="utf-8") as f:
-            all_jobs.extend(JobAd(**j) for j in _json.load(f))
+    all_jobs.extend(_load_jobs(linkedin_path))
 
     # Filter non-IT jobs
     before = len(all_jobs)
@@ -264,14 +275,9 @@ def _merge_all_jobs(output_dir: Path) -> None:
     if removed:
         logger.info(f"Removed {removed} non-IT jobs by title filter")
 
-    # Deduplicate by normalised title
-    seen: set[str] = set()
-    unique: list[JobAd] = []
-    for job in all_jobs:
-        key = job.job_title.strip().lower()
-        if key not in seen:
-            seen.add(key)
-            unique.append(job)
+    # Deduplicate only exact same posting identities.
+    # Title-only dedup removes many legitimate jobs (same title, different company/post).
+    unique = _deduplicate_by_identity(all_jobs)
 
     logger.info(
         f"Merged {before} total jobs → {len(unique)} unique "
@@ -284,6 +290,32 @@ def _save(jobs: list[JobAd], path: Path) -> None:
     with open(path, "w", encoding="utf-8") as f:
         json.dump([j.model_dump(mode="json") for j in jobs], f, ensure_ascii=False, indent=2)
     logger.info(f"Saved {len(jobs)} jobs → {path}")
+
+
+def _load_jobs(path: Path) -> list[JobAd]:
+    if not path.exists():
+        return []
+    with open(path, encoding="utf-8") as f:
+        return [JobAd(**j) for j in json.load(f)]
+
+
+def _deduplicate_by_identity(jobs: list[JobAd]) -> list[JobAd]:
+    seen: set[str] = set()
+    unique: list[JobAd] = []
+    for job in jobs:
+        key = (job.url or "").strip().lower()
+        if not key:
+            key = "|".join([
+                (job.source or "").strip().lower(),
+                (job.job_title or "").strip().lower(),
+                (job.location or "").strip().lower(),
+                (job.posting_date or "").strip().lower(),
+            ])
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(job)
+    return unique
 
 
 if __name__ == "__main__":

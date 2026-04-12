@@ -23,7 +23,7 @@ from pathlib import Path
 from loguru import logger
 
 from src.scraping.config import RAW_JOB_ADS_DIR
-from src.scraping.job_ads import _extract_skills_from_text
+from src.scraping.job_ads import _deduplicate_by_identity, _extract_skills_from_text, _load_jobs
 from src.scraping.models import JobAd
 
 from linkedin_jobs_scraper import LinkedinScraper
@@ -169,16 +169,12 @@ def scrape_auxiliary_linkedin(
     )
     scraper.run(queries)
 
-    # Deduplicate by title (lowercase)
-    unique: list[JobAd] = []
-    seen_titles: set[str] = set()
-    for job in collected:
-        key = job.job_title.strip().lower()
-        if key and key not in seen_titles:
-            seen_titles.add(key)
-            unique.append(job)
-
-    logger.info(f"After dedup: {len(unique)} unique auxiliary jobs (from {len(collected)} total)")
+    existing = _load_jobs(output_path)
+    unique = _deduplicate_by_identity([*existing, *collected])
+    logger.info(
+        f"Collected {len(collected)} auxiliary LinkedIn jobs; merged with existing {len(existing)} "
+        f"-> {len(unique)} total"
+    )
 
     # Persist
     output_path.parent.mkdir(parents=True, exist_ok=True)
