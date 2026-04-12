@@ -130,7 +130,7 @@ def align_hybrid(
     df: pd.DataFrame,
     semantic_top_n: int = 50,
     alpha: float = 0.6,
-    ipf_top_k: int = 20,
+    ipf_top_k: int = 30,
     gamma: float = 0.3,
     delta: float = 0.2,
     min_coherence_skills: int = 3,
@@ -281,7 +281,7 @@ def align_hybrid(
         # IPF = log(1 + N_prog / count) — smoothed, min-max normalised to [floor, 1]
         # The floor prevents generalist jobs from being obliterated — they
         # remain available for niche programmes that lack domain-specific jobs.
-        ipf_floor = 0.3
+        ipf_floor = 0.1
         merged["_ipf"] = np.log1p(n_prog / merged["_prog_count"])
         ipf_lo, ipf_hi = merged["_ipf"].min(), merged["_ipf"].max()
         if ipf_hi > ipf_lo:
