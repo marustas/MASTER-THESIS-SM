@@ -5,20 +5,20 @@
     "gamma": 0.3,
     "delta": 0.2
   },
-  "n_programmes": 46,
-  "n_jobs_total": 195,
-  "n_candidate_pairs": 2300,
+  "n_programmes": 47,
+  "n_jobs_total": 219,
+  "n_candidate_pairs": 2350,
   "hybrid_score": {
-    "mean": 0.08878949945309056,
-    "median": 0.0679608002413497,
-    "max": 0.5735379154827371
+    "mean": 0.09269914859142901,
+    "median": 0.06875065932462657,
+    "max": 0.6401043027639389
   },
   "cosine_score": {
-    "mean": 0.5046379566192627,
-    "median": 0.502703845500946
+    "mean": 0.4918285012245178,
+    "median": 0.4882727265357971
   },
   "programme_recall": {
-    "mean": 0.15580226920925236,
-    "median": 0.14258291839771947
+    "mean": 0.1417245868603329,
+    "median": 0.13197153395229733
   }
 }

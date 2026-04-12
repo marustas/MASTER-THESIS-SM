@@ -1,44 +1,44 @@
 {
-  "total_records": 566,
+  "total_records": 567,
   "by_source_type": {
     "job_ad": 520,
-    "programme": 46
+    "programme": 47
   },
   "coverage": {
     "explicit_skills": 1.0,
     "implicit_skills": 1.0,
     "embedding": 1.0,
-    "extended_description": 0.0813,
+    "extended_description": 0.0829,
     "language_supported": 1.0
   },
   "top_skills_overall": [
     [
       "computer technology",
-      393
+      394
     ],
     [
       "English",
-      324
+      325
     ],
     [
       "communication",
-      267
+      268
     ],
     [
       "think creatively",
-      232
+      233
     ],
     [
       "SQL",
-      226
+      216
     ],
     [
       "Lithuanian",
-      215
+      214
     ],
     [
       "troubleshoot",
-      189
+      188
     ],
     [
       "ICT project management methodologies",
@@ -46,15 +46,11 @@
     ],
     [
       "computer science",
-      185
+      186
     ],
     [
       "plan",
       185
-    ],
-    [
-      "think analytically",
-      183
     ],
     [
       "assume responsibility",
@@ -62,7 +58,11 @@
     ],
     [
       "lead others",
-      181
+      179
+    ],
+    [
+      "think analytically",
+      167
     ],
     [
       "Python (computer programming)",
@@ -70,15 +70,15 @@
     ],
     [
       "work independently",
-      154
-    ],
-    [
-      "manage time",
-      150
+      155
     ],
     [
       "make decisions",
-      140
+      139
+    ],
+    [
+      "manage time",
+      139
     ],
     [
       "DevOps",
@@ -89,90 +89,90 @@
       134
     ],
     [
-      "computer programming",
-      120
+      "database",
+      119
     ]
   ],
   "top_skills_programme": [
     [
       "computer science",
-      40
+      41
     ],
     [
       "think creatively",
-      40
+      41
     ],
     [
       "communication",
-      38
+      39
     ],
     [
       "computer technology",
-      37
+      38
     ],
     [
       "mathematics",
-      36
+      37
     ],
     [
       "algorithms",
       34
     ],
     [
-      "business communication",
-      32
+      "statistics",
+      27
     ],
     [
-      "data engineering",
-      32
+      "computer graphics",
+      27
     ],
     [
-      "electronic and telecommunication equipment",
-      32
+      "English",
+      26
     ],
     [
-      "NoSQL",
-      32
-    ],
-    [
-      "semantics",
-      32
-    ],
-    [
-      "advise others",
-      32
-    ],
-    [
-      "French",
-      32
-    ],
-    [
-      "business analytics",
-      31
-    ],
-    [
-      "geographic information systems",
-      31
-    ],
-    [
-      "solve problems",
-      31
-    ],
-    [
-      "database management systems",
-      31
-    ],
-    [
-      "address an audience",
-      31
-    ],
-    [
-      "computer programming",
-      29
+      "data mining",
+      26
     ],
     [
       "Agile development",
-      29
+      26
+    ],
+    [
+      "advise others",
+      26
+    ],
+    [
+      "inspect data",
+      26
+    ],
+    [
+      "make decisions",
+      25
+    ],
+    [
+      "ergonomics",
+      24
+    ],
+    [
+      "augmented reality",
+      24
+    ],
+    [
+      "Lithuanian",
+      24
+    ],
+    [
+      "assessment processes",
+      24
+    ],
+    [
+      "computer equipment",
+      23
+    ],
+    [
+      "computer programming",
+      23
     ]
   ],
   "top_skills_job_ad": [
@@ -198,11 +198,11 @@
     ],
     [
       "Lithuanian",
-      191
+      190
     ],
     [
       "troubleshoot",
-      189
+      188
     ],
     [
       "ICT project management methodologies",
@@ -210,7 +210,7 @@
     ],
     [
       "assume responsibility",
-      180
+      179
     ],
     [
       "lead others",
@@ -226,7 +226,7 @@
     ],
     [
       "think analytically",
-      156
+      155
     ],
     [
       "computer science",
@@ -250,7 +250,7 @@
     ],
     [
       "make decisions",
-      115
+      114
     ],
     [
       "perform cleaning duties",
@@ -258,19 +258,19 @@
     ]
   ],
   "skills_per_record": {
-    "mean": 22.36,
+    "mean": 21.18,
     "median": 16.0,
-    "zero_skill_records": 1
+    "zero_skill_records": 2
   },
   "text_length": {
-    "mean": 3089.4,
-    "median": 2727.5,
-    "p10": 1450.0,
-    "p90": 5344.0,
-    "min": 32,
-    "max": 9634
+    "mean": 3066.5,
+    "median": 2732.0,
+    "p10": 1452.0,
+    "p90": 5323.0,
+    "min": 24,
+    "max": 9301
   },
   "language_distribution": {
-    "en": 566
+    "en": 567
   }
 }
