@@ -28,7 +28,7 @@ SUPPORTED_LANGUAGES: frozenset[str] = frozenset({"lt", "en"})
 
 # Language codes accepted for job ads (broader — EU postings may also be in
 # German, Latvian, etc.; we keep them but flag non-lt/en for transparency).
-ACCEPTED_JOB_LANGUAGES: frozenset[str] = frozenset({"lt", "en", "lv", "et", "pl", "de"})
+ACCEPTED_JOB_LANGUAGES: frozenset[str] = frozenset({"lt", "en", "lv", "et", "pl", "de", "fr", "nl", "sv", "es"})
 
 
 def detect_language(text: str) -> str | None:
