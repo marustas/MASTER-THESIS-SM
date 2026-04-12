@@ -31,7 +31,7 @@ def translate_lt_to_en(text: str) -> str:
 
     from deep_translator import GoogleTranslator
 
-    translator = GoogleTranslator(source="lt", target="en")
+    translator = GoogleTranslator(source="auto", target="en")
     chunks = _split_into_chunks(text, _CHUNK_SIZE)
     translated_parts: list[str] = []
 
