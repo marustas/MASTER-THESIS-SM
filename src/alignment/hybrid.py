@@ -52,6 +52,7 @@ from src.skills.skill_weights import compute_corpus_idf, compute_median_idf
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
 DATASET_PATH = DATA_DIR / "dataset" / "dataset.parquet"
+SKILL_EMBEDDINGS_PATH = DATA_DIR / "dataset" / "skill_embeddings.npz"
 RESULTS_DIR = DATA_DIR.parent / "experiments" / "results"
 
 
@@ -384,5 +385,16 @@ def run_hybrid_alignment(
     logger.info(f"Summary → {summary_path}")
 
 
+def _load_skill_embeddings(path: Path = SKILL_EMBEDDINGS_PATH) -> dict[str, np.ndarray] | None:
+    if not path.exists():
+        logger.warning(f"Skill embeddings not found at {path} — coherence boost disabled")
+        return None
+    data = np.load(path, allow_pickle=False)
+    uris = data["uris"]
+    embeddings = data["embeddings"]
+    logger.info(f"Loaded {len(uris)} skill embeddings from {path}")
+    return dict(zip(uris, embeddings))
+
+
 if __name__ == "__main__":
-    run_hybrid_alignment()
+    run_hybrid_alignment(skill_embeddings=_load_skill_embeddings())
