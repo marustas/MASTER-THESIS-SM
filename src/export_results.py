@@ -1,6 +1,9 @@
 """Export study programme → job ad alignment results to a human-readable CSV.
 
-Output: experiments/results/programme_job_mapping.csv
+Each export is saved as a timestamped file to track progress across runs:
+    experiments/results/programme_job_mapping_YYYYMMDD_HHMMSS.csv
+
+A symlink ``programme_job_mapping.csv`` always points to the latest export.
 
 Columns:
     rank                  – job rank within the programme (1 = best match)
@@ -10,9 +13,10 @@ Columns:
     job_url               – link to the original job posting
     hybrid_score          – combined alignment score (0–1, higher = better match)
     semantic_score        – embedding cosine similarity (0–1)
-    symbolic_score        – weighted Jaccard over ESCO skill sets (0–1)
     top_skill_gaps        – up to 3 ESCO skill labels the programme lacks vs. this job
 """
+
+from datetime import datetime
 
 import pandas as pd
 from pathlib import Path
@@ -20,7 +24,7 @@ from pathlib import Path
 RESULTS_DIR = Path("experiments/results")
 DATASET_PATH = Path("data/dataset/dataset.parquet")
 ESCO_PATH = Path("data/raw/esco/skills_en.csv")
-OUTPUT_PATH = RESULTS_DIR / "programme_job_mapping.csv"
+LATEST_LINK = RESULTS_DIR / "programme_job_mapping.csv"
 
 
 def _load_esco_labels(path: Path) -> dict[str, str]:
@@ -86,10 +90,21 @@ def export() -> None:
         }
     )
 
-    output = output.round({"hybrid_score": 4, "semantic_score": 4, "symbolic_score": 4})
-    output.to_csv(OUTPUT_PATH, index=False)
-    print(f"Exported {len(output):,} rows → {OUTPUT_PATH}")
+    output = output.round({"hybrid_score": 4, "semantic_score": 4})
+
+    # Save timestamped file
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamped_path = RESULTS_DIR / f"programme_job_mapping_{ts}.csv"
+    output.to_csv(timestamped_path, index=False)
+
+    # Update symlink to latest
+    if LATEST_LINK.is_symlink() or LATEST_LINK.exists():
+        LATEST_LINK.unlink()
+    LATEST_LINK.symlink_to(timestamped_path.name)
+
+    print(f"Exported {len(output):,} rows → {timestamped_path}")
     print(f"  {output['programme_name'].nunique()} programmes × {output['job_title'].nunique()} jobs")
+    print(f"  Latest: {LATEST_LINK} → {timestamped_path.name}")
 
 
 if __name__ == "__main__":
