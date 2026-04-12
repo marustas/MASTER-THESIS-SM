@@ -84,6 +84,17 @@ def remove_boilerplate_lines(text: str) -> str:
     return "\n".join(cleaned)
 
 
+_LAMA_BPO_MARKER = "Programmes granting same qualifications"
+
+
+def strip_lama_bpo_nav(text: str) -> str:
+    """Remove LAMA BPO navigation boilerplate that precedes programme content."""
+    idx = text.find(_LAMA_BPO_MARKER)
+    if idx < 0:
+        return text
+    return text[idx + len(_LAMA_BPO_MARKER):].lstrip()
+
+
 def remove_urls(text: str) -> str:
     """Strip bare URLs from text (keep surrounding context)."""
     return re.sub(r"https?://\S+", "", text)

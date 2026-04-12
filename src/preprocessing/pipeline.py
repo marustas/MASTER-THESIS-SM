@@ -117,6 +117,9 @@ def process_record(record: dict, *, text_fields: list[str], is_job_ad: bool = Fa
     raw_text = " ".join(p for p in raw_parts if p.strip())
 
     cleaned = clean(raw_text, strip_html_tags=True, min_length=30)
+    if cleaned is not None and not is_job_ad:
+        from src.preprocessing.text_cleaner import strip_lama_bpo_nav
+        cleaned = strip_lama_bpo_nav(cleaned)
     if cleaned is None:
         record["cleaned_text"] = None
         record["tokens"] = []
