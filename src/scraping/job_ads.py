@@ -226,7 +226,7 @@ async def run(output_dir: Path = RAW_JOB_ADS_DIR) -> None:
 
     cvbankas_path = output_dir / "cvbankas_jobs.json"
     jobs_existing = _load_jobs(cvbankas_path)
-    jobs = _deduplicate_by_identity([*jobs_existing, *jobs_new])
+    jobs = _deduplicate_by_identity([*jobs_new, *jobs_existing])
     logger.info(
         f"CVbankas mined {len(jobs_new)} jobs; merged with existing {len(jobs_existing)} "
         f"-> {len(jobs)} total"
