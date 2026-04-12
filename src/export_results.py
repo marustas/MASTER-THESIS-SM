@@ -26,7 +26,8 @@ from src.scraping.config import DATA_DIR
 RESULTS_DIR = DATA_DIR.parent / "experiments" / "results"
 DATASET_PATH = DATA_DIR / "dataset" / "dataset.parquet"
 ESCO_PATH = DATA_DIR / "raw" / "esco" / "skills_en.csv"
-LATEST_LINK = RESULTS_DIR / "programme_job_mapping.csv"
+EXPORTS_DIR = RESULTS_DIR / "exports"
+LATEST_LINK = EXPORTS_DIR / "programme_job_mapping.csv"
 
 
 def _load_esco_labels(path: Path) -> dict[str, str]:
@@ -63,6 +64,7 @@ def export() -> None:
         ["programme_id", "hybrid_score"], ascending=[True, False]
     )
     rankings["rank"] = rankings.groupby("programme_id").cumcount() + 1
+    rankings = rankings[rankings["rank"] <= 10]
 
     # Enrich with institution and job URL
     rankings["institution"] = rankings["programme_id"].map(programmes["institution"])
@@ -95,8 +97,9 @@ def export() -> None:
     output = output.round({"hybrid_score": 4, "semantic_score": 4})
 
     # Save timestamped file
+    EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    timestamped_path = RESULTS_DIR / f"programme_job_mapping_{ts}.csv"
+    timestamped_path = EXPORTS_DIR / f"programme_job_mapping_{ts}.csv"
     output.to_csv(timestamped_path, index=False)
 
     # Update symlink to latest
