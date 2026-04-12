@@ -17,13 +17,15 @@ Columns:
 """
 
 from datetime import datetime
-
-import pandas as pd
 from pathlib import Path
 
-RESULTS_DIR = Path("experiments/results")
-DATASET_PATH = Path("data/dataset/dataset.parquet")
-ESCO_PATH = Path("data/raw/esco/skills_en.csv")
+import pandas as pd
+
+from src.scraping.config import DATA_DIR
+
+RESULTS_DIR = DATA_DIR.parent / "experiments" / "results"
+DATASET_PATH = DATA_DIR / "dataset" / "dataset.parquet"
+ESCO_PATH = DATA_DIR / "raw" / "esco" / "skills_en.csv"
 LATEST_LINK = RESULTS_DIR / "programme_job_mapping.csv"
 
 
