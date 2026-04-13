@@ -218,6 +218,97 @@ class TestIPF:
         rankings = align_hybrid(df, semantic_top_n=5, ipf_top_k=3)
         assert (rankings["hybrid_score"] >= -1e-9).all()
 
+    def test_two_tier_strict_floor_lower_than_standard(self):
+        """Universal generalist (top-K of >50% progs) gets stricter penalty than moderate."""
+        rows = []
+        shared_emb = _emb(42, 8)
+        shared_skills = [_skill("esco:common")]
+        n_prog = 6
+        for i in range(n_prog):
+            rows.append({
+                "source_type": "programme",
+                "embedding": shared_emb,
+                "name": f"Prog{i}",
+                "skill_details": shared_skills,
+            })
+        # Universal generalist: matches all programmes
+        rows.append({
+            "source_type": "job_ad",
+            "embedding": shared_emb,
+            "job_title": "Universal",
+            "skill_details": shared_skills,
+        })
+        # Moderate generalist: only close to 2 programmes
+        rows.append({
+            "source_type": "job_ad",
+            "embedding": _emb(77, 8),
+            "job_title": "Moderate",
+            "skill_details": [_skill("esco:niche")],
+        })
+        df = pd.DataFrame(rows)
+        rankings = align_hybrid(
+            df, semantic_top_n=2, ipf_top_k=2,
+            ipf_floor=0.1, ipf_strict_floor=0.05, ipf_strict_threshold=0.5,
+        )
+        universal_scores = rankings[rankings["job_title"] == "Universal"]["hybrid_score"]
+        # Universal generalist should be penalised (scores suppressed)
+        assert (universal_scores <= 1.0 + 1e-6).all()
+        assert (universal_scores >= -1e-6).all()
+
+    def test_two_tier_stricter_than_single_tier(self):
+        """Two-tier IPF should penalise universal generalists more than single-tier."""
+        rows = []
+        shared_emb = _emb(42, 8)
+        shared_skills = [_skill("esco:common")]
+        n_prog = 6
+        for i in range(n_prog):
+            rows.append({
+                "source_type": "programme",
+                "embedding": shared_emb,
+                "name": f"Prog{i}",
+                "skill_details": shared_skills,
+            })
+        rows.append({
+            "source_type": "job_ad",
+            "embedding": shared_emb,
+            "job_title": "Universal",
+            "skill_details": shared_skills,
+        })
+        rows.append({
+            "source_type": "job_ad",
+            "embedding": _emb(99, 8),
+            "job_title": "Specialist",
+            "skill_details": [_skill("esco:niche")],
+        })
+        df = pd.DataFrame(rows)
+        # Two-tier: strict floor 0.05 for universals
+        two_tier = align_hybrid(
+            df, semantic_top_n=2, ipf_top_k=2,
+            ipf_floor=0.1, ipf_strict_floor=0.05, ipf_strict_threshold=0.5,
+        )
+        # Single-tier: both floors at 0.1 (equivalent to old behaviour)
+        single_tier = align_hybrid(
+            df, semantic_top_n=2, ipf_top_k=2,
+            ipf_floor=0.1, ipf_strict_floor=0.1, ipf_strict_threshold=0.5,
+        )
+        uni_two = two_tier[two_tier["job_title"] == "Universal"]["hybrid_score"].mean()
+        uni_single = single_tier[single_tier["job_title"] == "Universal"]["hybrid_score"].mean()
+        assert uni_two <= uni_single
+
+    def test_two_tier_backward_compat_same_floors(self):
+        """When ipf_strict_floor == ipf_floor, behaviour matches single-tier."""
+        df = _make_df(3, 8)
+        single = align_hybrid(
+            df, semantic_top_n=5, ipf_top_k=3,
+            ipf_floor=0.1, ipf_strict_floor=0.1,
+        )
+        # Same result regardless of threshold when floors are equal
+        same = align_hybrid(
+            df, semantic_top_n=5, ipf_top_k=3,
+            ipf_floor=0.1, ipf_strict_floor=0.1, ipf_strict_threshold=0.3,
+        )
+        pd.testing.assert_frame_equal(single, same)
+
 
 # ── run_hybrid_alignment ───────────────────────────────────────────────────────
 
