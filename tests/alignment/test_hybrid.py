@@ -103,8 +103,8 @@ class TestAlignHybrid:
         """Hybrid score = α·norm(cosine) + (1-α)·norm(recall), both min-max per programme."""
         df = _make_df(2, 5)
         alpha = 0.6
-        # Disable IPF to test the base formula in isolation
-        rankings = align_hybrid(df, semantic_top_n=5, alpha=alpha, ipf_top_k=0)
+        # Disable IPF and confidence dampening to test the base formula in isolation
+        rankings = align_hybrid(df, semantic_top_n=5, alpha=alpha, ipf_top_k=0, norm_confidence=False)
         for p_id in rankings["programme_id"].unique():
             grp = rankings[rankings["programme_id"] == p_id]
             cos = grp["cosine_score"]
@@ -129,7 +129,7 @@ class TestAlignHybrid:
 
     def test_alpha_one_hybrid_equals_normalised_cosine(self):
         df = _make_df(2, 4)
-        rankings = align_hybrid(df, semantic_top_n=4, alpha=1.0, ipf_top_k=0)
+        rankings = align_hybrid(df, semantic_top_n=4, alpha=1.0, ipf_top_k=0, norm_confidence=False)
         # With alpha=1, hybrid = norm(cosine); top per programme should be 1.0
         for p_id in rankings["programme_id"].unique():
             grp = rankings[rankings["programme_id"] == p_id]
@@ -138,7 +138,7 @@ class TestAlignHybrid:
 
     def test_alpha_zero_hybrid_equals_normalised_recall(self):
         df = _make_df(2, 4)
-        rankings = align_hybrid(df, semantic_top_n=4, alpha=0.0, ipf_top_k=0)
+        rankings = align_hybrid(df, semantic_top_n=4, alpha=0.0, ipf_top_k=0, norm_confidence=False)
         # With alpha=0, hybrid = norm(recall); top per programme should be 1.0
         for p_id in rankings["programme_id"].unique():
             grp = rankings[rankings["programme_id"] == p_id]
@@ -308,6 +308,65 @@ class TestIPF:
             ipf_floor=0.1, ipf_strict_floor=0.1, ipf_strict_threshold=0.3,
         )
         pd.testing.assert_frame_equal(single, same)
+
+
+# ── Confidence-aware normalisation ────────────────────────────────────────────
+
+class TestConfidenceNorm:
+    def test_disabled_matches_plain_minmax(self):
+        """norm_confidence=False should give same result as plain min-max."""
+        df = _make_df(2, 5)
+        plain = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, norm_confidence=False,
+                             gamma=0.0, delta=0.0)
+        # Run twice — deterministic
+        again = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, norm_confidence=False,
+                             gamma=0.0, delta=0.0)
+        pd.testing.assert_frame_equal(plain, again)
+
+    def test_dampens_uniformly_weak_programmes(self):
+        """Programmes where all candidates have similar scores should get lower normalised max."""
+        # Programme 0: all jobs have nearly identical embeddings → narrow cosine range
+        rows = []
+        base_emb = _emb(1, 8)
+        for i in range(2):
+            rows.append({
+                "source_type": "programme",
+                "embedding": _emb(i, 8),
+                "name": f"Prog{i}",
+                "skill_details": [_skill("esco:python")],
+            })
+        # Jobs with very similar embeddings
+        for i in range(6):
+            noise = np.array(base_emb) + np.random.default_rng(i).normal(0, 0.001, 8)
+            noise = noise / np.linalg.norm(noise)
+            rows.append({
+                "source_type": "job_ad",
+                "embedding": noise.tolist(),
+                "job_title": f"Job{i}",
+                "skill_details": [_skill("esco:python")],
+            })
+        df = pd.DataFrame(rows)
+        with_conf = align_hybrid(df, semantic_top_n=6, ipf_top_k=0, norm_confidence=True,
+                                 gamma=0.0, delta=0.0)
+        without_conf = align_hybrid(df, semantic_top_n=6, ipf_top_k=0, norm_confidence=False,
+                                    gamma=0.0, delta=0.0)
+        # With confidence, max hybrid_score per programme should be ≤ without
+        for p_id in with_conf["programme_id"].unique():
+            max_with = with_conf[with_conf["programme_id"] == p_id]["hybrid_score"].max()
+            max_without = without_conf[without_conf["programme_id"] == p_id]["hybrid_score"].max()
+            assert max_with <= max_without + 1e-6
+
+    def test_scores_non_negative(self):
+        df = _make_df(3, 8)
+        rankings = align_hybrid(df, semantic_top_n=5, norm_confidence=True)
+        assert (rankings["hybrid_score"] >= -1e-6).all()
+
+    def test_sort_order_preserved(self):
+        df = _make_df(3, 8)
+        rankings = align_hybrid(df, semantic_top_n=5, norm_confidence=True)
+        for p_id in rankings["programme_id"].unique():
+            scores = rankings[rankings["programme_id"] == p_id]["hybrid_score"].tolist()
+            assert scores == sorted(scores, reverse=True)
 
 
 # ── run_hybrid_alignment ───────────────────────────────────────────────────────
