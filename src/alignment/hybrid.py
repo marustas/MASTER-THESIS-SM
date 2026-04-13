@@ -132,6 +132,9 @@ def align_hybrid(
     semantic_top_n: int = 50,
     alpha: float = 0.6,
     ipf_top_k: int = 30,
+    ipf_floor: float = 0.1,
+    ipf_strict_floor: float = 0.05,
+    ipf_strict_threshold: float = 0.5,
     gamma: float = 0.3,
     delta: float = 0.2,
     min_coherence_skills: int = 3,
@@ -150,6 +153,11 @@ def align_hybrid(
     ipf_top_k      : top-K threshold for inverse programme frequency.
                      Jobs appearing in top-K for many programmes are
                      down-weighted.  Set to 0 to disable.
+    ipf_floor      : minimum IPF multiplier for moderately popular jobs.
+    ipf_strict_floor : minimum IPF multiplier for universal generalists
+                     (jobs in top-K of > ``ipf_strict_threshold`` programmes).
+    ipf_strict_threshold : fraction of programmes above which a job is
+                     considered a universal generalist (default 0.5 = 50%).
 
     Returns
     -------
@@ -262,7 +270,7 @@ def align_hybrid(
         alpha * merged["cosine_norm"] + (1.0 - alpha) * merged["recall_norm"]
     )
 
-    # ── Inverse programme frequency (generalist penalty) ─────────────────────
+    # ── Inverse programme frequency (two-tier generalist penalty) ────────────
     if ipf_top_k > 0:
         # Rank within each programme by initial hybrid score
         merged["_rank"] = merged.groupby("programme_id")["hybrid_score"].rank(
@@ -279,24 +287,32 @@ def align_hybrid(
         merged = merged.merge(job_prog_count, on="job_id", how="left")
         merged["_prog_count"] = merged["_prog_count"].fillna(1.0)
 
-        # IPF = log(1 + N_prog / count) — smoothed, min-max normalised to [floor, 1]
-        # The floor prevents generalist jobs from being obliterated — they
-        # remain available for niche programmes that lack domain-specific jobs.
-        ipf_floor = 0.1
+        # IPF = log(1 + N_prog / count) — smoothed, min-max normalised
+        # Two-tier floor: universal generalists (>50% of programmes) get
+        # ipf_strict_floor; moderately popular jobs get ipf_floor.
+        strict_cutoff = max(2, int(n_prog * ipf_strict_threshold))
         merged["_ipf"] = np.log1p(n_prog / merged["_prog_count"])
         ipf_lo, ipf_hi = merged["_ipf"].min(), merged["_ipf"].max()
         if ipf_hi > ipf_lo:
             raw_norm = (merged["_ipf"] - ipf_lo) / (ipf_hi - ipf_lo)
-            merged["_ipf_norm"] = ipf_floor + (1.0 - ipf_floor) * raw_norm
+            # Per-job floor: strict for universal generalists, standard otherwise
+            per_job_floor = np.where(
+                merged["_prog_count"] >= strict_cutoff,
+                ipf_strict_floor,
+                ipf_floor,
+            )
+            merged["_ipf_norm"] = per_job_floor + (1.0 - per_job_floor) * raw_norm
         else:
             merged["_ipf_norm"] = 1.0
 
         merged["hybrid_score"] = merged["hybrid_score"] * merged["_ipf_norm"]
 
-        n_penalised = (merged["_prog_count"] > 1).sum()
+        n_strict = int((merged["_prog_count"] >= strict_cutoff).any() and
+                       job_prog_count[job_prog_count >= strict_cutoff].count())
         logger.info(
             f"  IPF penalty (top-{ipf_top_k}): "
-            f"{int(job_prog_count[job_prog_count > 1].count())} generalist jobs penalised"
+            f"{int(job_prog_count[job_prog_count > 1].count())} generalist jobs penalised "
+            f"({n_strict} universal, floor={ipf_strict_floor})"
         )
         merged = merged.drop(columns=["_rank", "_prog_count", "_ipf", "_ipf_norm"])
 
@@ -355,6 +371,10 @@ def run_hybrid_alignment(
     output_dir: Path = RESULTS_DIR / "exp3_hybrid",
     semantic_top_n: int = 50,
     alpha: float = 0.6,
+    ipf_top_k: int = 30,
+    ipf_floor: float = 0.1,
+    ipf_strict_floor: float = 0.05,
+    ipf_strict_threshold: float = 0.5,
     gamma: float = 0.3,
     delta: float = 0.2,
     min_coherence_skills: int = 3,
@@ -368,6 +388,9 @@ def run_hybrid_alignment(
 
     rankings = align_hybrid(
         df, semantic_top_n=semantic_top_n, alpha=alpha,
+        ipf_top_k=ipf_top_k, ipf_floor=ipf_floor,
+        ipf_strict_floor=ipf_strict_floor,
+        ipf_strict_threshold=ipf_strict_threshold,
         gamma=gamma, delta=delta,
         min_coherence_skills=min_coherence_skills,
         skill_embeddings=skill_embeddings,
