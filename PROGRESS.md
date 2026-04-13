@@ -327,7 +327,7 @@ Description embeddings should produce meaningful pairwise cosine similarity betw
 
 ---
 
-## Step 28 — Two-Tier IPF [ ]
+## Step 28 — Two-Tier IPF [x]
 Replace single IPF floor with two-tier penalty:
 - Jobs appearing in top-K of >50% of programmes → strict floor (0.05)
 - Other popular jobs → standard floor (0.1)
@@ -338,7 +338,7 @@ Preserves fallback matches for niche programmes while harder-penalising universa
 
 ---
 
-## Step 29 — Confidence-Aware Normalisation [ ]
+## Step 29 — Confidence-Aware Normalisation [x]
 When all candidates for a programme have similar raw scores, min-max stretches small differences into full [0,1] range, making rankings fragile.
 Add dampening factor: if raw score range (max-min) is below a threshold, shrink the normalised range proportionally.
 Prevents noisy rankings for programmes with uniformly weak matches.
