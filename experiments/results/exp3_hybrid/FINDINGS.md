@@ -157,3 +157,129 @@ The hybrid redesign achieved three goals:
 3. **Signal independence** — hybrid now blends both semantic (ρ=0.46) and symbolic (ρ=0.21) without being dominated by either
 
 The auxiliary corpus contributed the implicit extraction enrichment that made programme_recall discriminative enough to break generalist dominance. Without it, the new formula had the right structure but insufficient signal variety (Milestone B: ρ≈0.02–0.05 with both strategies, indicating near-random rankings).
+
+---
+
+# Post-Milestone Changes (April 2026)
+
+Changes applied after the initial hybrid redesign (Milestones A–C). Current parameters: α=0.6, IPF top_k=30, floor=0.1, γ=0.3, δ=0.2. Corpus: 520 jobs (401 CVbankas + 119 LinkedIn), 47 programmes, 1567 auxiliary jobs.
+
+## 9. Corpus expansion & IPF re-tuning (Milestone D → E)
+
+### Corpus changes
+
+- Extended LinkedIn scraping: added COMPUTER_GAMES industry, additional languages
+- Auxiliary corpus grew from 617 → 1567 EU-wide jobs
+- Main corpus: 520 jobs (401 CVbankas + 119 LinkedIn), up from 390
+- IPF parameters updated in Step 24: α=0.5→0.6, ipf_top_k=10→20
+
+### Generalist resurgence
+
+The expanded corpus introduced "IT specialistas (-ė)" which dominated top-5 for 17 programmes. Top-1 diversity regressed from 41→34.
+
+Parameter sweep over α ∈ {0.4, 0.5, 0.6}, top_k ∈ {10, 15, 20, 30, 40}, floor ∈ {0.05, 0.1, 0.15, 0.2, 0.3} (75 configs). Winner: α=0.6, top_k=30, floor=0.1. Recovered diversity to 41/46.
+
+### IPF parameter change rationale
+
+- top_k 20→30: wider window catches more generalist jobs
+- floor 0.3→0.1: generalists penalised down to 10% instead of 30% of their score
+
+## 10. Match quality refinement (Step 26)
+
+Three multiplicative terms applied to `programme_recall` before normalisation:
+
+```
+refined_recall = recall × specificity_ratio × generic_penalty × coherence_boost
+```
+
+1. **Specificity ratio** — `log(1 + mean_idf_matched) / log(1 + mean_idf_all_job)`, clamped [0.5, 2.0]. Rewards matching rare skills.
+2. **Generic penalty** — `1 − γ·generic_frac` (γ=0.3). Penalises matches dominated by below-median IDF skills.
+3. **Coherence boost** — `1 + δ·mean_pairwise_cosine` (δ=0.2). Rewards coherent skill clusters.
+
+Backward compatible: γ=0, δ=0 → quality_multiplier=1.0.
+
+## 11. Coherence boost activation
+
+Generated ESCO skill label embeddings (465 URIs, all-MiniLM-L6-v2) and passed to `align_hybrid()`.
+
+| Metric | Value |
+|--------|-------|
+| Boost firing rate | 88% of pairs (≥3 matched skills) |
+| Boost range | 1.0–1.11 |
+| Top-1 changes | 1/46 |
+
+Low discriminative power — ESCO skill labels embed similarly regardless of domain (all short English phrases). The coherence term is architecturally sound but limited by the embedding space granularity of skill labels.
+
+## 12. Programme boilerplate removal
+
+LAMA BPO navigation text ("ABOUT AIKOSNEWSREGISTERS CURRENTLY SELECTED CAREER Study and Learning Programmes...") was present in all 46 programme `cleaned_text` fields. Stripped at the "Programmes granting same qualifications" marker in `text_cleaner.py`.
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Inter-programme embedding similarity | 0.7510 | 0.6180 |
+| Programme → CVbankas cosine | 0.3621 | 0.3356 |
+| Programme → LinkedIn cosine | 0.2929 | 0.2647 |
+
+### Score distribution impact
+
+| Tier | Before removal | After removal |
+|------|---------------|---------------|
+| Strong (>0.4) | 6 (13%) | 10 (21%) |
+| Moderate (0.25–0.4) | 27 (59%) | 18 (38%) |
+| Weak (0.15–0.25) | 7 (15%) | 16 (34%) |
+| Very weak (<0.15) | 6 (13%) | 3 (6%) |
+
+The boilerplate inflated cosine similarity uniformly, pushing mediocre matches into the "moderate" tier artificially. After removal, scores are more honest: good matches score higher, bad matches score lower. The distribution polarised but became more truthful.
+
+### Notable match improvements
+
+| Programme | Before | After |
+|-----------|--------|-------|
+| Computer games and animation | BI programuotojas | Gameplay Programmer |
+| Game Development | Game Designer | Gameplay Programmer |
+| Cyber Systems and Security | Generic specialist | SOC analitikas (threat hunting) |
+| Software Engineering (VU) | TV tower engineer | Linux sistemų administratorius |
+
+## 13. LinkedIn underrepresentation
+
+Despite comprising 23% of the dataset (119/520 jobs), LinkedIn jobs account for only 6% of top-10 matches. Root cause: LinkedIn jobs get 3.3 slots per programme's top-50 candidates vs expected 11.4 (proportional).
+
+Mean cosine to programmes: LinkedIn 0.265 vs CVbankas 0.336. This gap persists after boilerplate removal — it reflects text style differences (corporate/practical vs academic) rather than boilerplate bias.
+
+## 14. Current state (Milestone F)
+
+### Match quality tiers (top-1, N=47)
+
+| Tier | Count | % |
+|------|-------|---|
+| Strong (>0.4) | 10 | 21% |
+| Moderate (0.25–0.4) | 18 | 38% |
+| Weak (0.15–0.25) | 16 | 34% |
+| Very weak (<0.15) | 3 | 6% |
+
+### Diversity
+
+| Scope | Unique | Total | % |
+|-------|--------|-------|---|
+| Top-1 | 40 | 47 | 85% |
+| Top-5 | 123 | 235 | 52% |
+| Top-10 | 163 | 470 | 35% |
+
+### Weakly-matched programmes — two distinct causes
+
+**Cause 1: Corpus coverage gap.** Programmes in niche domains (bioinformatics, game dev, multimedia design, digital arts) with very few matching jobs in Lithuanian job boards. This reflects real labour market structure — Lithuania's IT sector is dominated by enterprise software, fintech, and cybersecurity. These programmes may be training for international or remote markets rather than local employers.
+
+**Cause 2: Generic programme descriptions.** Programmes with broad curricula that lack distinctive skill profiles. Their embeddings and skill sets are too generic to differentiate between job types, producing near-random matches with very low scores.
+
+Both are valid findings for curriculum alignment analysis, not algorithmic failures.
+
+### Evolution summary
+
+| Milestone | Unique top-1 | Max repeat |
+|-----------|-------------|------------|
+| A — Old hybrid (symmetric Jaccard) | 13/35 (37%) | 6× |
+| B — Asymmetric recall + IPF | 33/46 (72%) | 5× |
+| C — + Auxiliary corpus (617 jobs) | 35/46 (76%) | 3× |
+| D — + IDF weighting + formula tuning | 41/46 (89%) | 3× |
+| E — + Corpus expansion + IPF retune | 40/47 (85%) | 10× |
+| F — + Boilerplate fix + coherence boost | 40/47 (85%) | 10× |
