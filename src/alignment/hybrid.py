@@ -135,6 +135,7 @@ def align_hybrid(
     ipf_floor: float = 0.1,
     ipf_strict_floor: float = 0.05,
     ipf_strict_threshold: float = 0.5,
+    norm_confidence: bool = True,
     gamma: float = 0.3,
     delta: float = 0.2,
     min_coherence_skills: int = 3,
@@ -158,6 +159,9 @@ def align_hybrid(
                      (jobs in top-K of > ``ipf_strict_threshold`` programmes).
     ipf_strict_threshold : fraction of programmes above which a job is
                      considered a universal generalist (default 0.5 = 50%).
+    norm_confidence : if True, dampen min-max normalisation when the raw
+                     score range within a programme is small, preventing
+                     noisy rankings for uniformly weak matches.
 
     Returns
     -------
@@ -257,13 +261,38 @@ def align_hybrid(
 
         merged["programme_recall"] = merged["programme_recall"] * multipliers
 
-    # ── Per-programme min-max normalisation ────────────────────────────────────
+    # ── Per-programme min-max normalisation (confidence-aware) ─────────────────
+    # When all candidates have similar raw scores, plain min-max stretches tiny
+    # differences to [0, 1], making rankings fragile.  Confidence-aware mode
+    # dampens the output by the ratio of the actual range to a reference range,
+    # so programmes with uniformly weak matches keep normalised values near 0.
+    #
+    # Reference ranges are computed as the global median per-programme range
+    # across the dataset — anything below that is "low confidence".
+
     def _minmax(series: pd.Series) -> pd.Series:
         lo, hi = series.min(), series.max()
         return (series - lo) / (hi - lo) if hi > lo else pd.Series(0.0, index=series.index)
 
-    merged["cosine_norm"] = merged.groupby("programme_id")["cosine_score"].transform(_minmax)
-    merged["recall_norm"] = merged.groupby("programme_id")["programme_recall"].transform(_minmax)
+    def _confident_minmax(col: str) -> pd.Series:
+        raw_norm = merged.groupby("programme_id")[col].transform(_minmax)
+        if not norm_confidence:
+            return raw_norm
+        # Compute per-programme range
+        ranges = merged.groupby("programme_id")[col].transform(
+            lambda s: s.max() - s.min()
+        )
+        # Reference = median of per-programme ranges (one value per programme)
+        prog_ranges = merged.groupby("programme_id")[col].agg(lambda s: s.max() - s.min())
+        ref_range = prog_ranges.median()
+        if ref_range <= 0:
+            return raw_norm
+        # Confidence = min(range / ref, 1.0) — capped at 1 so strong ranges unaffected
+        confidence = (ranges / ref_range).clip(upper=1.0)
+        return raw_norm * confidence
+
+    merged["cosine_norm"] = _confident_minmax("cosine_score")
+    merged["recall_norm"] = _confident_minmax("programme_recall")
 
     # ── Hybrid score ───────────────────────────────────────────────────────────
     merged["hybrid_score"] = (
@@ -375,6 +404,7 @@ def run_hybrid_alignment(
     ipf_floor: float = 0.1,
     ipf_strict_floor: float = 0.05,
     ipf_strict_threshold: float = 0.5,
+    norm_confidence: bool = True,
     gamma: float = 0.3,
     delta: float = 0.2,
     min_coherence_skills: int = 3,
@@ -391,6 +421,7 @@ def run_hybrid_alignment(
         ipf_top_k=ipf_top_k, ipf_floor=ipf_floor,
         ipf_strict_floor=ipf_strict_floor,
         ipf_strict_threshold=ipf_strict_threshold,
+        norm_confidence=norm_confidence,
         gamma=gamma, delta=delta,
         min_coherence_skills=min_coherence_skills,
         skill_embeddings=skill_embeddings,
