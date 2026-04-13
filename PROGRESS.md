@@ -317,6 +317,65 @@ which matters more than raw embedding quality on a small 46×390 corpus.
 
 ---
 
+## Step 27 — ESCO Description Embeddings for Coherence Boost [ ]
+Replace ESCO label embeddings (2-3 word labels) with ESCO skill description embeddings (1-3 sentences) in coherence boost computation.
+Current coherence boost fires in 88% of pairs but only ranges 1.0–1.11 due to coarse label embeddings.
+Description embeddings should produce meaningful pairwise cosine similarity between matched skills.
+
+**Output:** updated `src/skills/skill_weights.py`, `src/alignment/hybrid.py`
+**Module:** `src/skills/skill_weights.py` (ESCO description embedding cache), `src/alignment/hybrid.py` (coherence boost)
+
+---
+
+## Step 28 — Two-Tier IPF [ ]
+Replace single IPF floor with two-tier penalty:
+- Jobs appearing in top-K of >50% of programmes → strict floor (0.05)
+- Other popular jobs → standard floor (0.1)
+Preserves fallback matches for niche programmes while harder-penalising universal generalists.
+
+**Output:** updated `src/alignment/hybrid.py`
+**Module:** `src/alignment/hybrid.py`
+
+---
+
+## Step 29 — Confidence-Aware Normalisation [ ]
+When all candidates for a programme have similar raw scores, min-max stretches small differences into full [0,1] range, making rankings fragile.
+Add dampening factor: if raw score range (max-min) is below a threshold, shrink the normalised range proportionally.
+Prevents noisy rankings for programmes with uniformly weak matches.
+
+**Output:** updated `src/alignment/hybrid.py`
+**Module:** `src/alignment/hybrid.py`
+
+---
+
+## Step 30 — LinkedIn Boilerplate Stripping [ ]
+Strip corporate boilerplate phrases ("we offer competitive salary", "dynamic team environment", etc.) from job descriptions before embedding.
+Similar to existing LAMA BPO boilerplate removal. Closes text style gap between LinkedIn (mean cosine 0.265) and CVbankas (0.336).
+
+**Output:** updated `src/preprocessing/pipeline.py` or `src/embeddings/generator.py`
+**Module:** `src/preprocessing/pipeline.py`
+
+---
+
+## Step 31 — Programme-Level Skill TF-IDF [ ]
+Weight each programme's skills by distinctiveness relative to other programmes (inter-programme IDF), not just corpus-wide IDF.
+A skill unique to 1 programme should matter more in matching than one shared by 20 programmes.
+
+**Output:** updated `src/skills/skill_weights.py`, `src/alignment/symbolic.py`
+**Module:** `src/skills/skill_weights.py`, `src/alignment/symbolic.py`
+
+---
+
+## Step 32 — Expanded Niche Domain Corpus [ ]
+Expand geographic scope (EU-wide) for niche domains (game dev, bioinformatics, multimedia, digital arts) that have <5 matching jobs in Lithuanian boards.
+Use ESCO skill taxonomy to identify semantically adjacent job categories.
+Flag low-coverage programmes in recommendations.
+
+**Output:** `data/raw/job_ads/`, updated recommendations
+**Module:** `src/scraping/`, `src/recommendations/generator.py`
+
+---
+
 ## Legend
 - `[ ]` Not started
 - `[~]` In progress
