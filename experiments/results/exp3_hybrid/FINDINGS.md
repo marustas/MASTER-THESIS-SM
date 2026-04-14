@@ -246,24 +246,140 @@ Despite comprising 23% of the dataset (119/520 jobs), LinkedIn jobs account for 
 
 Mean cosine to programmes: LinkedIn 0.265 vs CVbankas 0.336. This gap persists after boilerplate removal — it reflects text style differences (corporate/practical vs academic) rather than boilerplate bias.
 
-## 14. Current state (Milestone F)
+## 14. Two-tier IPF (Step 28)
 
-### Match quality tiers (top-1, N=47)
+Replaced single IPF floor with two-tier penalty based on how many programmes a job appears in:
+
+- **Universal generalists** (top-K of >50% programmes) → `ipf_strict_floor=0.05`
+- **Moderately popular jobs** → standard `ipf_floor=0.1`
+
+Logic: `strict_cutoff = max(2, int(n_prog × 0.5))`. Jobs in top-K of ≥23 programmes (out of 45) get the strict floor.
+
+Backward compatible: when `ipf_strict_floor=ipf_floor`, behaves identically to single-tier.
+
+| Metric | Single-tier | Two-tier |
+|--------|-------------|----------|
+| Universal generalists penalised | — | 15 jobs (strict floor) |
+| Other generalists | 129 | 114 (standard floor) |
+| Unique top-1 | 40/47 | 40/47 |
+
+Minimal top-line impact because most universal generalists were already ranked low. The change primarily prevents edge cases where a truly universal job (appearing in top-K for 40+ programmes) could still accumulate enough score to reach top-5.
+
+## 15. Confidence-aware normalisation (Step 29)
+
+When all candidates for a programme have similar raw cosine scores, min-max normalisation stretches small differences into the full [0,1] range, making rankings fragile. The confidence dampening shrinks the normalised range proportionally:
+
+```
+range = max - min (per programme)
+median_range = median of all programme ranges
+confidence = min(range / median_range, 1.0)
+normalised_score = confidence × minmax(score)
+```
+
+Applied **only to cosine**, not recall. Rationale: a narrow recall range still carries real signal (skill overlap vs none), unlike narrow cosine which reflects genuinely indistinguishable embeddings.
+
+### Critical fix: cosine-only dampening
+
+Initial implementation dampened both cosine and recall. This caused "Information systems engineering" (VGTU) to get a zero-recall top-1 match — dampening destroyed the recall signal that should have discriminated between matches with and without skill overlap.
+
+After restricting dampening to cosine only, the recall signal is preserved for programmes with narrow cosine but meaningful skill differences.
+
+## 16. Section-weighted programme embeddings
+
+### Problem: text truncation
+
+MiniLM-L6-v2 has a 256-token limit (~1000 characters). 96% of programmes exceed this limit (mean=6203 chars). Both MiniLM and MPNet share the same truncation boundary — **this is why the larger model (Step 25) didn't help**: same information was discarded.
+
+### Solution: embed sections independently
+
+Parse programme text into section groups, embed each independently (avoiding truncation), and compute a weighted average:
+
+| Section group | Weight | Content type |
+|---------------|--------|-------------|
+| subjects | 0.40 | Course lists — most discriminative |
+| outcomes | 0.25 | Learning outcomes / competencies |
+| identity | 0.20 | Objectives + distinctive features |
+| specialisations | 0.15 | Domain-specific tracks |
+
+Headers are detected by pattern (ends with colon, <80 chars) and mapped to groups via `_SECTION_MAP`. Sections not matching any header go to `_remainder` (not embedded in the weighted average).
+
+### Fallback for programmes without section headers
+
+Programmes where all section groups are empty (content goes entirely to `_remainder`) get a plain full-text embedding instead. This prevents zero vectors for programmes with non-standard formatting.
+
+After analysis, 2 programmes were removed from the dataset entirely due to insufficient descriptions:
+- "Information Technologies" (VGTU) — only 24 characters of text
+- "Information systems engineering" (VGTU) — 571 characters, no section headers
+
+"Informatics Systems" (VMU, 6869 chars, inline headers) was kept with the fallback mechanism.
+
+### Chunk-and-pool job embeddings
+
+Job descriptions are split into 256-token chunks, each embedded independently, and the final embedding is the mean of all chunks (L2-normalised). This ensures long job descriptions are fully represented rather than truncated.
+
+### Embedding quality impact
+
+| Metric | Before (truncated) | After (section-weighted + chunked) |
+|--------|--------------------|------------------------------------|
+| Inter-programme cosine | 0.605 | 0.633 |
+| Programme-job cosine mean | 0.365 | 0.365 |
+| Programme-job cosine CoV | 0.300 | 0.252 |
+| Zero-embedding programmes | 0 | 0 |
+
+Inter-programme cosine increased slightly (more shared section structure captured). Programme-job cosine mean unchanged but the CoV decreased, indicating more consistent matching.
+
+## 17. Data quality: programme removal
+
+Removed 2 of 47 programmes (→ 45) with insufficient descriptions for meaningful embedding and skill extraction:
+
+| Programme | Institution | Chars | Issue |
+|-----------|------------|-------|-------|
+| Information Technologies | VGTU | 24 | Near-empty: only programme name |
+| Information systems engineering | VGTU | 571 | No section headers, generic text |
+
+These programmes produced near-random top matches across all strategies, adding noise without providing meaningful alignment signal.
+
+## 18. Current state (Milestone G)
+
+Parameters: α=0.6, IPF top_k=30, floor=0.1, strict_floor=0.05, strict_threshold=0.5, γ=0.3, δ=0.2, norm_confidence=True. Corpus: 520 jobs, 45 programmes.
+
+### Match quality tiers (top-1, N=45)
 
 | Tier | Count | % |
 |------|-------|---|
-| Strong (>0.4) | 10 | 21% |
-| Moderate (0.25–0.4) | 18 | 38% |
-| Weak (0.15–0.25) | 16 | 34% |
-| Very weak (<0.15) | 3 | 6% |
+| Strong (>0.4) | 9 | 20% |
+| Moderate (0.25–0.4) | 13 | 29% |
+| Weak (0.15–0.25) | 19 | 42% |
+| Very weak (<0.15) | 4 | 9% |
 
 ### Diversity
 
 | Scope | Unique | Total | % |
 |-------|--------|-------|---|
-| Top-1 | 40 | 47 | 85% |
-| Top-5 | 123 | 235 | 52% |
-| Top-10 | 163 | 470 | 35% |
+| Top-1 | 39 | 45 | 87% |
+| Top-5 | 130 | 225 | 58% |
+| Top-10 | 185 | 450 | 41% |
+
+Max top-1 repeat: 2× (6 jobs). No job dominates top-1 for more than 2 programmes.
+
+### Score distribution
+
+| Metric | Value |
+|--------|-------|
+| Hybrid mean (top-1) | 0.285 |
+| Hybrid std (top-1) | 0.115 |
+| Hybrid CoV (top-1) | 0.403 |
+| Range | 0.126 – 0.590 |
+
+### Cross-strategy correlations
+
+| Pair | Spearman ρ (mean) |
+|------|-------------------|
+| symbolic ↔ semantic | 0.287 |
+| symbolic ↔ hybrid | 0.071 |
+| semantic ↔ hybrid | 0.130 |
+
+Top-1 agreement across all 3 strategies: 0/45 (0%).
 
 ### Weakly-matched programmes — two distinct causes
 
@@ -275,11 +391,12 @@ Both are valid findings for curriculum alignment analysis, not algorithmic failu
 
 ### Evolution summary
 
-| Milestone | Unique top-1 | Max repeat |
-|-----------|-------------|------------|
-| A — Old hybrid (symmetric Jaccard) | 13/35 (37%) | 6× |
-| B — Asymmetric recall + IPF | 33/46 (72%) | 5× |
-| C — + Auxiliary corpus (617 jobs) | 35/46 (76%) | 3× |
-| D — + IDF weighting + formula tuning | 41/46 (89%) | 3× |
-| E — + Corpus expansion + IPF retune | 40/47 (85%) | 10× |
-| F — + Boilerplate fix + coherence boost | 40/47 (85%) | 10× |
+| Milestone | Unique top-1 | Max repeat | Programmes |
+|-----------|-------------|------------|------------|
+| A — Old hybrid (symmetric Jaccard) | 13/35 (37%) | 6× | 35 |
+| B — Asymmetric recall + IPF | 33/46 (72%) | 5× | 46 |
+| C — + Auxiliary corpus (617 jobs) | 35/46 (76%) | 3× | 46 |
+| D — + IDF weighting + formula tuning | 41/46 (89%) | 3× | 46 |
+| E — + Corpus expansion + IPF retune | 40/47 (85%) | 10× | 47 |
+| F — + Boilerplate fix + coherence boost | 40/47 (85%) | 10× | 47 |
+| G — + Two-tier IPF, confidence norm, section embeddings, data cleanup | 39/45 (87%) | 2× | 45 |
