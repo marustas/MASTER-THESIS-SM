@@ -18,7 +18,10 @@ import pandas as pd
 import pytest
 
 from tests.skills.conftest import MockEmbeddingModel
-from src.embeddings.generator import embed_texts, embed_programmes, embed_job_ads
+from src.embeddings.generator import (
+    embed_texts, embed_programmes, embed_job_ads,
+    parse_programme_sections, embed_programme_sections, embed_chunked,
+)
 
 
 # ── Shared fixture ─────────────────────────────────────────────────────────────
@@ -218,3 +221,116 @@ class TestEmbedJobAds:
         assert out.exists()
         reloaded = pd.read_parquet(out)
         assert "embedding" in reloaded.columns
+
+
+# ── parse_programme_sections ──────────────────────────────────────────────────
+
+class TestParseProgrammeSections:
+    def test_parses_known_sections(self):
+        text = (
+            "General Description:\n"
+            "Objective(s) of a study programme:\n"
+            "Train AI engineers\n"
+            "Learning outcomes:\n"
+            "A1. Understand ML\nA2. Apply Python\n"
+            "Study subjects (modules), practical training:\n"
+            "Python, ML, Databases\n"
+            "Specialisations:\n"
+            "Deep learning track\n"
+        )
+        sections = parse_programme_sections(text)
+        assert "Train AI engineers" in sections["identity"]
+        assert "Understand ML" in sections["outcomes"]
+        assert "Python, ML, Databases" in sections["subjects"]
+        assert "Deep learning track" in sections["specialisations"]
+
+    def test_empty_text_returns_empty_groups(self):
+        sections = parse_programme_sections("")
+        for group in ("subjects", "outcomes", "identity", "specialisations"):
+            assert sections[group] == ""
+
+    def test_no_headers_goes_to_remainder(self):
+        text = "Just some text with no section headers at all"
+        sections = parse_programme_sections(text)
+        assert "Just some text" in sections["_remainder"]
+        assert all(sections[g] == "" for g in ("subjects", "outcomes", "identity", "specialisations"))
+
+    def test_specialization_prefix_detected(self):
+        text = (
+            "Specialization - Cybersecurity:\n"
+            "InfoSec, Pen Testing\n"
+            "Specialization - Cloud:\n"
+            "AWS, Azure\n"
+        )
+        sections = parse_programme_sections(text)
+        assert "InfoSec" in sections["specialisations"]
+        assert "AWS" in sections["specialisations"]
+
+    def test_optional_courses_mapped_to_specialisations(self):
+        text = (
+            "Optional courses:\n"
+            "Elective A, Elective B\n"
+        )
+        sections = parse_programme_sections(text)
+        assert "Elective A" in sections["specialisations"]
+
+
+# ── embed_programme_sections ──────────────────────────────────────────────────
+
+class TestEmbedProgrammeSections:
+    def test_output_shape(self, mock_model: MockEmbeddingModel):
+        texts = [
+            "Objective(s) of a study programme:\nTrain devs\n"
+            "Learning outcomes:\nA1 code\n"
+            "Study subjects (modules), practical training:\nPython, Java\n",
+            "Some generic programme text",
+        ]
+        result = embed_programme_sections(mock_model, texts)
+        assert result.shape == (2, MockEmbeddingModel.DIM)
+
+    def test_l2_normalised(self, mock_model: MockEmbeddingModel):
+        texts = ["Objective(s) of a study programme:\nBuild stuff\nLearning outcomes:\nA1 learn"]
+        result = embed_programme_sections(mock_model, texts)
+        norm = np.linalg.norm(result[0])
+        assert abs(norm - 1.0) < 1e-5
+
+    def test_empty_text_zero_vector(self, mock_model: MockEmbeddingModel):
+        result = embed_programme_sections(mock_model, [""])
+        assert np.all(result[0] == 0.0)
+
+    def test_different_sections_produce_different_embeddings(self, mock_model: MockEmbeddingModel):
+        """Two programmes with different course lists should embed differently."""
+        text_a = (
+            "Objective(s) of a study programme:\nSame objective\n"
+            "Study subjects (modules), practical training:\n"
+            "Python, machine learning, data science\n"
+        )
+        text_b = (
+            "Objective(s) of a study programme:\nSame objective\n"
+            "Study subjects (modules), practical training:\n"
+            "Java, SQL, enterprise systems\n"
+        )
+        result = embed_programme_sections(mock_model, [text_a, text_b])
+        sim = float(result[0] @ result[1])
+        # Should not be identical despite shared objective
+        assert sim < 0.999
+
+
+# ── embed_chunked ─────────────────────────────────────────────────────────────
+
+class TestEmbedChunked:
+    def test_fallback_without_tokenizer(self, mock_model: MockEmbeddingModel):
+        """Mock model has no tokenizer — should fall back to embed_texts."""
+        texts = ["Python developer", "Java backend"]
+        result = embed_chunked(mock_model, texts)
+        assert result.shape == (2, MockEmbeddingModel.DIM)
+
+    def test_l2_normalised(self, mock_model: MockEmbeddingModel):
+        texts = ["Some text about Python and ML"]
+        result = embed_chunked(mock_model, texts)
+        norm = np.linalg.norm(result[0])
+        assert abs(norm - 1.0) < 1e-5
+
+    def test_empty_text_zero_vector(self, mock_model: MockEmbeddingModel):
+        result = embed_chunked(mock_model, [""])
+        assert np.all(result[0] == 0.0)
