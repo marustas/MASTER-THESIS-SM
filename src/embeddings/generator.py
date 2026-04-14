@@ -179,10 +179,25 @@ def embed_programme_sections(
     # Parse all texts into sections
     all_sections = [parse_programme_sections(t) for t in texts]
 
+    # Identify programmes where no known sections were found — fall back to
+    # embedding the full text (remainder) so they don't get a zero vector.
+    no_sections = [
+        i for i, s in enumerate(all_sections)
+        if all(not s.get(g, "").strip() for g in SECTION_WEIGHTS)
+    ]
+
     for group, weight in SECTION_WEIGHTS.items():
         group_texts = [s.get(group, "") for s in all_sections]
         group_embs = embed_texts(model, group_texts, batch_size=batch_size)
         result += weight * group_embs
+
+    # Fall back: programmes without sections get a plain full-text embedding
+    if no_sections:
+        fallback_texts = [texts[i] for i in no_sections]
+        fallback_embs = embed_texts(model, fallback_texts, batch_size=batch_size)
+        for j, i in enumerate(no_sections):
+            result[i] = fallback_embs[j]
+        logger.info(f"  {len(no_sections)} programmes without sections — used full-text fallback")
 
     # L2-normalise the weighted average
     norms = np.linalg.norm(result, axis=1, keepdims=True)

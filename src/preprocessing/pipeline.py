@@ -183,6 +183,22 @@ def run_programmes(
 
     # Drop records with no usable text
     valid = [r for r in dedup.kept if r.get("cleaned_text")]
+
+    # Exclude programmes with insufficient descriptions
+    _EXCLUDED = {
+        ("Information Technologies", "Vilnius Gediminas Technical University"),
+        ("Information systems engineering", "Vilnius Gediminas Technical University"),
+    }
+    before = len(valid)
+    valid = [
+        r for r in valid
+        if (r.get("name"), r.get("institution")) not in _EXCLUDED
+    ]
+    if len(valid) < before:
+        logger.info(
+            f"  Excluded {before - len(valid)} programmes with insufficient descriptions"
+        )
+
     logger.info(f"Programmes after dedup + filtering: {len(valid)}")
 
     df = pd.DataFrame(valid)
