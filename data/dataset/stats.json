@@ -1,14 +1,14 @@
 {
-  "total_records": 567,
+  "total_records": 565,
   "by_source_type": {
     "job_ad": 520,
-    "programme": 47
+    "programme": 45
   },
   "coverage": {
     "explicit_skills": 1.0,
     "implicit_skills": 1.0,
     "embedding": 1.0,
-    "extended_description": 0.0829,
+    "extended_description": 0.0796,
     "language_supported": 1.0
   },
   "top_skills_overall": [
@@ -26,7 +26,7 @@
     ],
     [
       "think creatively",
-      233
+      232
     ],
     [
       "SQL",
@@ -45,16 +45,16 @@
       187
     ],
     [
-      "computer science",
+      "plan",
       186
     ],
     [
-      "plan",
+      "computer science",
       185
     ],
     [
       "assume responsibility",
-      183
+      185
     ],
     [
       "lead others",
@@ -62,7 +62,7 @@
     ],
     [
       "think analytically",
-      167
+      168
     ],
     [
       "Python (computer programming)",
@@ -70,11 +70,11 @@
     ],
     [
       "work independently",
-      155
+      156
     ],
     [
       "make decisions",
-      139
+      140
     ],
     [
       "manage time",
@@ -96,11 +96,11 @@
   "top_skills_programme": [
     [
       "computer science",
-      41
+      40
     ],
     [
       "think creatively",
-      41
+      40
     ],
     [
       "communication",
@@ -112,7 +112,7 @@
     ],
     [
       "mathematics",
-      37
+      36
     ],
     [
       "algorithms",
@@ -128,10 +128,6 @@
     ],
     [
       "English",
-      26
-    ],
-    [
-      "data mining",
       26
     ],
     [
@@ -173,6 +169,10 @@
     [
       "computer programming",
       23
+    ],
+    [
+      "embedded systems",
+      23
     ]
   ],
   "top_skills_job_ad": [
@@ -210,7 +210,7 @@
     ],
     [
       "assume responsibility",
-      179
+      181
     ],
     [
       "lead others",
@@ -218,7 +218,7 @@
     ],
     [
       "plan",
-      163
+      164
     ],
     [
       "Python (computer programming)",
@@ -226,7 +226,7 @@
     ],
     [
       "think analytically",
-      155
+      156
     ],
     [
       "computer science",
@@ -238,7 +238,7 @@
     ],
     [
       "work independently",
-      137
+      138
     ],
     [
       "tools for software configuration management",
@@ -250,7 +250,7 @@
     ],
     [
       "make decisions",
-      114
+      115
     ],
     [
       "perform cleaning duties",
@@ -258,19 +258,19 @@
     ]
   ],
   "skills_per_record": {
-    "mean": 21.18,
+    "mean": 21.27,
     "median": 16.0,
-    "zero_skill_records": 2
+    "zero_skill_records": 1
   },
   "text_length": {
-    "mean": 3066.5,
-    "median": 2732.0,
-    "p10": 1452.0,
-    "p90": 5323.0,
-    "min": 24,
+    "mean": 3076.4,
+    "median": 2733.0,
+    "p10": 1462.8,
+    "p90": 5324.0,
+    "min": 32,
     "max": 9301
   },
   "language_distribution": {
-    "en": 567
+    "en": 565
   }
 }

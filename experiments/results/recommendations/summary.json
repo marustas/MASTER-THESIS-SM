@@ -1,13 +1,13 @@
 {
   "best_strategy": "semantic",
-  "n_programmes": 47,
+  "n_programmes": 45,
   "n_job_ads": 520,
   "top_n": 10,
   "top1_agreement_rate": 0.0,
   "spearman_means": {
-    "sym_sem": 0.24045002817295558,
-    "sym_hyb": -0.006081169228841051,
-    "sem_hyb": 0.14146765089014326
+    "sym_sem": 0.286824544004842,
+    "sym_hyb": 0.07133709172715122,
+    "sem_hyb": 0.12952914499132984
   },
   "n_market_trend_skills": 50,
   "top_market_skills": [
@@ -20,6 +20,6 @@
     "http://data.europa.eu/esco/skill/4f1b6304-f54a-42f0-9604-5427a28d240f",
     "http://data.europa.eu/esco/skill/75d8e5d9-bef3-418b-9011-01bff9f27207",
     "http://data.europa.eu/esco/skill/86ed2a45-eae9-4ab7-b0e6-d7508d33df4f",
-    "http://data.europa.eu/esco/skill/598de5b0-5b58-4ea7-8058-a4bc4d18c742"
+    "http://data.europa.eu/esco/skill/a8d07b5a-c1a1-42c6-9d53-db9c7a2ca996"
   ]
 }
