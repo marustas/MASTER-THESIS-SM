@@ -292,7 +292,9 @@ def align_hybrid(
         return raw_norm * confidence
 
     merged["cosine_norm"] = _confident_minmax("cosine_score")
-    merged["recall_norm"] = _confident_minmax("programme_recall")
+    # Recall is not dampened: a narrow recall range still carries real signal
+    # (skill overlap vs none), unlike narrow cosine which is genuinely noise.
+    merged["recall_norm"] = merged.groupby("programme_id")["programme_recall"].transform(_minmax)
 
     # ── Hybrid score ───────────────────────────────────────────────────────────
     merged["hybrid_score"] = (
