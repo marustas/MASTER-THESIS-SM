@@ -389,6 +389,42 @@ Top-1 agreement across all 3 strategies: 0/45 (0%).
 
 Both are valid findings for curriculum alignment analysis, not algorithmic failures.
 
+## 19. LinkedIn boilerplate stripping (Step 30)
+
+Stripped non-technical boilerplate from LinkedIn job descriptions before embedding:
+
+- **"About the job"** header (100% of LinkedIn jobs)
+- **Benefit/offer sections** ("What we offer", "Benefits", "Our offer") and everything after
+- **EEO/diversity blocks** ("We are proud to foster...", "Equal opportunity employer")
+- **Salary/compensation lines**
+- **Lithuanian data protection** ("Siųsdami savo gyvenimo aprašymą")
+
+Applied as a cutoff: the first matching section header or EEO block truncates the rest of the text. This preserves all technical content (role description, requirements, tech stack) while removing corporate boilerplate that inflates cosine similarity without carrying role-specific signal.
+
+### Impact
+
+| Metric | Before | After |
+|--------|--------|-------|
+| LinkedIn jobs affected | — | 73/127 (57%) |
+| Total char reduction | — | 18.4% |
+| Mean LinkedIn desc length | 3620 | 2955 chars |
+| CVbankas false positives | — | 0/439 |
+
+### Alignment impact
+
+| Metric | Before (G) | After (H) |
+|--------|-----------|-----------|
+| Unique top-1 | 39/45 (87%) | 35/45 (78%) |
+| Max top-1 repeat | 2× | 3× |
+| Hybrid score max | 0.590 | 0.710 |
+| Hybrid CoV (top-1) | 0.403 | 0.412 |
+| Programme-job cosine mean | 0.365 | 0.363 |
+| Top-1 changes | — | 5/34 |
+
+Top-1 diversity dropped from 39 to 35. The stripped LinkedIn embeddings are more focused on technical content, causing some jobs to become stronger matches for multiple related programmes. The 3× repeat ("KIBERNETINIO SAUGUMO VADOVAS") affects 3 security/informatics programmes — a domain-coherent repeat rather than a generalist problem.
+
+The max hybrid score increased from 0.59 to 0.71, indicating stronger top matches where boilerplate was previously diluting the signal.
+
 ### Evolution summary
 
 | Milestone | Unique top-1 | Max repeat | Programmes |
@@ -400,3 +436,4 @@ Both are valid findings for curriculum alignment analysis, not algorithmic failu
 | E — + Corpus expansion + IPF retune | 40/47 (85%) | 10× | 47 |
 | F — + Boilerplate fix + coherence boost | 40/47 (85%) | 10× | 47 |
 | G — + Two-tier IPF, confidence norm, section embeddings, data cleanup | 39/45 (87%) | 2× | 45 |
+| H — + LinkedIn boilerplate stripping | 35/45 (78%) | 3× | 45 |
