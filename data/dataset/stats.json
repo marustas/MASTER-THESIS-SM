@@ -14,83 +14,83 @@
   "top_skills_overall": [
     [
       "computer technology",
-      394
+      383
     ],
     [
       "English",
-      325
+      324
     ],
     [
       "communication",
-      268
+      266
     ],
     [
       "think creatively",
-      232
+      231
     ],
     [
       "SQL",
-      216
+      212
     ],
     [
       "Lithuanian",
-      214
-    ],
-    [
-      "troubleshoot",
-      188
-    ],
-    [
-      "ICT project management methodologies",
-      187
-    ],
-    [
-      "plan",
-      186
+      211
     ],
     [
       "computer science",
-      185
+      187
+    ],
+    [
+      "ICT project management methodologies",
+      181
     ],
     [
       "assume responsibility",
-      185
+      180
     ],
     [
       "lead others",
-      179
+      172
+    ],
+    [
+      "troubleshoot",
+      171
     ],
     [
       "think analytically",
-      168
+      164
+    ],
+    [
+      "plan",
+      161
     ],
     [
       "Python (computer programming)",
-      166
+      159
     ],
     [
       "work independently",
-      156
+      155
     ],
     [
       "make decisions",
-      140
+      138
     ],
     [
       "manage time",
-      139
+      136
     ],
     [
       "DevOps",
-      139
-    ],
-    [
-      "tools for software configuration management",
       134
     ],
     [
-      "database",
-      119
+      "tools for software configuration management",
+      122
+    ],
+    [
+      "computer programming",
+      113
     ]
   ],
   "top_skills_programme": [
@@ -178,95 +178,95 @@
   "top_skills_job_ad": [
     [
       "computer technology",
-      356
+      345
     ],
     [
       "English",
-      299
+      298
     ],
     [
       "communication",
-      229
+      227
     ],
     [
       "SQL",
-      205
+      201
     ],
     [
       "think creatively",
-      192
+      191
     ],
     [
       "Lithuanian",
-      190
-    ],
-    [
-      "troubleshoot",
-      188
+      187
     ],
     [
       "ICT project management methodologies",
-      184
+      178
     ],
     [
       "assume responsibility",
-      181
+      176
+    ],
+    [
+      "troubleshoot",
+      171
     ],
     [
       "lead others",
-      172
-    ],
-    [
-      "plan",
-      164
+      165
     ],
     [
       "Python (computer programming)",
-      162
+      155
     ],
     [
       "think analytically",
-      156
+      152
     ],
     [
       "computer science",
-      145
+      147
     ],
     [
-      "DevOps",
-      138
+      "plan",
+      139
     ],
     [
       "work independently",
-      138
+      137
     ],
     [
-      "tools for software configuration management",
-      134
+      "DevOps",
+      133
     ],
     [
       "manage time",
-      129
+      126
+    ],
+    [
+      "tools for software configuration management",
+      122
     ],
     [
       "make decisions",
-      115
+      113
     ],
     [
       "perform cleaning duties",
-      113
+      108
     ]
   ],
   "skills_per_record": {
-    "mean": 21.27,
-    "median": 16.0,
+    "mean": 20.33,
+    "median": 15.0,
     "zero_skill_records": 1
   },
   "text_length": {
-    "mean": 3076.4,
-    "median": 2733.0,
-    "p10": 1462.8,
-    "p90": 5324.0,
+    "mean": 2944.0,
+    "median": 2597.0,
+    "p10": 1390.4,
+    "p90": 5008.8,
     "min": 32,
     "max": 9301
   },
