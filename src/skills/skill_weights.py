@@ -201,3 +201,18 @@ def build_skill_description_embeddings(
     embeddings = np.asarray(embeddings, dtype=np.float32)
 
     return dict(zip(uris, embeddings))
+
+
+def save_skill_embeddings(
+    skill_embeddings: dict[str, np.ndarray],
+    path: Path = SKILL_EMBEDDINGS_PATH,
+) -> None:
+    """Persist skill embeddings to NPZ (compatible with ``_load_skill_embeddings`` in hybrid.py)."""
+    if not skill_embeddings:
+        logger.warning("No skill embeddings to save")
+        return
+    uris = np.array(list(skill_embeddings.keys()))
+    embeddings = np.stack(list(skill_embeddings.values()))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(path, uris=uris, embeddings=embeddings)
+    logger.info(f"Saved {len(uris)} skill embeddings → {path}")
