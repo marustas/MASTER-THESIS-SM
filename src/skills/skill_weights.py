@@ -25,6 +25,7 @@ import math
 from collections import Counter
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from loguru import logger
 
@@ -156,3 +157,47 @@ def build_weighted_skills(
         weights[uri] = max(weights.get(uri, 0.0), w)
 
     return weights
+
+
+# ── ESCO description embeddings (Step 27) ────────────────────────────────────
+
+SKILL_EMBEDDINGS_PATH = DATA_DIR / "dataset" / "skill_embeddings.npz"
+
+
+def build_skill_description_embeddings(
+    embedding_model: object,
+    csv_path: Path = ESCO_CSV_PATH,
+) -> dict[str, np.ndarray]:
+    """
+    Embed ESCO skill descriptions (1-3 sentences) for coherence boost.
+
+    Parameters
+    ----------
+    embedding_model:
+        Any object with ``.encode(texts, normalize_embeddings=True) -> np.ndarray``
+        (e.g. ``SentenceTransformer`` or ``MockEmbeddingModel``).
+    csv_path:
+        Path to the ESCO skills CSV.
+
+    Returns
+    -------
+    ``{esco_uri: L2-normalised embedding}`` for all skills that have a
+    non-empty description.  Skills without a description are skipped.
+    """
+    index = load_from_csv(csv_path)
+    uris: list[str] = []
+    descriptions: list[str] = []
+    for skill in index.skills:
+        if skill.description:
+            uris.append(skill.uri)
+            descriptions.append(skill.description)
+
+    if not descriptions:
+        logger.warning("No ESCO descriptions found — returning empty embeddings")
+        return {}
+
+    logger.info(f"Embedding {len(descriptions)} ESCO skill descriptions…")
+    embeddings = embedding_model.encode(descriptions, normalize_embeddings=True)
+    embeddings = np.asarray(embeddings, dtype=np.float32)
+
+    return dict(zip(uris, embeddings))
