@@ -345,21 +345,28 @@ Re-ran semantic + hybrid alignment and compared against MiniLM baseline.
 - Cross-model top-1 agreement: 1/46 (2%) — almost entirely different rankings
 - Cross-model Spearman (top-20): 0.05 (semantic), 0.22 (hybrid) — near-random overlap
 
-MiniLM's wider cosine score spread gives the hybrid formula more signal to differentiate matches,
-which matters more than raw embedding quality on a small 46×390 corpus.
+**Root cause:** Both models share a 256-token truncation limit (~1000 chars). 96% of programmes exceed this. Swapping the model doesn't help because the same information is discarded.
+
+**Fix applied:** Section-weighted programme embeddings (parse into subjects/outcomes/identity/specialisations, embed each independently, weighted average) and chunk-and-pool job embeddings (split into 256-token chunks, mean-pool). Also removed 2 VGTU programmes with insufficient descriptions (24 and 571 chars).
 
 **Output:** `experiments/results/evaluation/embedding_comparison.json`
+**Module:** `src/embeddings/generator.py`, `src/preprocessing/pipeline.py`
 
 ---
 
-## Step 27 — ESCO Description Embeddings for Coherence Boost [ ]
+## Step 27 — ESCO Description Embeddings for Coherence Boost [x]
 
 Replace ESCO label embeddings (2-3 word labels) with ESCO skill description embeddings (1-3 sentences) in coherence boost computation.
 Current coherence boost fires in 88% of pairs but only ranges 1.0–1.11 due to coarse label embeddings.
 Description embeddings should produce meaningful pairwise cosine similarity between matched skills.
 
-**Output:** updated `src/skills/skill_weights.py`, `src/alignment/hybrid.py`
-**Module:** `src/skills/skill_weights.py` (ESCO description embedding cache), `src/alignment/hybrid.py` (coherence boost)
+Added `build_skill_description_embeddings()` and `save_skill_embeddings()` to `skill_weights.py`.
+Embeds the ESCO `description` field (1-3 sentences) instead of short labels. Saves to `data/dataset/skill_embeddings.npz`.
+The existing `_load_skill_embeddings()` in `hybrid.py` loads these for coherence boost.
+
+**Output:** updated `src/skills/skill_weights.py`
+**Module:** `src/skills/skill_weights.py` (ESCO description embedding builder + NPZ persistence)
+**Tests:** 9 tests in `tests/skills/test_skill_embeddings.py`
 
 ---
 
@@ -387,34 +394,44 @@ Prevents noisy rankings for programmes with uniformly weak matches.
 
 ---
 
-## Step 30 — LinkedIn Boilerplate Stripping [ ]
+## Step 30 — LinkedIn Boilerplate Stripping [x]
 
-Strip corporate boilerplate phrases ("we offer competitive salary", "dynamic team environment", etc.) from job descriptions before embedding.
-Similar to existing LAMA BPO boilerplate removal. Closes text style gap between LinkedIn (mean cosine 0.265) and CVbankas (0.336).
+Strip corporate boilerplate from LinkedIn job descriptions: "About the job" header, benefit/offer sections, EEO blocks, salary lines, and data protection notices. Uses cutoff approach — first matching non-technical section truncates remaining text.
 
-**Output:** updated `src/preprocessing/pipeline.py` or `src/embeddings/generator.py`
-**Module:** `src/preprocessing/pipeline.py`
+57% of LinkedIn jobs affected, 18.4% total char reduction. Zero CVbankas false positives. Top-1 diversity dropped 39→35 due to stripped embeddings being more focused, but max hybrid score increased 0.59→0.71.
+
+**Output:** updated `src/preprocessing/text_cleaner.py`, `src/preprocessing/pipeline.py`
+**Module:** `src/preprocessing/text_cleaner.py` (`strip_linkedin_boilerplate()`), `tests/preprocessing/test_text_cleaner.py`
 
 ---
 
-## Step 31 — Programme-Level Skill TF-IDF [ ]
+## Step 31 — Programme-Level Skill TF-IDF [x]
 
 Weight each programme's skills by distinctiveness relative to other programmes (inter-programme IDF), not just corpus-wide IDF.
 A skill unique to 1 programme should matter more in matching than one shared by 20 programmes.
 
+Added `compute_programme_idf(df)` to `skill_weights.py` — filters to programme rows only and computes IDF.
+Added `use_programme_idf` parameter to `align_symbolic_weighted()` — when True, programme skills use inter-programme IDF while job skills keep corpus-wide IDF. Default False for backward compatibility.
+
 **Output:** updated `src/skills/skill_weights.py`, `src/alignment/symbolic.py`
-**Module:** `src/skills/skill_weights.py`, `src/alignment/symbolic.py`
+**Module:** `src/skills/skill_weights.py` (`compute_programme_idf`), `src/alignment/symbolic.py` (`use_programme_idf` param)
+**Tests:** 5 tests in `tests/skills/test_skill_embeddings.py`, 4 tests in `tests/alignment/test_symbolic.py`
 
 ---
 
-## Step 32 — Expanded Niche Domain Corpus [ ]
+## Step 32 — Niche Domain Coverage Analysis [x]
 
-Expand geographic scope (EU-wide) for niche domains (game dev, bioinformatics, multimedia, digital arts) that have <5 matching jobs in Lithuanian boards.
-Use ESCO skill taxonomy to identify semantically adjacent job categories.
-Flag low-coverage programmes in recommendations.
+Analyse per-programme job coverage to identify niche domains with insufficient matches.
+Flag low-coverage programmes (< min_matches above score threshold) and generate corpus expansion recommendations.
 
-**Output:** `data/raw/job_ads/`, updated recommendations
-**Module:** `src/scraping/`, `src/recommendations/generator.py`
+Added `src/evaluation/coverage.py` with:
+- `analyse_coverage()` — per-programme coverage metrics (n_matches, coverage_ratio, top_score, low_coverage flag)
+- `identify_niche_clusters()` — aggregate coverage by cluster to find niche domain groups
+- `generate_expansion_recommendations()` — actionable recommendations for low-coverage programmes with top skill URIs
+
+**Output:** `experiments/results/coverage/programme_coverage.parquet`, `niche_clusters.parquet`, `coverage_summary.json`
+**Module:** `src/evaluation/coverage.py`
+**Tests:** 12 tests in `tests/evaluation/test_coverage.py`
 
 ---
 
