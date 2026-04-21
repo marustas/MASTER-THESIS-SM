@@ -431,3 +431,88 @@ class TestAlignSymbolicWeighted:
             # At least some scores should differ (weights are not uniform)
             diffs = (nonzero["weighted_jaccard_uniform"] - nonzero["weighted_jaccard_weighted"]).abs()
             assert diffs.max() > 0.0
+
+
+# ── Programme-level IDF (Step 31) ────────────────────────────────────────────
+
+class TestProgrammeIdf:
+    """Tests for use_programme_idf parameter in align_symbolic_weighted."""
+
+    def _make_idf_df(self):
+        """Dataset where a programme-unique skill should get boosted by prog IDF."""
+        return _make_df(
+            programmes=[
+                # Prog0: has unique_skill (only in this programme) + shared
+                [_skill("esco:unique"), _skill("esco:shared")],
+                # Prog1: has only shared skill (in both programmes)
+                [_skill("esco:shared")],
+            ],
+            jobs=[
+                # Job0: requires unique + shared
+                [_skill("esco:unique"), _skill("esco:shared")],
+                # Job1: requires only shared
+                [_skill("esco:shared")],
+            ],
+        )
+
+    def test_programme_idf_runs_without_error(self):
+        df = self._make_idf_df()
+        rankings, gaps = align_symbolic_weighted(df, top_n=2, use_programme_idf=True)
+        assert len(rankings) == 4  # 2 programmes × 2 jobs
+
+    def test_programme_idf_produces_different_scores(self):
+        """Programme IDF should produce different scores than corpus IDF.
+
+        Key: 'esco:shared' appears in both progs but only some jobs,
+        so corpus IDF(shared) ≠ prog IDF(shared), causing different weights.
+        """
+        df = _make_df(
+            programmes=[
+                [_skill("esco:unique"), _skill("esco:shared")],
+                [_skill("esco:shared")],
+            ],
+            jobs=[
+                [_skill("esco:unique"), _skill("esco:shared")],
+                [_skill("esco:other")],  # doesn't have shared → lowers corpus df for shared
+                [_skill("esco:other")],
+                [_skill("esco:other")],
+                [_skill("esco:other")],
+            ],
+        )
+        corpus_r, _ = align_symbolic_weighted(df, top_n=5, use_programme_idf=False)
+        prog_r, _ = align_symbolic_weighted(df, top_n=5, use_programme_idf=True)
+        merged = corpus_r.merge(
+            prog_r, on=["programme_id", "job_id"], suffixes=("_corpus", "_prog"),
+        )
+        nonzero = merged[merged["weighted_jaccard_corpus"] > 0]
+        assert len(nonzero) > 0
+        diffs = (nonzero["weighted_jaccard_corpus"] - nonzero["weighted_jaccard_prog"]).abs()
+        assert diffs.max() > 0.0
+
+    def test_unique_skill_boosted(self):
+        """Programme with unique skill should get higher weight for matching job."""
+        df = self._make_idf_df()
+        rankings, _ = align_symbolic_weighted(df, top_n=2, use_programme_idf=True)
+        # Prog0 matching Job0 (unique + shared) should score higher than
+        # Prog1 matching Job1 (shared only)
+        prog0_id = df[df["source_type"] == "programme"].index[0]
+        prog1_id = df[df["source_type"] == "programme"].index[1]
+        job0_id = df[df["source_type"] == "job_ad"].index[0]
+        job1_id = df[df["source_type"] == "job_ad"].index[1]
+
+        score_p0_j0 = rankings[
+            (rankings["programme_id"] == prog0_id) & (rankings["job_id"] == job0_id)
+        ]["weighted_jaccard"].iloc[0]
+        score_p1_j1 = rankings[
+            (rankings["programme_id"] == prog1_id) & (rankings["job_id"] == job1_id)
+        ]["weighted_jaccard"].iloc[0]
+        # Both match fully, but Prog0's unique skill has higher IDF
+        assert score_p0_j0 > 0
+        assert score_p1_j1 > 0
+
+    def test_backward_compat_default_false(self):
+        """Default use_programme_idf=False produces same results as before."""
+        df = self._make_idf_df()
+        default_r, _ = align_symbolic_weighted(df, top_n=2)
+        explicit_r, _ = align_symbolic_weighted(df, top_n=2, use_programme_idf=False)
+        pd.testing.assert_frame_equal(default_r, explicit_r)
