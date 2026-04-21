@@ -40,6 +40,7 @@ from src.skills.skill_weights import (
     build_reuse_level_map,
     build_weighted_skills as _build_tiered_skills,
     compute_corpus_idf,
+    compute_programme_idf,
 )
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
@@ -283,6 +284,7 @@ def align_symbolic_weighted(
     esco_csv_path: Path | None = None,
     idf_cap: float | None = 3.0,
     use_tiers: bool = False,
+    use_programme_idf: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Like ``align_symbolic`` but uses capped IDF weights instead of
@@ -301,6 +303,11 @@ def align_symbolic_weighted(
         skill from dominating.  ``None`` disables capping.
     use_tiers:
         If True, also multiply by ESCO reuse-level tier weight.
+    use_programme_idf:
+        If True, weight programme skills by inter-programme IDF instead
+        of corpus-wide IDF.  Skills unique to one programme carry more
+        weight than skills shared across all programmes.  Job skills
+        still use corpus-wide IDF.
 
     Returns
     -------
@@ -315,8 +322,9 @@ def align_symbolic_weighted(
 
     mode = "IDF + tier" if use_tiers else "IDF-only"
     cap_str = f"cap={idf_cap}" if idf_cap is not None else "uncapped"
+    prog_idf_str = " + prog-IDF" if use_programme_idf else ""
     logger.info(
-        f"Weighted symbolic alignment ({mode}, {cap_str}): "
+        f"Weighted symbolic alignment ({mode}{prog_idf_str}, {cap_str}): "
         f"{len(programmes)} programmes × {len(jobs)} job ads"
     )
 
@@ -339,10 +347,17 @@ def align_symbolic_weighted(
     uri_idfs = compute_corpus_idf(all_uri_lists)
     logger.info(f"  IDF computed for {len(uri_idfs)} URIs")
 
+    # ── Programme-level IDF (Step 31) ─────────────────────────────────────
+    if use_programme_idf:
+        prog_uri_idfs = compute_programme_idf(df)
+        logger.info(f"  Programme IDF computed for {len(prog_uri_idfs)} URIs")
+    else:
+        prog_uri_idfs = uri_idfs
+
     # ── Build weighted skill vectors ──────────────────────────────────────
     prog_skills: dict[int, dict[str, float]] = {
         idx: _build_tiered_skills(
-            _safe_details(row), uri_reuse, uri_idfs,
+            _safe_details(row), uri_reuse, prog_uri_idfs,
             idf_cap=idf_cap, use_tiers=use_tiers,
         )
         for idx, row in programmes.iterrows()
