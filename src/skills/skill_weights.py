@@ -15,6 +15,13 @@ trade-off between discriminative power (CoV +18%) and ranking quality
 (only 4 of 46 programmes get a semantically worse top-1 match, vs 10
 when tier weighting is active).
 
+Step 27 addition — ESCO description embeddings for coherence boost:
+    ``build_skill_description_embeddings()`` embeds the 1-3 sentence
+    ``description`` field from the ESCO CSV (instead of 2-3 word labels)
+    and saves them to an NPZ file.  These richer embeddings produce
+    meaningful pairwise cosine similarity for the coherence boost in
+    hybrid alignment.
+
 Usage:
     python -m src.skills.skill_weights
 """
