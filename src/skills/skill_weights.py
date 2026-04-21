@@ -223,3 +223,37 @@ def save_skill_embeddings(
     path.parent.mkdir(parents=True, exist_ok=True)
     np.savez(path, uris=uris, embeddings=embeddings)
     logger.info(f"Saved {len(uris)} skill embeddings → {path}")
+
+
+# ── Programme-level IDF (Step 31) ────────────────────────────────────────────
+
+def compute_programme_idf(
+    df: pd.DataFrame,
+) -> dict[str, float]:
+    """
+    Compute inter-programme IDF: how distinctive each skill is across programmes.
+
+    A skill unique to one programme gets a high IDF; a skill shared by all
+    programmes gets a low IDF.  This complements the corpus-wide IDF by
+    rewarding programme-specific specialisations.
+
+    Parameters
+    ----------
+    df:
+        Unified dataset with ``source_type`` and ``skill_details`` columns.
+
+    Returns
+    -------
+    ``{uri: log(1 + N_prog / df_prog)}`` where ``N_prog`` = number of programmes
+    and ``df_prog`` = number of programmes containing the URI.
+    """
+    programmes = df[df["source_type"] == "programme"]
+    uri_lists: list[list[str]] = []
+    for _, row in programmes.iterrows():
+        details = row.get("skill_details", [])
+        if not isinstance(details, (list, np.ndarray)):
+            details = []
+        uri_lists.append(
+            [s.get("esco_uri", "") for s in details if s.get("esco_uri")]
+        )
+    return compute_corpus_idf(uri_lists)
