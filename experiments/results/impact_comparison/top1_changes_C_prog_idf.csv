@@ -1,0 +1,46 @@
+programme_id,programme_name,baseline_job,baseline_score,variant_job,variant_score,score_delta,changed
+520,Information Systems and Cybersecurity,IT skyriaus vadovas (-ė),0.2194,IT sistemų testuotojas (-a),0.2155,-0.0039,True
+521,Development and Maintenance of Information Systems,KIBERNETINIO SAUGUMO VADOVAS (-Ė),0.1463,IT skyriaus administratorius (-ė),0.1968,0.0505,True
+522,Information Systems,IT ADMINISTRATORIUS (-Ė),0.1806,Verslo sistemų ir procesų analitikas (-ė),0.2138,0.0332,True
+523,Information Systems,IT sistemų testuotojas (-a),0.2523,IT sistemų testuotojas (-a),0.3045,0.0522,False
+524,Marketing Technologies,E-commerce Customer Success Manager (Account Manager),0.3244,E-commerce Customer Success Manager (Account Manager),0.3628,0.0383,False
+525,Bioinformatics,Data Analyst SQL Python with verification,0.7095,Data Analyst SQL Python with verification,0.7095,0.0,False
+526,Artificial intelligence,MLOps engineer with expertise in Ray and Kubeflow vLLM SkyPikot on kubernetes,0.4142,MLOps engineer with expertise in Ray and Kubeflow vLLM SkyPikot on kubernetes,0.4646,0.0504,False
+527,Information and Communication Technologies,Integration / Automation Engineer,0.2269,Integration / Automation Engineer,0.2337,0.0068,False
+528,Information Technologies,IT PASLAUGŲ VALDYMO ANALITIKĖ (-AS),0.2586,IT PASLAUGŲ VALDYMO ANALITIKĖ (-AS),0.2583,-0.0003,False
+529,Informatics,IT sistemų administratorius (-ė),0.2565,IT sistemų administratorius (-ė),0.2681,0.0116,False
+530,Informatics,IT ADMINISTRATORIUS (-Ė),0.2494,IT ADMINISTRATORIUS (-Ė),0.341,0.0916,False
+531,Informatics,BI programuotojas (-a),0.1478,BI programuotojas (-a),0.1312,-0.0166,False
+532,Informatics,IT SUPPORTER with development opportunity in Data Integration,0.2426,IT SUPPORTER with development opportunity in Data Integration,0.2426,0.0,False
+533,Informatics Systems,DIRBTINIO INTELEKTO INŽINIERĖ (-IUS) IT skyriuje,0.3426,DIRBTINIO INTELEKTO INŽINIERĖ (-IUS) IT skyriuje,0.3563,0.0136,False
+534,Cybersecurity Technologies,Pažeidžiamumų valdymo – įsilaužimų testavimo specialistas (-ė),0.2966,Pažeidžiamumų valdymo – įsilaužimų testavimo specialistas (-ė),0.3438,0.0471,False
+535,Computer games and animation,Gameplay Programmer,0.2613,Gameplay Programmer,0.2918,0.0305,False
+536,Media Technologies,Junior Front-End Developer,0.2629,Junior Front-End Developer,0.3098,0.0468,False
+537,Multimedia and Internet Technologies,Techninio aptarnavimo specialistas (-ė) - darbas studentams!,0.4541,Techninio aptarnavimo specialistas (-ė) - darbas studentams!,0.3861,-0.068,False
+538,Programming and Internet Technologies,Paid Summer Internship in the IT Department,0.2647,Paid Summer Internship in the IT Department,0.2589,-0.0058,False
+539,Digital Design Technologies,Jaunesnysis (-ioji) socialinių tinklų reklamos dizaineris (-ė) / IT projektų specialistas (-ė),0.2641,Jaunesnysis (-ioji) socialinių tinklų reklamos dizaineris (-ė) / IT projektų specialistas (-ė),0.26,-0.0041,False
+540,Applied Informatics and Programming,.NET programuotojas (-a),0.2267,.NET programuotojas (-a),0.2507,0.024,False
+541,Game Development,Paid Summer Internship in the IT Department,0.4554,Paid Summer Internship in the IT Department,0.4554,0.0,False
+542,Game Development and Digital Animation,Junior QA Mobile Game Tester,0.5419,Junior QA Mobile Game Tester,0.5398,-0.0021,False
+543,Artificial Intelligence Systems,Machine Learning Engineer (Mid-level),0.3939,Machine Learning Engineer (Mid-level),0.4035,0.0096,False
+544,Information Systems and Cyber Security,Pažeidžiamumų valdymo – įsilaužimų testavimo specialistas (-ė),0.3502,SOC analitikas (-ė) kibernetinių grėsmių paieškai,0.3941,0.0439,True
+545,Information Systems Engineering,IT sistemų testuotojas (-a),0.1897,IT sistemų testuotojas (-a),0.2121,0.0223,False
+546,Information Systems Engineering,Robotizacijos ir automatizavimo vadovas (-ė) (valymo versle),0.4511,Robotizacijos ir automatizavimo vadovas (-ė) (valymo versle),0.4511,0.0,False
+547,Information System Engineering,SAP DATA Services Developer with verification,0.2041,SAP DATA Services Developer with verification,0.248,0.0439,False
+548,Information Systems Technology,Pardavimų inžinierius (-ė) KLAIPĖDA,0.2108,Pardavimų inžinierius (-ė) KLAIPĖDA,0.2342,0.0233,False
+549,Informatics Engineering,KIBERNETINIO SAUGUMO VADOVAS (-Ė),0.1373,AI Engineer (Applied AI) with verification,0.1498,0.0125,True
+550,Informatics engineering,IT inžinierius (-ė),0.2439,IT inžinierius (-ė),0.2746,0.0307,False
+551,Informatics Engineering,PLV programuotojas,0.2138,PLV programuotojas,0.2862,0.0725,False
+552,Informatics Engineering,Jaunesnysis telekomunikacijų inžinierius (-ė),0.4643,Jaunesnysis telekomunikacijų inžinierius (-ė),0.4585,-0.0058,False
+553,Cyber Systems and Security,IT Compliance & Process manager,0.2288,KIBERNETINIO SAUGUMO VADOVAS (-Ė),0.217,-0.0118,True
+554,Multimedia design,IT inžinierius (-ė),0.2218,IT inžinierius (-ė),0.2218,0.0,False
+555,Multimedia technology,Product Manager,0.2445,Product Manager,0.2543,0.0098,False
+556,Multimedia Technologies,Gameplay Programmer,0.2779,Gameplay Programmer,0.2581,-0.0198,False
+557,Multimedia Technologies,Jaunesnysis (-ioji) socialinių tinklų reklamos dizaineris (-ė) / IT projektų specialistas (-ė),0.1791,Jaunesnysis (-ioji) socialinių tinklų reklamos dizaineris (-ė) / IT projektų specialistas (-ė),0.182,0.0029,False
+558,Digital technologies and cyber security,KIBERNETINIO SAUGUMO VADOVAS (-Ė),0.1665,AI Engineer (Applied AI) with verification,0.2023,0.0358,True
+559,Programming and Multimedia,PHP programuotojas (-a) | Mid / Strong Mid,0.3974,PHP programuotojas (-a) | Mid / Strong Mid,0.5043,0.1069,False
+560,Software Systems,IT Compliance & Process manager,0.2443,IT Compliance & Process manager,0.2279,-0.0164,False
+561,Software Systems,AI Engineer (Applied AI) with verification,0.1578,AI Engineer (Applied AI) with verification,0.1908,0.0329,False
+562,Software Engineering,Join our team as a JUNIOR System Analyst!,0.2445,Join our team as a JUNIOR System Analyst!,0.2506,0.0062,False
+563,Software Engineering,DIRBTINIO INTELEKTO INŽINIERĖ (-IUS) IT skyriuje,0.2268,DIRBTINIO INTELEKTO INŽINIERĖ (-IUS) IT skyriuje,0.2267,-0.0001,False
+564,Software Engineering,Low-code programuotojas,0.4378,Low-code programuotojas,0.4378,0.0,False
