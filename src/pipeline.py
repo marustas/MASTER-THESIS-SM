@@ -126,7 +126,7 @@ def _run_step(step: int) -> None:
 
     elif step == 10:
         from src.alignment.hybrid import run_hybrid_alignment as _run
-        _run()
+        _run(use_programme_idf=True)
 
     elif step == 11:
         from src.evaluation.cross_strategy import run_evaluation as _run

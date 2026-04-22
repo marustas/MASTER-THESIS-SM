@@ -165,7 +165,7 @@ class TestIPF:
     def test_ipf_disabled_matches_base_formula(self):
         """ipf_top_k=0 should give same results as raw normalised formula."""
         df = _make_df(3, 8)
-        rankings = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0, delta=0.0)
+        rankings = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0)
         assert (rankings["hybrid_score"] >= -1e-6).all()
         assert (rankings["hybrid_score"] <= 1.0 + 1e-6).all()
 
@@ -317,10 +317,10 @@ class TestConfidenceNorm:
         """norm_confidence=False should give same result as plain min-max."""
         df = _make_df(2, 5)
         plain = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, norm_confidence=False,
-                             gamma=0.0, delta=0.0)
+                             gamma=0.0)
         # Run twice — deterministic
         again = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, norm_confidence=False,
-                             gamma=0.0, delta=0.0)
+                             gamma=0.0)
         pd.testing.assert_frame_equal(plain, again)
 
     def test_dampens_uniformly_weak_programmes(self):
@@ -347,9 +347,9 @@ class TestConfidenceNorm:
             })
         df = pd.DataFrame(rows)
         with_conf = align_hybrid(df, semantic_top_n=6, ipf_top_k=0, norm_confidence=True,
-                                 gamma=0.0, delta=0.0)
+                                 gamma=0.0)
         without_conf = align_hybrid(df, semantic_top_n=6, ipf_top_k=0, norm_confidence=False,
-                                    gamma=0.0, delta=0.0)
+                                    gamma=0.0)
         # With confidence, max hybrid_score per programme should be ≤ without
         for p_id in with_conf["programme_id"].unique():
             max_with = with_conf[with_conf["programme_id"] == p_id]["hybrid_score"].max()
@@ -401,23 +401,6 @@ class TestRunHybridAlignment:
             assert len(rankings[rankings["programme_id"] == p_id]) <= 3
 
 
-# ── Mock skill embeddings helper ─────────────────────────────────────────────
-
-def _mock_skill_embeddings(uris: list[str], dim: int = 8, cluster: bool = True):
-    """Return {uri: embedding} — cluster=True → similar vectors, False → orthogonal."""
-    rng = np.random.default_rng(42)
-    if cluster:
-        base = _l2(rng.random(dim).astype(np.float32))
-        return {u: _l2(base + rng.normal(0, 0.05, dim).astype(np.float32)) for u in uris}
-    else:
-        embeddings = {}
-        for i, u in enumerate(uris):
-            v = np.zeros(dim, dtype=np.float32)
-            v[i % dim] = 1.0
-            embeddings[u] = v
-        return embeddings
-
-
 # ── compute_match_quality ─────────────────────────────────────────────────────
 
 class TestComputeMatchQuality:
@@ -429,14 +412,14 @@ class TestComputeMatchQuality:
         uri_idfs = {"rare": 4.0, "common": 0.5}
         qm = compute_match_quality(
             matched_uris=["rare"], job_uris=["rare", "common"],
-            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.0, delta=0.0,
+            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.0,
         )
         assert qm["specificity_ratio"] > 1.0
 
     def test_specificity_neutral_when_empty_matched(self):
         qm = compute_match_quality(
             matched_uris=[], job_uris=["a"], uri_idfs={"a": 1.0},
-            median_idf=1.0, gamma=0.0, delta=0.0,
+            median_idf=1.0, gamma=0.0,
         )
         assert qm["specificity_ratio"] == 1.0
 
@@ -445,7 +428,7 @@ class TestComputeMatchQuality:
         uri_idfs = {"common": 0.3, "rare": 5.0}
         qm = compute_match_quality(
             matched_uris=["common"], job_uris=["common", "rare"],
-            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.0, delta=0.0,
+            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.0,
         )
         assert qm["specificity_ratio"] < 1.0
 
@@ -455,7 +438,7 @@ class TestComputeMatchQuality:
         uri_idfs = {"a": 0.5, "b": 0.3}
         qm = compute_match_quality(
             matched_uris=["a", "b"], job_uris=["a", "b"],
-            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3, delta=0.0,
+            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3,
         )
         assert qm["generic_penalty"] == pytest.approx(0.7)
 
@@ -464,7 +447,7 @@ class TestComputeMatchQuality:
         uri_idfs = {"a": 3.0, "b": 4.0}
         qm = compute_match_quality(
             matched_uris=["a", "b"], job_uris=["a", "b"],
-            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3, delta=0.0,
+            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3,
         )
         assert qm["generic_penalty"] == pytest.approx(1.0)
 
@@ -473,64 +456,24 @@ class TestComputeMatchQuality:
         uri_idfs = {"gen": 0.5, "spec": 4.0}
         qm = compute_match_quality(
             matched_uris=["gen", "spec"], job_uris=["gen", "spec"],
-            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3, delta=0.0,
+            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3,
         )
         assert 0.7 < qm["generic_penalty"] < 1.0
-
-    # ── Coherence boost ───────────────────────────────────────────────────
-    def test_coherence_disabled_when_none(self):
-        qm = compute_match_quality(
-            matched_uris=["a", "b", "c"], job_uris=["a", "b", "c"],
-            uri_idfs={"a": 1.0, "b": 1.0, "c": 1.0}, median_idf=1.0,
-            gamma=0.0, delta=0.2, skill_embeddings=None,
-        )
-        assert qm["coherence_boost"] == 1.0
-
-    def test_coherence_disabled_below_min_skills(self):
-        embs = _mock_skill_embeddings(["a", "b"], dim=8)
-        qm = compute_match_quality(
-            matched_uris=["a", "b"], job_uris=["a", "b"],
-            uri_idfs={"a": 1.0, "b": 1.0}, median_idf=1.0,
-            gamma=0.0, delta=0.2, min_coherence_skills=3,
-            skill_embeddings=embs,
-        )
-        assert qm["coherence_boost"] == 1.0
-
-    def test_coherence_boosts_similar_cluster(self):
-        embs = _mock_skill_embeddings(["a", "b", "c"], dim=8, cluster=True)
-        qm = compute_match_quality(
-            matched_uris=["a", "b", "c"], job_uris=["a", "b", "c"],
-            uri_idfs={"a": 1.0, "b": 1.0, "c": 1.0}, median_idf=1.0,
-            gamma=0.0, delta=0.2, min_coherence_skills=3,
-            skill_embeddings=embs,
-        )
-        assert qm["coherence_boost"] > 1.0
-
-    def test_coherence_near_neutral_with_dissimilar(self):
-        embs = _mock_skill_embeddings(["a", "b", "c"], dim=8, cluster=False)
-        qm = compute_match_quality(
-            matched_uris=["a", "b", "c"], job_uris=["a", "b", "c"],
-            uri_idfs={"a": 1.0, "b": 1.0, "c": 1.0}, median_idf=1.0,
-            gamma=0.0, delta=0.2, min_coherence_skills=3,
-            skill_embeddings=embs,
-        )
-        # Orthogonal → coherence ≈ 0 → boost ≈ 1.0
-        assert qm["coherence_boost"] == pytest.approx(1.0, abs=0.05)
 
     # ── Multiplier ────────────────────────────────────────────────────────
     def test_multiplier_is_product(self):
         uri_idfs = {"a": 0.5, "b": 3.0}
         qm = compute_match_quality(
             matched_uris=["a", "b"], job_uris=["a", "b"],
-            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3, delta=0.0,
+            uri_idfs=uri_idfs, median_idf=2.0, gamma=0.3,
         )
-        expected = qm["specificity_ratio"] * qm["generic_penalty"] * qm["coherence_boost"]
+        expected = qm["specificity_ratio"] * qm["generic_penalty"]
         assert qm["quality_multiplier"] == pytest.approx(expected)
 
     def test_empty_job_uris(self):
         qm = compute_match_quality(
             matched_uris=[], job_uris=[], uri_idfs={}, median_idf=0.0,
-            gamma=0.3, delta=0.2,
+            gamma=0.3,
         )
         assert qm["quality_multiplier"] == pytest.approx(1.0)
 
@@ -576,8 +519,8 @@ class TestHybridMatchQuality:
                 "skill_details": [common_skill],
             })
         df = pd.DataFrame(rows)
-        raw = align_hybrid(df, semantic_top_n=7, ipf_top_k=0, gamma=0.0, delta=0.0)
-        refined = align_hybrid(df, semantic_top_n=7, ipf_top_k=0, gamma=0.3, delta=0.0)
+        raw = align_hybrid(df, semantic_top_n=7, ipf_top_k=0, gamma=0.0)
+        refined = align_hybrid(df, semantic_top_n=7, ipf_top_k=0, gamma=0.3)
         merged = raw.merge(refined, on=["programme_id", "job_id"], suffixes=("_raw", "_ref"))
         # programme_recall values should differ (quality multiplier applied)
         assert not np.allclose(
@@ -585,12 +528,12 @@ class TestHybridMatchQuality:
             merged["programme_recall_ref"].values,
         )
 
-    def test_backward_compat_gamma0_delta0(self):
-        """γ=0, δ=0 → identical to original formula."""
+    def test_backward_compat_gamma0(self):
+        """γ=0 → identical to original formula."""
         df = _make_df(2, 5)
-        original = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0, delta=0.0)
+        original = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0)
         # Run again with same params — should be deterministic
-        again = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0, delta=0.0)
+        again = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0)
         pd.testing.assert_frame_equal(original, again)
 
     def test_specificity_reranks_domain_match(self):
@@ -628,7 +571,7 @@ class TestHybridMatchQuality:
         df = pd.DataFrame(rows)
         # Low alpha to let recall (with quality refinement) dominate
         rankings = align_hybrid(
-            df, semantic_top_n=7, ipf_top_k=0, alpha=0.3, gamma=0.3, delta=0.0,
+            df, semantic_top_n=7, ipf_top_k=0, alpha=0.3, gamma=0.3,
         )
         top_for_prog = rankings[rankings["programme_id"] == 0].iloc[0]
         assert top_for_prog["job_title"] == "DevOps Engineer"
@@ -636,49 +579,20 @@ class TestHybridMatchQuality:
     def test_generic_penalty_demotes_generic_match(self):
         """Job matched only via generic skills should score lower with γ > 0."""
         df = _make_df(2, 5)
-        without = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0, delta=0.0)
-        with_pen = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.3, delta=0.0)
+        without = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.0)
+        with_pen = align_hybrid(df, semantic_top_n=5, ipf_top_k=0, gamma=0.3)
         # Mean hybrid score should not increase (generic penalty only reduces)
         assert with_pen["hybrid_score"].mean() <= without["hybrid_score"].mean() + 1e-6
 
-    def test_coherence_boosts_related_cluster(self):
-        """Coherence boost should increase score for coherent skill matches."""
-        rows = []
-        devops_skills = ["esco:k8s", "esco:docker", "esco:ci_cd", "esco:terraform"]
-        rows.append({
-            "source_type": "programme",
-            "embedding": _emb(1, 8),
-            "name": "DevOps",
-            "skill_details": [_skill(u) for u in devops_skills],
-        })
-        rows.append({
-            "source_type": "job_ad",
-            "embedding": _emb(2, 8),
-            "job_title": "DevOps Job",
-            "skill_details": [_skill(u) for u in devops_skills],
-        })
-        df = pd.DataFrame(rows)
-        embs = _mock_skill_embeddings(devops_skills, dim=8, cluster=True)
-        with_coh = align_hybrid(
-            df, semantic_top_n=1, ipf_top_k=0,
-            gamma=0.0, delta=0.2, skill_embeddings=embs,
-        )
-        without_coh = align_hybrid(
-            df, semantic_top_n=1, ipf_top_k=0,
-            gamma=0.0, delta=0.0,
-        )
-        # With coherence boost, programme_recall should be higher
-        assert with_coh["programme_recall"].iloc[0] >= without_coh["programme_recall"].iloc[0]
-
     def test_scores_non_negative(self):
         df = _make_df(3, 8)
-        rankings = align_hybrid(df, semantic_top_n=5, gamma=0.3, delta=0.2)
+        rankings = align_hybrid(df, semantic_top_n=5, gamma=0.3)
         assert (rankings["hybrid_score"] >= -1e-9).all()
         assert (rankings["programme_recall"] >= -1e-9).all()
 
     def test_sort_order_maintained(self):
         df = _make_df(3, 8)
-        rankings = align_hybrid(df, semantic_top_n=5, gamma=0.3, delta=0.2)
+        rankings = align_hybrid(df, semantic_top_n=5, gamma=0.3)
         for p_id in rankings["programme_id"].unique():
             scores = rankings[rankings["programme_id"] == p_id]["hybrid_score"].tolist()
             assert scores == sorted(scores, reverse=True)

@@ -166,65 +166,6 @@ def build_weighted_skills(
     return weights
 
 
-# ── ESCO description embeddings (Step 27) ────────────────────────────────────
-
-SKILL_EMBEDDINGS_PATH = DATA_DIR / "dataset" / "skill_embeddings.npz"
-
-
-def build_skill_description_embeddings(
-    embedding_model: object,
-    csv_path: Path = ESCO_CSV_PATH,
-) -> dict[str, np.ndarray]:
-    """
-    Embed ESCO skill descriptions (1-3 sentences) for coherence boost.
-
-    Parameters
-    ----------
-    embedding_model:
-        Any object with ``.encode(texts, normalize_embeddings=True) -> np.ndarray``
-        (e.g. ``SentenceTransformer`` or ``MockEmbeddingModel``).
-    csv_path:
-        Path to the ESCO skills CSV.
-
-    Returns
-    -------
-    ``{esco_uri: L2-normalised embedding}`` for all skills that have a
-    non-empty description.  Skills without a description are skipped.
-    """
-    index = load_from_csv(csv_path)
-    uris: list[str] = []
-    descriptions: list[str] = []
-    for skill in index.skills:
-        if skill.description:
-            uris.append(skill.uri)
-            descriptions.append(skill.description)
-
-    if not descriptions:
-        logger.warning("No ESCO descriptions found — returning empty embeddings")
-        return {}
-
-    logger.info(f"Embedding {len(descriptions)} ESCO skill descriptions…")
-    embeddings = embedding_model.encode(descriptions, normalize_embeddings=True)
-    embeddings = np.asarray(embeddings, dtype=np.float32)
-
-    return dict(zip(uris, embeddings))
-
-
-def save_skill_embeddings(
-    skill_embeddings: dict[str, np.ndarray],
-    path: Path = SKILL_EMBEDDINGS_PATH,
-) -> None:
-    """Persist skill embeddings to NPZ (compatible with ``_load_skill_embeddings`` in hybrid.py)."""
-    if not skill_embeddings:
-        logger.warning("No skill embeddings to save")
-        return
-    uris = np.array(list(skill_embeddings.keys()))
-    embeddings = np.stack(list(skill_embeddings.values()))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(path, uris=uris, embeddings=embeddings)
-    logger.info(f"Saved {len(uris)} skill embeddings → {path}")
-
-
 # ── Programme-level IDF (Step 31) ────────────────────────────────────────────
 
 def compute_programme_idf(

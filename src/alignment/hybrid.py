@@ -52,7 +52,6 @@ from src.skills.skill_weights import compute_corpus_idf, compute_median_idf
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
 DATASET_PATH = DATA_DIR / "dataset" / "dataset.parquet"
-SKILL_EMBEDDINGS_PATH = DATA_DIR / "dataset" / "skill_embeddings.npz"
 RESULTS_DIR = DATA_DIR.parent / "experiments" / "results"
 
 
@@ -64,15 +63,12 @@ def compute_match_quality(
     uri_idfs: dict[str, float],
     median_idf: float,
     gamma: float = 0.3,
-    delta: float = 0.2,
-    min_coherence_skills: int = 3,
-    skill_embeddings: dict[str, np.ndarray] | None = None,
 ) -> dict[str, float]:
     """
     Compute a quality multiplier for programme_recall.
 
     Returns dict with keys: specificity_ratio, generic_penalty,
-    coherence_boost, quality_multiplier (product of the three).
+    quality_multiplier (product of the two).
     """
     # ── 1. Specificity ratio ──────────────────────────────────────────────
     if not matched_uris or not job_uris:
@@ -96,31 +92,11 @@ def compute_match_quality(
             generic_frac = generic_sum / total_idf
             generic_penalty = 1.0 - gamma * generic_frac
 
-    # ── 3. Coherence boost ────────────────────────────────────────────────
-    if skill_embeddings is None or delta == 0.0:
-        coherence_boost = 1.0
-    else:
-        emb_uris = [u for u in matched_uris if u in skill_embeddings]
-        if len(emb_uris) < min_coherence_skills:
-            coherence_boost = 1.0
-        else:
-            mat = np.stack([skill_embeddings[u] for u in emb_uris])
-            # L2-normalise rows (dot product = cosine)
-            norms = np.linalg.norm(mat, axis=1, keepdims=True)
-            norms = np.where(norms == 0, 1.0, norms)
-            mat = mat / norms
-            sim = mat @ mat.T
-            n = len(emb_uris)
-            # Mean of off-diagonal elements
-            coherence = float((sim.sum() - n) / (n * (n - 1)))
-            coherence_boost = 1.0 + delta * coherence
-
-    quality_multiplier = specificity_ratio * generic_penalty * coherence_boost
+    quality_multiplier = specificity_ratio * generic_penalty
 
     return {
         "specificity_ratio": specificity_ratio,
         "generic_penalty": generic_penalty,
-        "coherence_boost": coherence_boost,
         "quality_multiplier": quality_multiplier,
     }
 
@@ -137,9 +113,7 @@ def align_hybrid(
     ipf_strict_threshold: float = 0.5,
     norm_confidence: bool = True,
     gamma: float = 0.3,
-    delta: float = 0.2,
-    min_coherence_skills: int = 3,
-    skill_embeddings: dict[str, np.ndarray] | None = None,
+    use_programme_idf: bool = True,
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -162,6 +136,10 @@ def align_hybrid(
     norm_confidence : if True, dampen min-max normalisation when the raw
                      score range within a programme is small, preventing
                      noisy rankings for uniformly weak matches.
+    gamma          : weight of the generic penalty in match quality
+                     refinement.  0.0 disables the penalty.
+    use_programme_idf : if True, weight programme skills by inter-programme
+                     IDF in the symbolic refinement stage.
 
     Returns
     -------
@@ -197,16 +175,17 @@ def align_hybrid(
 
     # ── Stage 2: symbolic refinement (IDF-weighted programme recall) ────────
     logger.info("Stage 2: symbolic refinement (IDF-weighted programme_recall)…")
-    sym, _ = align_symbolic_weighted(df, top_n=semantic_top_n)
+    sym, _ = align_symbolic_weighted(
+        df, top_n=semantic_top_n, use_programme_idf=use_programme_idf,
+    )
     sym = sym[["programme_id", "job_id", "programme_recall"]]
 
     merged = candidates.merge(sym, on=["programme_id", "job_id"], how="left")
     merged["programme_recall"] = merged["programme_recall"].fillna(0.0)
 
     # ── Match quality refinement ───────────────────────────────────────────────
-    if gamma != 0.0 or delta != 0.0:
-        logger.info("  Applying match quality refinement "
-                     f"(γ={gamma}, δ={delta}, min_coherence={min_coherence_skills})…")
+    if gamma != 0.0:
+        logger.info(f"  Applying match quality refinement (γ={gamma})…")
 
         # Build corpus IDF (same pattern as align_symbolic_weighted)
         all_uri_lists: list[list[str]] = []
@@ -253,9 +232,6 @@ def align_hybrid(
                 uri_idfs=uri_idfs,
                 median_idf=median_idf,
                 gamma=gamma,
-                delta=delta,
-                min_coherence_skills=min_coherence_skills,
-                skill_embeddings=skill_embeddings,
             )
             multipliers.append(qm["quality_multiplier"])
 
@@ -367,14 +343,12 @@ def _compute_summary(
     semantic_top_n: int,
     alpha: float,
     gamma: float = 0.3,
-    delta: float = 0.2,
 ) -> dict:
     return {
         "parameters": {
             "semantic_top_n": semantic_top_n,
             "alpha": alpha,
             "gamma": gamma,
-            "delta": delta,
         },
         "n_programmes": int(rankings["programme_id"].nunique()),
         "n_jobs_total": int(rankings["job_id"].nunique()),
@@ -408,9 +382,7 @@ def run_hybrid_alignment(
     ipf_strict_threshold: float = 0.5,
     norm_confidence: bool = True,
     gamma: float = 0.3,
-    delta: float = 0.2,
-    min_coherence_skills: int = 3,
-    skill_embeddings: dict[str, np.ndarray] | None = None,
+    use_programme_idf: bool = True,
 ) -> None:
     """Load dataset, run hybrid alignment, persist results."""
     logger.info(f"Loading dataset from {dataset_path}…")
@@ -424,9 +396,8 @@ def run_hybrid_alignment(
         ipf_strict_floor=ipf_strict_floor,
         ipf_strict_threshold=ipf_strict_threshold,
         norm_confidence=norm_confidence,
-        gamma=gamma, delta=delta,
-        min_coherence_skills=min_coherence_skills,
-        skill_embeddings=skill_embeddings,
+        gamma=gamma,
+        use_programme_idf=use_programme_idf,
     )
 
     rankings_path = output_dir / "rankings.parquet"
@@ -435,22 +406,11 @@ def run_hybrid_alignment(
     rankings.to_parquet(rankings_path, index=False)
     logger.info(f"Rankings → {rankings_path}  ({len(rankings):,} pairs)")
 
-    summary = _compute_summary(rankings, semantic_top_n, alpha, gamma, delta)
+    summary = _compute_summary(rankings, semantic_top_n, alpha, gamma)
     with open(summary_path, "w") as fh:
         json.dump(summary, fh, indent=2)
     logger.info(f"Summary → {summary_path}")
 
 
-def _load_skill_embeddings(path: Path = SKILL_EMBEDDINGS_PATH) -> dict[str, np.ndarray] | None:
-    if not path.exists():
-        logger.warning(f"Skill embeddings not found at {path} — coherence boost disabled")
-        return None
-    data = np.load(path, allow_pickle=False)
-    uris = data["uris"]
-    embeddings = data["embeddings"]
-    logger.info(f"Loaded {len(uris)} skill embeddings from {path}")
-    return dict(zip(uris, embeddings))
-
-
 if __name__ == "__main__":
-    run_hybrid_alignment(skill_embeddings=_load_skill_embeddings())
+    run_hybrid_alignment()
