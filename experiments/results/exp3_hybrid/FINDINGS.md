@@ -186,17 +186,18 @@ Parameter sweep over α ∈ {0.4, 0.5, 0.6}, top_k ∈ {10, 15, 20, 30, 40}, flo
 
 ## 10. Match quality refinement (Step 26)
 
-Three multiplicative terms applied to `programme_recall` before normalisation:
+Two multiplicative terms applied to `programme_recall` before normalisation:
 
 ```
-refined_recall = recall × specificity_ratio × generic_penalty × coherence_boost
+refined_recall = recall × specificity_ratio × generic_penalty
 ```
 
 1. **Specificity ratio** — `log(1 + mean_idf_matched) / log(1 + mean_idf_all_job)`, clamped [0.5, 2.0]. Rewards matching rare skills.
 2. **Generic penalty** — `1 − γ·generic_frac` (γ=0.3). Penalises matches dominated by below-median IDF skills.
-3. **Coherence boost** — `1 + δ·mean_pairwise_cosine` (δ=0.2). Rewards coherent skill clusters.
 
-Backward compatible: γ=0, δ=0 → quality_multiplier=1.0.
+Backward compatible: γ=0 → quality_multiplier=1.0.
+
+Note: Coherence boost (Step 27, δ=0.2 × mean pairwise cosine of ESCO description embeddings) was tested and removed — it degraded 53% of programmes while improving only 18%. See `experiments/results/impact_comparison/FINDINGS.md`.
 
 ## 11. Coherence boost activation
 
