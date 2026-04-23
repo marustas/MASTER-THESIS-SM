@@ -450,17 +450,11 @@ Applied: enabled `use_programme_idf=True` as default, removed coherence boost (`
 
 ---
 
-## Step 34 — Expand Section Header Recognition [ ]
+## Step 34 — Expand Section Header Recognition [x]
 
-The section-weighted embedding strategy (Step 25) misses 84 of 102 unique headers in programme descriptions. Only 18 are mapped to the four section groups (subjects, outcomes, identity, specialisations). Unmapped content falls into `_remainder` which gets **zero weight** — averaging 2,625 chars per programme (27% of text).
+Expanded `_SECTION_MAP` from 18 to 90 entries. Added `_remainder` group with weight 0.05. Rebalanced weights: subjects=0.35, outcomes=0.25, identity=0.15, specialisations=0.20, _remainder=0.05.
 
-This means learning outcomes like "students will develop special skills", "graduates will be able to", and specialisation blocks like "Specialization – Machine Learning" are silently discarded from the embedding.
-
-Changes:
-
-1. Expand `_SECTION_MAP` in `generator.py` to cover the 84 unmapped headers, mapping each to the correct group
-2. Add a `_remainder` fallback weight (e.g. 0.05) so truly unmapped content contributes minimally rather than being zeroed
-3. 15/45 programmes have no recognised "subjects" header and 14/45 have no "outcomes" — after header expansion these should drop significantly
+Results: programmes with 0 subjects dropped 15→1, with 0 outcomes 14→7. Top-1 diversity improved 37→39/45 (0.867). Inter-programme cosine increased 0.633→0.697 (programmes become more similar when more shared curriculum is captured). Cosine range per programme barely changed (0.154→0.160). Net score impact mixed (38% improved, 59% degraded, mean -0.007) — expected, proper fix is Step 35 alpha rebalance.
 4. Re-generate embeddings and re-run hybrid alignment
 
 **Rationale:** 58% of programme text by volume is currently identity+remainder (weighted 0.20 + 0.00 = 0.20), while discriminative content (subjects+outcomes+specialisations) averages only 42% of text but gets 80% of weight. Expanding header recognition will route more discriminative content into the high-weight groups, increasing embedding discrimination.
