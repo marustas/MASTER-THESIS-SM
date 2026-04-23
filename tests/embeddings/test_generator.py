@@ -274,6 +274,53 @@ class TestParseProgrammeSections:
         sections = parse_programme_sections(text)
         assert "Elective A" in sections["specialisations"]
 
+    def test_expanded_subject_headers(self):
+        text = (
+            "Framework:\n"
+            "Mathematics, Physics\n"
+            "Compulsory subjects:\n"
+            "Algorithms, Data Structures\n"
+        )
+        sections = parse_programme_sections(text)
+        assert "Mathematics" in sections["subjects"]
+        assert "Algorithms" in sections["subjects"]
+
+    def test_expanded_outcome_headers(self):
+        text = (
+            "Graduates will be able to:\n"
+            "Design systems\n"
+            "Special abilities:\n"
+            "Critical thinking\n"
+        )
+        sections = parse_programme_sections(text)
+        assert "Design systems" in sections["outcomes"]
+        assert "Critical thinking" in sections["outcomes"]
+
+    def test_remainder_has_weight(self):
+        from src.embeddings.generator import SECTION_WEIGHTS
+        assert "_remainder" in SECTION_WEIGHTS
+        assert SECTION_WEIGHTS["_remainder"] > 0
+
+    def test_meta_sections_go_to_remainder(self):
+        text = (
+            "Activities of teaching and learning:\n"
+            "Lectures and seminars\n"
+            "Access to further study:\n"
+            "Master programmes\n"
+        )
+        sections = parse_programme_sections(text)
+        assert "Lectures" in sections["_remainder"]
+        assert "Master programmes" in sections["_remainder"]
+
+    def test_specialization_dash_prefix(self):
+        """Specialization variants with – or - should map to specialisations."""
+        text = (
+            "Specialization – machine learning:\n"
+            "Deep learning, NLP\n"
+        )
+        sections = parse_programme_sections(text)
+        assert "Deep learning" in sections["specialisations"]
+
 
 # ── embed_programme_sections ──────────────────────────────────────────────────
 
