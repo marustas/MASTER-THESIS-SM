@@ -435,6 +435,61 @@ Added `src/evaluation/coverage.py` with:
 
 ---
 
+## Step 33 — Impact Comparison & Coherence Boost Removal [x]
+
+Evaluated Steps 27 and 31 against a baseline (no skill embeddings, no programme IDF) in four configurations: baseline, +desc_emb only, +prog_idf only, +both.
+
+- **Programme IDF (Step 31):** Clearly positive — 60% of programmes improved, +0.018 mean score lift, top-1 diversity 35→37. Generic roles replaced by domain-specific ones.
+- **ESCO description embeddings (Step 27):** Actively harmful — 53% degraded, -0.002 mean delta. Coherence boost added noise.
+
+Applied: enabled `use_programme_idf=True` as default, removed coherence boost (`delta`, `skill_embeddings`, `_load_skill_embeddings`, `build_skill_description_embeddings`, `save_skill_embeddings`). Re-ran pipeline steps 8+10.
+
+**Output:** `experiments/results/impact_comparison/`
+**Module:** `src/evaluation/impact_comparison.py`, `src/alignment/hybrid.py` (simplified)
+**Tests:** 478 tests, all passing (11 coherence tests removed)
+
+---
+
+## Step 34 — Expand Section Header Recognition [ ]
+
+The section-weighted embedding strategy (Step 25) misses 84 of 102 unique headers in programme descriptions. Only 18 are mapped to the four section groups (subjects, outcomes, identity, specialisations). Unmapped content falls into `_remainder` which gets **zero weight** — averaging 2,625 chars per programme (27% of text).
+
+This means learning outcomes like "students will develop special skills", "graduates will be able to", and specialisation blocks like "Specialization – Machine Learning" are silently discarded from the embedding.
+
+Changes:
+
+1. Expand `_SECTION_MAP` in `generator.py` to cover the 84 unmapped headers, mapping each to the correct group
+2. Add a `_remainder` fallback weight (e.g. 0.05) so truly unmapped content contributes minimally rather than being zeroed
+3. 15/45 programmes have no recognised "subjects" header and 14/45 have no "outcomes" — after header expansion these should drop significantly
+4. Re-generate embeddings and re-run hybrid alignment
+
+**Rationale:** 58% of programme text by volume is currently identity+remainder (weighted 0.20 + 0.00 = 0.20), while discriminative content (subjects+outcomes+specialisations) averages only 42% of text but gets 80% of weight. Expanding header recognition will route more discriminative content into the high-weight groups, increasing embedding discrimination.
+
+**Output:** updated embeddings in `data/embeddings/`, re-run alignment
+**Module:** `src/embeddings/generator.py`
+
+---
+
+## Step 35 — Rebalance Hybrid Alpha [ ]
+
+Cosine similarity has very low discriminative power: per-programme range across 50 candidates is only 0.154 (std=0.034). Programme recall has 2x the range (0.306) and 1.7x the std (0.056). Despite this, cosine gets 60% of the weight (alpha=0.6).
+
+The hybrid top-1 matches the semantic-only top-1 in only 2% of cases, vs 20% for recall-only top-1. This means the IPF penalty — not the alpha-weighted combination — is the dominant re-ranker.
+
+Changes:
+
+1. Re-run alpha sweep at finer granularity (0.3–0.7, step=0.025) with programme IDF enabled
+2. Measure top-1 diversity, score mean/CoV, and Spearman correlation with pure semantic/symbolic rankings at each alpha
+3. Evaluate whether Step 34 (header expansion) sufficiently improves cosine discrimination — if it does, alpha may not need lowering
+4. Apply optimal alpha
+
+**Rationale:** The current alpha=0.6 was tuned before programme IDF was enabled. With programme IDF amplifying the recall signal, the balance point may have shifted. Additionally, if cosine ranges remain narrow after Step 34, lowering alpha to 0.4–0.5 would let the more discriminative recall component drive rankings.
+
+**Output:** `experiments/results/sensitivity/`
+**Module:** `src/evaluation/sensitivity.py`
+
+---
+
 ## Legend
 
 - `[ ]` Not started
