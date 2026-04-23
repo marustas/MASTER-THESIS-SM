@@ -103,33 +103,116 @@ def _embeddings_to_list(arr: np.ndarray) -> list[list[float]]:
 
 # Section groups and their weights for programme embeddings.
 # Most discriminative sections get the highest weight.
+# _remainder catches content under unmapped headers (meta sections like
+# "activities of teaching and learning", career paths, assessment methods).
 SECTION_WEIGHTS = {
-    "subjects": 0.40,     # course lists — most discriminative
-    "outcomes": 0.25,     # learning outcomes / competencies
-    "identity": 0.20,     # objectives + distinctive features
-    "specialisations": 0.15,  # domain-specific tracks
+    "subjects": 0.35,         # course lists — most discriminative
+    "outcomes": 0.25,         # learning outcomes / competencies
+    "identity": 0.15,         # objectives + distinctive features
+    "specialisations": 0.20,  # domain-specific tracks — key differentiator
+    "_remainder": 0.05,       # unmapped content — small weight so it's not lost
 }
 
-# Map raw section headers to groups
+# Map raw section headers to groups.
+# Headers are normalised to lower-case with trailing colon stripped.
 _SECTION_MAP: dict[str, str] = {
+    # ── subjects ──────────────────────────────────────────────────────────
     "study subjects (modules), practical training": "subjects",
     "study subjects (modules)": "subjects",
+    "study subjects, practical training": "subjects",
+    "study course units, practical training": "subjects",
+    "study modules (subjects), practical training": "subjects",
     "subjects": "subjects",
+    "framework": "subjects",
+    "framework: course units, practice": "subjects",
+    "framework: study subjects, practical training": "subjects",
+    "the study field course units": "subjects",
+    "students study the following subjects (modules)": "subjects",
+    "i. general subjects of collegiate studies": "subjects",
+    "i. general study subjects": "subjects",
+    "general college study subjects (15 ects)": "subjects",
+    "subjects in the study field (99 ects)": "subjects",
+    "compulsory subjects": "subjects",
+    "main study subjects (165 credits)": "subjects",
+    "arbitrary study subjects (60 credits)": "subjects",
+    "study field subjects – 152 ects credits": "subjects",
+    "general and/or specific study subjects – 19 ects credits": "subjects",
+    "fundamental part of the study program (60 ects credits)": "subjects",
+    "scope of study field subjects – 123 credits, of them": "subjects",
+    "scope of study field subjects – 83 credits": "subjects",
+    "scope of study field subjects – 125 credits, of them": "subjects",
+    "scope of study field subjects – 80 credits": "subjects",
+    "mandatory subjects – 10 credits": "subjects",
+    "professional activity internships – 30 ects credits": "subjects",
+    "practice (36 credits)": "subjects",
+    "practice - 30 ects credits": "subjects",
+    "iii. practices / internships": "subjects",
+    "iv. final project": "subjects",
+    # ── outcomes ──────────────────────────────────────────────────────────
     "learning outcomes": "outcomes",
+    "study outcomes": "outcomes",
     "knowledge and its application": "outcomes",
     "research skills": "outcomes",
     "specific skills": "outcomes",
     "special skills": "outcomes",
     "social skills": "outcomes",
     "personal skills": "outcomes",
+    "special abilities": "outcomes",
+    "social abilities": "outcomes",
+    "personal abilities": "outcomes",
+    "ability to exploration": "outcomes",
+    "graduates will be able to": "outcomes",
+    "the graduates of this study programme will be able": "outcomes",
+    "students completing this program will be able to": "outcomes",
+    "after graduating from the studies, a person will be able": "outcomes",
+    "after completion of the study programme, a graduate": "outcomes",
+    "students will learn": "outcomes",
+    "students will develop research skills and will be able to": "outcomes",
+    "students will develop special skills": "outcomes",
+    "students will develop such social skills": "outcomes",
+    "students will develop following personal skills": "outcomes",
+    # ── identity ──────────────────────────────────────────────────────────
     "objective(s) of a study programme": "identity",
     "objective of a study programme": "identity",
+    "objectives of the study programme": "identity",
+    "aim(s) of the study programme": "identity",
     "study programme abstract": "identity",
     "description of the study programme": "identity",
+    "general description": "identity",
     "distinctive features of a study programme": "identity",
+    "distinctive features of the study programme": "identity",
+    "a) the programme focuses on": "identity",
+    "b) unique content of the programme": "identity",
+    "c) experienced teachers": "identity",
+    # ── specialisations ───────────────────────────────────────────────────
     "specialisations": "specialisations",
     "specializations": "specialisations",
     "optional courses": "specialisations",
+    "you can optionally choose up to 66 credits": "specialisations",
+    "students can choose one out of two specializations from the study programme": "specialisations",
+    "deeper specialization in the software systems field - 60 credits, of them": "specialisations",
+    # Named specialisation modules → specialisations
+    "management of computer systems specialization": "specialisations",
+    "management of internet projects specialization": "specialisations",
+    "programming for mobile devices specialization": "specialisations",
+    "management of computer systems (module)": "specialisations",
+    "management of internet projects (module)": "specialisations",
+    "programming for mobile devices (module)": "specialisations",
+    "1. specialisation. \u201ecyberphysical systems\u201c - 23 credits": "specialisations",
+    "2. specialisation. \u201ecyber security\u201c - 23 credits": "specialisations",
+    "free elective subjects - 9 credits": "specialisations",
+    "specialization – machine learning": "specialisations",
+    "specialization – web technologies": "specialisations",
+    "specialization – business systems technology": "specialisations",
+    # ── deliberately unmapped (non-content / meta) ────────────────────────
+    # These go to _remainder intentionally:
+    #   "activities of teaching and learning" (40)
+    #   "access to further study" (40)
+    #   "access to professional activity" (39)
+    #   "methods of assessment of learning achievements" (37)
+    #   "access to professional activity or further study" (32)
+    #   "graduates work as" (1)
+    #   … and other meta / career-path headers
 }
 
 
@@ -141,7 +224,6 @@ def parse_programme_sections(text: str) -> dict[str, str]:
     Sections not matching any known header go into a '_remainder' key.
     """
     groups: dict[str, list[str]] = {g: [] for g in SECTION_WEIGHTS}
-    groups["_remainder"] = []
 
     current_group = "_remainder"
     for line in text.split("\n"):
@@ -150,7 +232,7 @@ def parse_programme_sections(text: str) -> dict[str, str]:
         if stripped.endswith(":") and 3 < len(stripped) < 80:
             header_key = stripped[:-1].strip().lower()
             # Check specialisation-prefixed headers like "Specialization - InfoSec"
-            if header_key.startswith("specialization"):
+            if header_key.startswith("specializ"):
                 current_group = "specialisations"
             else:
                 current_group = _SECTION_MAP.get(header_key, "_remainder")
@@ -179,11 +261,12 @@ def embed_programme_sections(
     # Parse all texts into sections
     all_sections = [parse_programme_sections(t) for t in texts]
 
-    # Identify programmes where no known sections were found — fall back to
-    # embedding the full text (remainder) so they don't get a zero vector.
+    # Identify programmes where no named sections were found — fall back to
+    # embedding the full text so they don't get a zero vector.
+    named_groups = [g for g in SECTION_WEIGHTS if g != "_remainder"]
     no_sections = [
         i for i, s in enumerate(all_sections)
-        if all(not s.get(g, "").strip() for g in SECTION_WEIGHTS)
+        if all(not s.get(g, "").strip() for g in named_groups)
     ]
 
     for group, weight in SECTION_WEIGHTS.items():
