@@ -438,3 +438,5 @@ The max hybrid score increased from 0.59 to 0.71, indicating stronger top matche
 | F — + Boilerplate fix + coherence boost | 40/47 (85%) | 10× | 47 |
 | G — + Two-tier IPF, confidence norm, section embeddings, data cleanup | 39/45 (87%) | 2× | 45 |
 | H — + LinkedIn boilerplate stripping | 35/45 (78%) | 3× | 45 |
+| I — + Programme IDF (Step 33) | 37/45 (82%) | 2× | 45 |
+| J — + Section header expansion (Step 34) | 39/45 (87%) | 2× | 45 |
