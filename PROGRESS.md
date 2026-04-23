@@ -490,6 +490,28 @@ Changes:
 
 ---
 
+## Step 36 — Replace LinkedIn Data Source (Commercial Viability) [ ]
+
+**Deferred — not required for thesis defence. Only relevant if project is productised.**
+
+LinkedIn ToS explicitly prohibits scraping; *hiQ v. LinkedIn* (2022) settled in LinkedIn's favour. Commercial use of the existing LinkedIn-derived corpus is legally exposed (ToS breach + GDPR risk on personal data in postings). Research/thesis use is a tolerated grey area and does not require action now.
+
+Replace LinkedIn ingestion with licensed / open sources before any paid pilot or commercial release:
+
+1. **EURES** (EU Employment Services API) — free, official, EU-wide coverage, pristine provenance
+2. **Adzuna API** — licensed commercial aggregator, ~€500–€2k/mo, strong UK/DE/FR/NL/PL
+3. **CVbankas.lt partnership** — negotiate commercial licence for existing LT coverage
+4. **Optional fallbacks:** Jooble / Careerjet partner feeds, Cedefop Skills-OVATE, SerpAPI / JobsPikr (legal risk outsourced by contract)
+
+Rebuild `all_jobs.json` without LinkedIn rows, re-run steps 3–11, re-validate ranking quality against the existing expert-reviewed baseline. Dropping LinkedIn likely improves procurement story ("fully licensed data, auditable provenance, GDPR-compliant") — not a loss for the commercial pitch.
+
+**Rationale:** keeps the LinkedIn-inclusive pipeline intact for the thesis; isolates the replacement as a commercialisation concern to be handled only when needed.
+
+**Output:** replacement job corpus in `data/raw/job_ads/` (licensed sources only), re-run evaluation results
+**Module:** new `src/scraping/eures.py`, new `src/scraping/adzuna.py`, updated `src/scraping/job_ads.py`
+
+---
+
 ## Legend
 
 - `[ ]` Not started
