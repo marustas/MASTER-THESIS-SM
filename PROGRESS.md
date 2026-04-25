@@ -464,23 +464,16 @@ Results: programmes with 0 subjects dropped 15→1, with 0 outcomes 14→7. Top-
 
 ---
 
-## Step 35 — Rebalance Hybrid Alpha [ ]
+## Step 35 — Rebalance Hybrid Alpha [x]
 
-Cosine similarity has very low discriminative power: per-programme range across 50 candidates is only 0.154 (std=0.034). Programme recall has 2x the range (0.306) and 1.7x the std (0.056). Despite this, cosine gets 60% of the weight (alpha=0.6).
+Fine-grained alpha sweep (0.3–0.7, step=0.025) with full hybrid pipeline (programme IDF, match quality, confidence-aware normalisation, two-tier IPF).
 
-The hybrid top-1 matches the semantic-only top-1 in only 2% of cases, vs 20% for recall-only top-1. This means the IPF penalty — not the alpha-weighted combination — is the dominant re-ranker.
+Three alphas achieve max diversity (40/45 = 0.889): 0.300, 0.550, 0.575. α=0.300 rejected (70% recall = not truly hybrid). α=0.55 selected: smallest shift from 0.6, maintains hybrid character, improves diversity 39→40/45, generalists 2→1.
 
-Changes:
+**Applied:** alpha 0.6 → 0.55
 
-1. Re-run alpha sweep at finer granularity (0.3–0.7, step=0.025) with programme IDF enabled
-2. Measure top-1 diversity, score mean/CoV, and Spearman correlation with pure semantic/symbolic rankings at each alpha
-3. Evaluate whether Step 34 (header expansion) sufficiently improves cosine discrimination — if it does, alpha may not need lowering
-4. Apply optimal alpha
-
-**Rationale:** The current alpha=0.6 was tuned before programme IDF was enabled. With programme IDF amplifying the recall signal, the balance point may have shifted. Additionally, if cosine ranges remain narrow after Step 34, lowering alpha to 0.4–0.5 would let the more discriminative recall component drive rankings.
-
-**Output:** `experiments/results/sensitivity/`
-**Module:** `src/evaluation/sensitivity.py`
+**Output:** `experiments/results/sensitivity/alpha_rebalance.json`
+**Module:** `src/evaluation/sensitivity.py` (`run_alpha_rebalance()`), `src/alignment/hybrid.py` (default updated)
 
 ---
 
