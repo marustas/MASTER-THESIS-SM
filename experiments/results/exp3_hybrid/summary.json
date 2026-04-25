@@ -1,23 +1,23 @@
 {
   "parameters": {
     "semantic_top_n": 50,
-    "alpha": 0.6,
+    "alpha": 0.55,
     "gamma": 0.3
   },
   "n_programmes": 45,
   "n_jobs_total": 216,
   "n_candidate_pairs": 2250,
   "hybrid_score": {
-    "mean": 0.08456074905179184,
-    "median": 0.06710978014508097,
-    "max": 0.6796573138291007
+    "mean": 0.08765201689199056,
+    "median": 0.06896343917507909,
+    "max": 0.6770576800466737
   },
   "cosine_score": {
     "mean": 0.5125946402549744,
     "median": 0.5108257532119751
   },
   "programme_recall": {
-    "mean": 0.10769723481177182,
+    "mean": 0.10769723481177183,
     "median": 0.09855485363337035
   }
 }

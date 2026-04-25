@@ -21,7 +21,7 @@ Two-stage pipeline that balances recall with transparency:
       candidate set to ensure they contribute equally regardless of their
       raw scale.
 
-      α (``alpha``) defaults to 0.6.  Varying α between 0 and 1 gives a
+      α (``alpha``) defaults to 0.55.  Varying α between 0 and 1 gives a
       continuum from fully symbolic to fully semantic.
 
 Output  (experiments/results/exp3_hybrid/):
@@ -106,7 +106,7 @@ def compute_match_quality(
 def align_hybrid(
     df: pd.DataFrame,
     semantic_top_n: int = 50,
-    alpha: float = 0.6,
+    alpha: float = 0.55,
     ipf_top_k: int = 30,
     ipf_floor: float = 0.1,
     ipf_strict_floor: float = 0.05,
@@ -375,7 +375,7 @@ def run_hybrid_alignment(
     dataset_path: Path = DATASET_PATH,
     output_dir: Path = RESULTS_DIR / "exp3_hybrid",
     semantic_top_n: int = 50,
-    alpha: float = 0.6,
+    alpha: float = 0.55,
     ipf_top_k: int = 30,
     ipf_floor: float = 0.1,
     ipf_strict_floor: float = 0.05,
