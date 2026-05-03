@@ -54,10 +54,10 @@ PROCESSED_JOB_ADS_DIR.mkdir(parents=True, exist_ok=True)
 # ── spaCy model registry ───────────────────────────────────────────────────────
 # Models must be installed separately:
 #   python -m spacy download en_core_web_sm
-#   python -m spacy download lt_core_news_sm   (if available)
+# Lithuanian job ads are translated to English before tokenisation, so only the
+# English model is needed; any other detected language falls back to it.
 _SPACY_MODELS: dict[str, str] = {
     "en": "en_core_web_sm",
-    "lt": "lt_core_news_sm",
 }
 _FALLBACK_MODEL = "en_core_web_sm"
 

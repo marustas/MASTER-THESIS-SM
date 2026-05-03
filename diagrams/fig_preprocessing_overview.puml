@@ -18,7 +18,7 @@ component "**Stage 3**\nTranslation\n---\nDetect language with\nlangdetect, tran
 
 component "**Stage 4**\nDeduplication\n---\nExact URL match,\nMD5 text fingerprint,\nMinHash near-duplicate\ndetection (128 hashes,\n3-char shingles, Jaccard\nthreshold 0.85)" as S4
 
-component "**Stage 5**\nTokenisation /\nLemmatisation\n---\nspaCy lemmatisation\n(en_core_web_sm /\nlt_core_news_sm),\nremove stop words,\npunctuation, tokens\nshorter than 2 chars" as S5
+component "**Stage 5**\nTokenisation /\nLemmatisation\n---\nspaCy lemmatisation\n(en_core_web_sm),\nremove stop words,\npunctuation, tokens\nshorter than 2 chars" as S5
 
 component "**Output**\n---\n**45 programmes**\n**520 job ads**\nprogrammes_preprocessed\n.parquet\njobs_preprocessed\n.parquet" as OUT #DFF0D8
 
