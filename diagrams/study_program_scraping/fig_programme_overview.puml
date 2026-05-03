@@ -1,0 +1,24 @@
+@startuml programme_overview
+left to right direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 13
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Phase 1**\nLAMA BPO\nListing Extraction\n---\nFilter CS/ICT/AI\nprogrammes from the\nnational registry via\nPlaywright browser\nautomation" as P1
+
+component "**Phase 2**\nAIKOS\nEnrichment\n---\nFor each programme,\nfetch the AIKOS detail\npage and assemble an\nextended description\nfrom four structured\nsections" as P2
+
+component "**Phase 3**\nQuality\nFiltering\n---\nDeduplicate and discard\nprogrammes with\ninsufficient descriptive\ntext (< 1,000 chars)" as P3
+
+component "**Output**\n---\n**45 study\nprogrammes**\nlama_bpo_\nprogrammes.json" as OUT #DFF0D8
+
+P1 --> P2 : 48 raw\nprogrammes
+P2 --> P3 : 48 enriched\nprogrammes
+P3 --> OUT : 45 programmes\n(3 removed)
+
+@enduml

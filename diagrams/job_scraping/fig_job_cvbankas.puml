@@ -1,0 +1,26 @@
+@startuml job_cvbankas
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 12
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Open Site**\n---\nen.cvbankas.lt\nIT category (ID 76)\nPlaywright +\nBeautifulSoup" as S1
+
+component "**Paginate\nListings**\n---\nUp to 7 pages\nCSS: article\n[id^=\"job_ad_\"]\nStop if >50%\ntoo old" as S2
+
+component "**Parse Detail\nPages**\n---\nFetch each job URL\nExtract: description,\nsector, employment\ntype, remote flag" as S3
+
+component "**Extract\nSkills**\n---\n45 regex patterns\n(languages, DBs,\nDevOps, ML, web)" as S4
+
+component "**Output**\n---\n**439 raw jobs**" as S5 #DFF0D8
+
+S1 -right-> S2
+S2 -down-> S3
+S3 -right-> S4
+S4 -down-> S5
+
+@enduml

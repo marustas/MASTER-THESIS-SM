@@ -1,0 +1,28 @@
+@startuml programme_phase3
+left to right direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 12
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Input**\n---\n48 enriched\nprogrammes" as IN
+
+component "**Check Text**\n---\nHas extended or\nbrief description?" as CHECK1
+
+component "**Check Length**\n---\nDescription\n>= 1,000 chars?" as CHECK2
+
+component "**Accepted**\n---\n**45 programmes**\nsaved to\nlama_bpo_\nprogrammes.json" as ACCEPT #DFF0D8
+
+component "**Discarded**\n---\n3 programmes\nremoved" as REJECT #F2DEDE
+
+IN --> CHECK1
+CHECK1 --> CHECK2 : has text
+CHECK1 ..> REJECT : no text
+CHECK2 --> ACCEPT : yes
+CHECK2 ..> REJECT : too short
+
+@enduml

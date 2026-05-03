@@ -1,0 +1,41 @@
+@startuml programme_phase2
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 12
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Input**\n---\n48 programmes\nwith AIKOS URLs" as IN
+
+usecase "AIKOS URL\nexists?" as CHECK
+
+' ── Top row: has URL ──
+component "**Fetch Page**\n---\nNavigate to AIKOS\ndetail page via\nPlaywright\n- 2s request delay\n- 30s timeout\n- Up to 3 retries" as FETCH
+
+component "**Scan Elements**\n---\nScan page headings\n(h1-h4), table cells,\nlabel, strong, b\nfor section keywords" as SCAN
+
+component "**Extract Sections**\n---\n1. Programme Objective\n2. Learning Outcomes\n3. Teaching Methods\n4. Career Paths" as EXTRACT
+
+component "**Assemble Text**\n---\nConcatenate sections\nwith labelled prefixes\ninto extended_description\n\nFallback: extract main\ncontent zone" as ASSEMBLE
+
+' ── Bottom row: no URL ──
+component "**Skip**\n---\nRetain listing\nmetadata only" as SKIP
+
+component "**Output**\n---\n48 programmes\nwith extended\ndescriptions" as OUT #DFF0D8
+
+IN -right-> CHECK
+
+CHECK -right-> FETCH : has URL
+FETCH -right-> SCAN
+SCAN -right-> EXTRACT
+EXTRACT -right-> ASSEMBLE
+ASSEMBLE -down-> OUT
+
+CHECK -down-> SKIP : no URL
+SKIP -right[hidden]-> EXTRACT
+SKIP -right-> OUT
+
+@enduml

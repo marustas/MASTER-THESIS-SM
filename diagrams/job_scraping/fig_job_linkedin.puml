@@ -1,0 +1,26 @@
+@startuml job_linkedin
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 12
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Initialise**\n---\nlinkedin-jobs-scraper\nli_at cookie auth\n1 worker, 1.5s delay" as S1
+
+component "**Execute\n12 Queries**\n---\nSoftware Engineer,\nData Engineer/Scientist,\nML, DevOps, Backend,\nFrontend, Full Stack,\nCyber, IT, SysAdmin" as S2
+
+component "**Apply Filters**\n---\nLocation: Lithuania\nIndustry: Software Dev,\nTech, IT Services\nTime: last month\nType: full-time\nExp: Entry-MidSenior" as S3
+
+component "**Collect\nResults**\n---\nEvent callback per job\nDeduplicate by job ID\nExtract skills (same\n45 regex patterns)" as S4
+
+component "**Output**\n---\n**121 raw jobs**" as S5 #DFF0D8
+
+S1 -right-> S2
+S2 -down-> S3
+S3 -right-> S4
+S4 -down-> S5
+
+@enduml

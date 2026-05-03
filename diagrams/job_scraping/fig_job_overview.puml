@@ -1,0 +1,30 @@
+@startuml job_overview
+left to right direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 13
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Pipeline 1**\nCVbankas\nScraper\n---\nPaginate listings,\nparse detail pages,\nextract skills via\n45 regex patterns" as CV
+
+component "**Pipeline 2**\nLinkedIn\nScraper\n---\n12 search queries,\nindustry & location\nfilters, event-based\ncollection" as LI
+
+component "**Merge**\n---\nCombine CVbankas\n+ LinkedIn corpora" as MERGE
+
+component "**Filter\nNon-IT**\n---\nRemove by title\n(8 patterns)" as FILTER
+
+component "**Deduplicate**\n---\nBy URL or\n(source, title,\nlocation, date)" as DEDUP
+
+component "**Output**\n---\n**560 raw jobs**\nall_jobs.json" as FINAL #DFF0D8
+
+CV --> MERGE : 439 jobs
+LI --> MERGE : 121 jobs
+MERGE --> FILTER
+FILTER --> DEDUP
+DEDUP --> FINAL
+
+@enduml

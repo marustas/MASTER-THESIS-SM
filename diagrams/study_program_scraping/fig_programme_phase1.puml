@@ -1,0 +1,32 @@
+@startuml programme_phase1
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 12
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Load Page**\n---\nOpen LAMA BPO\nEnglish registry\nvia Playwright" as S1
+
+component "**Read Filters**\n---\nExtract dropdown\noptions from page\n- field groups\n- study fields" as S2
+
+component "**Match Keywords**\n---\nMatch options against\nCS/ICT/AI targets\n- 3 field group keywords\n- 7 study field keywords" as S3
+
+component "**Apply Filters\n& Scrape**\n---\nFor each matched value:\n1. Set dropdown value\n2. Dispatch JS change event\n3. Click submit button\n4. Wait 3 seconds\n5. Extract table rows" as S4
+
+component "**Extract Rows**\n---\nFrom each table row:\nname, institution,\ncity, field group,\nfield, study mode,\nAIKOS URL" as S5
+
+component "**Deduplicate**\n---\nRemove duplicates by\nnormalised\n(name, institution)\npair" as S6
+
+component "**Output**\n---\n**48 raw\nprogrammes**" as S7 #DFF0D8
+
+S1 -right-> S2
+S2 -down-> S3
+S3 -right-> S4
+S4 -down-> S5
+S5 -right-> S6
+S6 -down-> S7
+
+@enduml

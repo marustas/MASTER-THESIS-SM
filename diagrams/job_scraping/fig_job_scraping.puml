@@ -1,0 +1,56 @@
+@startuml job_scraping
+left to right direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 12
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**CVbankas\nScraper**\n---\nen.cvbankas.lt\nIT category (ID 76)\nPlaywright +\nBeautifulSoup" as CV_START
+
+component "**Paginate\nListings**\n---\nUp to 7 pages\nCSS: article\n[id^=\"job_ad_\"]\nStop if >50%\ntoo old" as CV_PAGE
+
+component "**Parse Detail\nPages**\n---\nFetch each job URL\nExtract: description,\nsector, employment\ntype, remote flag" as CV_DETAIL
+
+component "**Extract\nSkills**\n---\n45 regex patterns\n(languages, DBs,\nDevOps, ML, web)" as CV_SKILLS
+
+component "**CVbankas\nJobs**\n---\n439 raw jobs" as CV_OUT
+
+CV_START --> CV_PAGE
+CV_PAGE --> CV_DETAIL : job cards
+CV_DETAIL --> CV_SKILLS
+CV_SKILLS --> CV_OUT
+
+component "**LinkedIn\nScraper**\n---\nlinkedin-jobs-scraper\nli_at cookie auth\n1 worker, 1.5s delay" as LI_START
+
+component "**Execute\n12 Queries**\n---\nSoftware Engineer,\nData Engineer/Scientist,\nML, DevOps, Backend,\nFrontend, Full Stack,\nCyber, IT, SysAdmin" as LI_QUERY
+
+component "**Query\nFilters**\n---\nLocation: Lithuania\nIndustry: Software Dev,\nTech, IT Services\nTime: last month\nType: full-time\nExp: Entry-MidSenior" as LI_FILTER
+
+component "**Collect\nResults**\n---\nEvent callback per job\nDeduplicate by job ID\nExtract skills (same\n45 regex patterns)" as LI_COLLECT
+
+component "**LinkedIn\nJobs**\n---\n121 raw jobs" as LI_OUT
+
+LI_START --> LI_QUERY
+LI_QUERY --> LI_FILTER
+LI_FILTER --> LI_COLLECT
+LI_COLLECT --> LI_OUT
+
+component "**Merge**\n---\nCombine CVbankas\n+ LinkedIn corpora" as MERGE
+
+component "**Filter\nNon-IT**\n---\nRemove by title\n(8 patterns)" as FILTER
+
+component "**Deduplicate**\n---\nBy URL or\n(source, title,\nlocation, date)" as DEDUP
+
+component "**Output**\n---\n**560 raw jobs**\nall_jobs.json" as FINAL #DFF0D8
+
+CV_OUT --> MERGE
+LI_OUT --> MERGE
+MERGE --> FILTER
+FILTER --> DEDUP
+DEDUP --> FINAL
+
+@enduml
