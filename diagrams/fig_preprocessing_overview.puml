@@ -1,0 +1,32 @@
+@startuml preprocessing_overview
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 13
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Input**\n---\nProgrammes\n+\nJob ads\n(raw JSON)" as IN
+
+component "**Stage 1**\nText Cleaning\n---\nStrip HTML markup,\nNFC unicode normalisation,\ncollapse whitespace,\nremove URLs" as S1
+
+component "**Stage 2**\nBoilerplate Removal\n---\nDrop generic lines\n(cookies, share buttons,\nEEO, copyright), apply\nsource-specific strips:\nLAMA BPO navigation,\nLinkedIn benefits sections" as S2
+
+component "**Stage 3**\nTranslation\n---\nDetect language with\nlangdetect, translate\nLithuanian job ads to\nEnglish via deep-translator\n(Google Translate),\ndrop unsupported languages" as S3
+
+component "**Stage 4**\nDeduplication\n---\nExact URL match,\nMD5 text fingerprint,\nMinHash near-duplicate\ndetection (128 hashes,\n3-char shingles, Jaccard\nthreshold 0.85)" as S4
+
+component "**Stage 5**\nTokenisation /\nLemmatisation\n---\nspaCy lemmatisation\n(en_core_web_sm /\nlt_core_news_sm),\nremove stop words,\npunctuation, tokens\nshorter than 2 chars" as S5
+
+component "**Output**\n---\n**45 programmes**\n**520 job ads**\nprogrammes_preprocessed\n.parquet\njobs_preprocessed\n.parquet" as OUT #DFF0D8
+
+IN --> S1 : 48 programmes\n560 job ads
+S1 --> S2 : cleaned_text
+S2 --> S3 : stripped_text
+S3 --> S4 : english_text
+S4 --> S5 : 45 + 520\n(3 + 40 dropped)
+S5 --> OUT : tokens
+
+@enduml
