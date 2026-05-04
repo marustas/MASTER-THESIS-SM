@@ -1,17 +1,19 @@
-"""Compare the impact of Step 27 (ESCO description embeddings) and Step 31
-(programme-level IDF) on hybrid alignment results.
+"""Compare the impact of programme-level IDF (Step 31) on hybrid alignment.
 
-Runs four configurations:
-  A) baseline       — no skill embeddings, no programme IDF (current pipeline)
-  B) +desc_emb      — ESCO description embeddings for coherence boost
-  C) +prog_idf      — programme-level IDF in symbolic refinement
-  D) +both          — description embeddings + programme IDF
+Runs two configurations:
+  A) baseline   — corpus-wide IDF only (use_programme_idf=False)
+  B) +prog_idf  — corpus + programme-level IDF (use_programme_idf=True)
 
 For each configuration, captures top-10 matches per programme and computes:
   - Top-1 / top-5 / top-10 diversity (unique jobs)
   - Score distributions (mean, median, max, CoV)
   - Top-1 match changes vs baseline
   - Generalist frequency (jobs appearing in top-K of many programmes)
+
+A previous version of this driver also evaluated Step 27 (ESCO description
+embeddings for a coherence boost).  That experiment was rejected — the
+coherence boost degraded 53% of programmes — and Step 27 has been removed
+from the pipeline.  See `experiments/results/impact_comparison/FINDINGS.md`.
 
 Usage:
     python -m src.evaluation.impact_comparison
