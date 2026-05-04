@@ -285,6 +285,7 @@ def align_symbolic_weighted(
     idf_cap: float | None = 3.0,
     use_tiers: bool = False,
     use_programme_idf: bool = False,
+    implicit_confidence_mode: str = "uniform",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Like ``align_symbolic`` but uses capped IDF weights instead of
@@ -308,6 +309,10 @@ def align_symbolic_weighted(
         of corpus-wide IDF.  Skills unique to one programme carry more
         weight than skills shared across all programmes.  Job skills
         still use corpus-wide IDF.
+    implicit_confidence_mode:
+        Forwarded to ``build_weighted_skills``.  ``"uniform"`` (default)
+        applies the paper's flat 0.5 weight to every implicit skill;
+        ``"linear"`` / ``"sqrt"`` scale by propagation confidence.
 
     Returns
     -------
@@ -359,6 +364,7 @@ def align_symbolic_weighted(
         idx: _build_tiered_skills(
             _safe_details(row), uri_reuse, prog_uri_idfs,
             idf_cap=idf_cap, use_tiers=use_tiers,
+            implicit_confidence_mode=implicit_confidence_mode,
         )
         for idx, row in programmes.iterrows()
     }
@@ -366,6 +372,7 @@ def align_symbolic_weighted(
         idx: _build_tiered_skills(
             _safe_details(row), uri_reuse, uri_idfs,
             idf_cap=idf_cap, use_tiers=use_tiers,
+            implicit_confidence_mode=implicit_confidence_mode,
         )
         for idx, row in jobs.iterrows()
     }

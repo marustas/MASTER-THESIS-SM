@@ -114,6 +114,7 @@ def align_hybrid(
     norm_confidence: bool = True,
     gamma: float = 0.3,
     use_programme_idf: bool = True,
+    implicit_confidence_mode: str = "uniform",
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -140,6 +141,11 @@ def align_hybrid(
                      refinement.  0.0 disables the penalty.
     use_programme_idf : if True, weight programme skills by inter-programme
                      IDF in the symbolic refinement stage.
+    implicit_confidence_mode : how implicit-skill weight scales with the
+                     propagation confidence stored in ``skill_details``.
+                     ``"uniform"`` keeps the paper's flat 0.5;
+                     ``"linear"`` / ``"sqrt"`` scale linearly / by sqrt
+                     between conf=0.70 (→ 0) and conf=1.0 (→ 0.5).
 
     Returns
     -------
@@ -174,9 +180,13 @@ def align_hybrid(
     )
 
     # ── Stage 2: symbolic refinement (IDF-weighted programme recall) ────────
-    logger.info("Stage 2: symbolic refinement (IDF-weighted programme_recall)…")
+    logger.info(
+        f"Stage 2: symbolic refinement "
+        f"(IDF-weighted programme_recall, implicit_mode={implicit_confidence_mode})…"
+    )
     sym, _ = align_symbolic_weighted(
         df, top_n=semantic_top_n, use_programme_idf=use_programme_idf,
+        implicit_confidence_mode=implicit_confidence_mode,
     )
     sym = sym[["programme_id", "job_id", "programme_recall"]]
 
@@ -383,6 +393,7 @@ def run_hybrid_alignment(
     norm_confidence: bool = True,
     gamma: float = 0.3,
     use_programme_idf: bool = True,
+    implicit_confidence_mode: str = "uniform",
 ) -> None:
     """Load dataset, run hybrid alignment, persist results."""
     logger.info(f"Loading dataset from {dataset_path}…")
@@ -398,6 +409,7 @@ def run_hybrid_alignment(
         norm_confidence=norm_confidence,
         gamma=gamma,
         use_programme_idf=use_programme_idf,
+        implicit_confidence_mode=implicit_confidence_mode,
     )
 
     rankings_path = output_dir / "rankings.parquet"

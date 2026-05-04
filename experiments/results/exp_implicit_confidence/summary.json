@@ -1,0 +1,84 @@
+{
+  "by_mode": {
+    "uniform": {
+      "n_programmes": 45,
+      "unique_top1": 40,
+      "top1_diversity": 0.8889,
+      "top1_max_repeat": 3,
+      "top5_generalists": 1,
+      "top5_max_repeat": 7,
+      "top1_score_mean": 0.30945552327411796,
+      "top1_score_max": 0.6770578886629304,
+      "top1_score_min": 0.12452933132744708,
+      "top1_score_std": 0.12113186008946357,
+      "top1_score_cov": 0.3914354438009629,
+      "gap_mean": 0.07001797377721404,
+      "gap_median": 0.042056252645467224,
+      "gap_p10": 0.0053005541046661,
+      "gap_lt_002": 15,
+      "gap_lt_005": 23,
+      "spearman_sym_hyb_mean": 0.3191099257630121,
+      "spearman_sem_hyb_mean": -0.03262638388688809
+    },
+    "linear": {
+      "n_programmes": 45,
+      "unique_top1": 40,
+      "top1_diversity": 0.8889,
+      "top1_max_repeat": 2,
+      "top5_generalists": 0,
+      "top5_max_repeat": 5,
+      "top1_score_mean": 0.3013911075847426,
+      "top1_score_max": 0.6312616478461517,
+      "top1_score_min": 0.13260761473089544,
+      "top1_score_std": 0.10846359725514956,
+      "top1_score_cov": 0.3598765674420328,
+      "gap_mean": 0.06983812648133236,
+      "gap_median": 0.04474409487265091,
+      "gap_p10": 0.007624490475728142,
+      "gap_lt_002": 13,
+      "gap_lt_005": 24,
+      "spearman_sym_hyb_mean": 0.2527354543867673,
+      "spearman_sem_hyb_mean": -0.0010937708416699937
+    },
+    "sqrt": {
+      "n_programmes": 45,
+      "unique_top1": 40,
+      "top1_diversity": 0.8889,
+      "top1_max_repeat": 2,
+      "top5_generalists": 1,
+      "top5_max_repeat": 6,
+      "top1_score_mean": 0.304617414956156,
+      "top1_score_max": 0.6770578886629304,
+      "top1_score_min": 0.13979548627141186,
+      "top1_score_std": 0.11325612455714845,
+      "top1_score_cov": 0.37179793076981354,
+      "gap_mean": 0.06935560085050245,
+      "gap_median": 0.04762221171253306,
+      "gap_p10": 0.0031761125405092416,
+      "gap_lt_002": 12,
+      "gap_lt_005": 24,
+      "spearman_sym_hyb_mean": 0.26339417590678077,
+      "spearman_sem_hyb_mean": -0.021609710550887017
+    }
+  },
+  "deltas_vs_uniform": {
+    "linear": {
+      "unique_top1": 0,
+      "top1_score_mean": -0.008064415689375382,
+      "top1_score_max": -0.04579624081677869,
+      "gap_mean": -0.00017984729588167714,
+      "gap_lt_002": -2,
+      "top1_score_cov": -0.03155887635893012,
+      "spearman_sym_hyb_mean": -0.0663744713762448
+    },
+    "sqrt": {
+      "unique_top1": 0,
+      "top1_score_mean": -0.004838108317961942,
+      "top1_score_max": 0.0,
+      "gap_mean": -0.0006623729267115908,
+      "gap_lt_002": -3,
+      "top1_score_cov": -0.019637513031149356,
+      "spearman_sym_hyb_mean": -0.055715749856231345
+    }
+  }
+}

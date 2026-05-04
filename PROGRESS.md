@@ -499,6 +499,86 @@ Rebuild `all_jobs.json` without LinkedIn rows, re-run steps 3–11, re-validate 
 
 ---
 
+## Step 37 — Confidence-Weighted Implicit Skills (T2a) [ ]
+
+Replace the blanket `0.5` weight currently assigned to every implicit skill with a confidence-proportional weight using the propagation cosine that is already stored in `skill_details.confidence` (range 0.70–1.00 after Step 4b filtering).
+
+Proposed mapping:
+
+```
+w_implicit(u, d) = 0.5 × clip((conf - 0.70) / 0.30, 0, 1)   # → 0 at conf=0.70, 0.5 at conf=1.00
+```
+
+(Try a linear and a square-root variant; pick by impact on hybrid metrics.)
+
+**Why:** ~47% of programme skill weight and ~35% of job skill weight comes from the implicit channel, but the propagation confidence is currently discarded at the alignment boundary. A skill propagated at cosine 0.95 carries genuinely stronger evidence than one at 0.71. The information is already in the dataset.
+
+**Risk:** lowers total recall mass uniformly — re-tune γ if the generic_penalty saturates. Cheap fix, low blast radius.
+
+**Output:** updated `src/skills/skill_weights.py`, comparison report
+**Module:** `src/skills/skill_weights.py` (`build_weighted_skills`), `src/alignment/symbolic.py` (callers)
+**Metrics to report:** top-1 diversity, top-1 score mean / max, gap top1↔top2 distribution, sym↔hyb Spearman.
+
+---
+
+## Step 38 — Cross-Encoder Re-ranking of Top-N Candidates (T1a) [ ]
+
+Add a re-ranking stage after Stage 1 retrieval. For each programme, run a cross-encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2` or `BAAI/bge-reranker-base`) on programme-text × job-text pairs for the top-50 candidates. Use the cross-encoder score as a fresh signal that replaces or augments the bi-encoder cosine in the hybrid blend.
+
+Variants to test:
+
+1. Replace `cos_norm` with `xe_norm` (cross-encoder min-max per programme)
+2. Three-channel blend: `α₁·xe_norm + α₂·cos_norm + α₃·recall_norm` with constraint Σα = 1
+3. Cross-encoder as gate: only candidates above `xe_score > τ` proceed to symbolic refinement
+
+**Why:** diagnostic shows cosine top-1 == hybrid top-1 in **0/45** programmes — the bi-encoder cosine has spent its variance on pool selection and contributes nothing at the head. A cross-encoder re-evaluates each pair from scratch with fine-grained token interaction; this is the standard modern fix for head-tie problems and is expected to move 15/45 sub-0.02-gap programmes into confident heads.
+
+**Risk:** ~2-3 min CPU for 2 250 pairs (acceptable). Adds one model dependency. May correlate with cosine more than expected — measure cross-encoder ↔ cosine Spearman before assuming independence.
+
+**Output:** `experiments/results/exp3_hybrid_xenc/`, comparison report
+**Module:** new `src/alignment/cross_encoder.py`, `src/alignment/hybrid.py` (re-rank stage)
+**Metrics to report:** top-1 diversity, top-1 mean score, top1↔top2 gap distribution, agreement with current hybrid, cost per query.
+
+---
+
+## Step 39 — Learning-to-Rank with Cross-Strategy Consensus (T1b) [ ]
+
+Replace the hand-tuned hybrid formula (α, γ, IPF floors, normalisation) with a single learned ranker. Use cross-strategy consensus from `src/evaluation/ir_metrics.py` as soft binary labels: a (programme, job) pair is positive if the job is in the top-K of ≥2 of {symbolic, semantic, hybrid, BM25}. Train LightGBM-rank (or XGBoost-rank) with leave-one-programme-out cross-validation to avoid overfitting to current rankings.
+
+Feature set (initial):
+
+- `cosine_score`, `cross_encoder_score` (if Step 38 done), `programme_recall`, `R*` (quality-multiplied recall)
+- `weighted_jaccard`, `overlap_coeff`, `bm25_score`
+- `n_matched_uris`, `mean_idf_matched`, `mean_idf_job_unmatched`
+- `count_top30(j)` (IPF input), `programme_skill_richness`, `job_skill_count`
+- `programme_implicit_ratio`, `job_implicit_ratio`
+
+**Why:** the current formula has ~7 hand-tuned hyperparameters (α, γ, ipf_top_k, ipf_floor, ipf_strict_floor, ipf_strict_threshold, norm_confidence). Each was tuned independently against partial metrics. A learned ranker (i) replaces all of them with one fit, (ii) gives cross-programme calibration (current per-programme min-max destroys this), and (iii) is the legible, citeable answer to "why this formula?" in a thesis.
+
+**Risk:** consensus labels are noisy by construction — must validate that the learned model doesn't merely memorise current rankings. Mitigation: leave-one-programme-out CV, plus a held-out manually-spot-checked set (10–20 pairs).
+
+**Output:** `experiments/results/exp4_ltr/`, model artefacts, calibration report
+**Module:** new `src/alignment/ltr.py`, new `tests/alignment/test_ltr.py`, possibly `src/evaluation/calibration.py`
+**Metrics to report:** held-out NDCG@10, Precision@5 vs consensus, learned vs hand-tuned hybrid Spearman, feature-importance ranking, calibration plot (predicted score vs consensus precision).
+
+---
+
+## Step 40 — Asymmetric Retrieval Encoder (T1c) [ ]
+
+Replace `all-MiniLM-L6-v2` for programme-vs-job retrieval with an encoder explicitly trained on asymmetric query/document retrieval: `intfloat/e5-large-v2` or `BAAI/bge-large-en-v1.5`. Use prefixed inputs (`query: {programme}` and `passage: {job}`) so the asymmetry between curriculum descriptions and recruitment text is modelled directly.
+
+**Why deferred to last:** Step 25 already showed MPNet (a larger symmetric encoder) gives no improvement because both models share the 256-token truncation limit. Asymmetric encoders are a *different* change — they're trained with explicit query/document distinction and have higher MTEB retrieval scores — but they cost ~30 min to re-embed both corpora and re-run the full pipeline. Run only after Steps 37–39 land; if those bring head discrimination into a strong regime, the embedding upgrade may be unnecessary.
+
+Section-weighted programme embeddings (Step 34) and chunk-and-pool job embeddings already exist and must be preserved when swapping the encoder.
+
+**Risk:** a 1024-dim embedding instead of 384-dim — must verify storage (`embedding`, `embedding_brief`, `embedding_extended`, `skill_embeddings.npz`) handles the new dimension everywhere. Model size ~1.3 GB instead of 80 MB.
+
+**Output:** `experiments/results/evaluation/asymmetric_encoder/`, side-by-side hybrid metrics
+**Module:** `src/embeddings/generator.py` (model parameter + prefix handling), regenerated embeddings
+**Metrics to report:** programme-job cosine mean / range, top-1 diversity, top-1 mean score, head-discrimination gap, sensitivity to model choice.
+
+---
+
 ## Legend
 
 - `[ ]` Not started

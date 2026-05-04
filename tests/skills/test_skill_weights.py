@@ -16,10 +16,12 @@ import pytest
 from src.skills.skill_weights import (
     DEFAULT_IDF_CAP,
     DEFAULT_TIER_WEIGHT,
+    IMPLICIT_CONF_FLOOR,
     REUSE_TIER_WEIGHTS,
     build_weighted_skills,
     compute_corpus_idf,
     compute_median_idf,
+    implicit_weight_factor,
     tier_weight,
 )
 
@@ -227,3 +229,124 @@ class TestBuildWeightedSkillsWithTiers:
         )
         expected = 0.8 * 3.0 * 1.0
         assert result["uri:rare"] == pytest.approx(expected)
+
+
+# ── implicit_weight_factor (Step 37) ─────────────────────────────────────────
+
+class TestImplicitWeightFactor:
+    """Confidence-aware weighting of implicit skills."""
+
+    def test_uniform_returns_base_at_floor(self):
+        assert implicit_weight_factor(IMPLICIT_CONF_FLOOR, mode="uniform") == 0.5
+
+    def test_uniform_returns_base_at_ceil(self):
+        assert implicit_weight_factor(1.0, mode="uniform") == 0.5
+
+    def test_uniform_ignores_confidence(self):
+        assert implicit_weight_factor(0.85, mode="uniform") == 0.5
+
+    def test_linear_zero_at_floor(self):
+        assert implicit_weight_factor(0.70, mode="linear") == pytest.approx(0.0)
+
+    def test_linear_full_at_ceil(self):
+        assert implicit_weight_factor(1.00, mode="linear") == pytest.approx(0.5)
+
+    def test_linear_midpoint(self):
+        # (0.85 - 0.70) / 0.30 = 0.5; 0.5 * base
+        assert implicit_weight_factor(0.85, mode="linear") == pytest.approx(0.25)
+
+    def test_linear_below_floor_clamped(self):
+        assert implicit_weight_factor(0.5, mode="linear") == pytest.approx(0.0)
+
+    def test_linear_above_ceil_clamped(self):
+        assert implicit_weight_factor(1.5, mode="linear") == pytest.approx(0.5)
+
+    def test_sqrt_zero_at_floor(self):
+        assert implicit_weight_factor(0.70, mode="sqrt") == pytest.approx(0.0)
+
+    def test_sqrt_full_at_ceil(self):
+        assert implicit_weight_factor(1.00, mode="sqrt") == pytest.approx(0.5)
+
+    def test_sqrt_above_linear_in_lower_half(self):
+        """sqrt curves should boost low/medium confidence vs linear."""
+        for c in (0.74, 0.80, 0.85):
+            assert (
+                implicit_weight_factor(c, mode="sqrt")
+                > implicit_weight_factor(c, mode="linear")
+            )
+
+    def test_sqrt_at_midpoint(self):
+        # sqrt(0.5) * 0.5 ≈ 0.353553
+        assert implicit_weight_factor(0.85, mode="sqrt") == pytest.approx(
+            0.5 * (0.5 ** 0.5)
+        )
+
+    def test_unknown_mode_raises(self):
+        with pytest.raises(ValueError, match="Unknown implicit_confidence_mode"):
+            implicit_weight_factor(0.85, mode="exponential")
+
+    def test_custom_base(self):
+        assert implicit_weight_factor(1.0, mode="linear", base=0.8) == pytest.approx(0.8)
+
+
+# ── build_weighted_skills × implicit_confidence_mode (Step 37) ───────────────
+
+class TestBuildWeightedSkillsConfidence:
+    """build_weighted_skills must honour implicit_confidence_mode."""
+
+    def test_uniform_default_matches_old_behaviour(self):
+        s = _skill("uri:k", explicit=False)
+        s["confidence"] = 0.85
+        result = build_weighted_skills([s], {}, {"uri:k": 2.0})
+        assert result["uri:k"] == pytest.approx(2.0 * 0.5)
+
+    def test_linear_scales_implicit_weight(self):
+        s = _skill("uri:k", explicit=False)
+        s["confidence"] = 0.85  # midpoint → 0.25 factor
+        result = build_weighted_skills(
+            [s], {}, {"uri:k": 2.0}, implicit_confidence_mode="linear",
+        )
+        assert result["uri:k"] == pytest.approx(2.0 * 0.25)
+
+    def test_sqrt_scales_implicit_weight(self):
+        s = _skill("uri:k", explicit=False)
+        s["confidence"] = 0.85
+        result = build_weighted_skills(
+            [s], {}, {"uri:k": 2.0}, implicit_confidence_mode="sqrt",
+        )
+        assert result["uri:k"] == pytest.approx(2.0 * 0.5 * (0.5 ** 0.5))
+
+    def test_explicit_unchanged_under_any_mode(self):
+        """Explicit skills never depend on confidence — weight stays 1.0."""
+        s = _skill("uri:k", explicit=True)
+        s["confidence"] = 0.71  # would zero out an implicit
+        idfs = {"uri:k": 2.0}
+        for mode in ("uniform", "linear", "sqrt"):
+            result = build_weighted_skills(
+                [s], {}, idfs, implicit_confidence_mode=mode,
+            )
+            assert result["uri:k"] == pytest.approx(2.0)
+
+    def test_missing_confidence_falls_back_to_floor(self):
+        """A skill_details dict without 'confidence' must not crash."""
+        s = {
+            "esco_uri": "uri:k",
+            "explicit": False,
+            "implicit": True,
+        }
+        result = build_weighted_skills(
+            [s], {}, {"uri:k": 2.0}, implicit_confidence_mode="linear",
+        )
+        # default floor → factor 0
+        assert result["uri:k"] == pytest.approx(0.0)
+
+    def test_dedup_keeps_highest_weight_under_confidence_mode(self):
+        s_low = _skill("uri:k", explicit=False)
+        s_low["confidence"] = 0.74
+        s_high = _skill("uri:k", explicit=False)
+        s_high["confidence"] = 0.95
+        result = build_weighted_skills(
+            [s_low, s_high], {}, {"uri:k": 2.0}, implicit_confidence_mode="linear",
+        )
+        # s_high gives factor (0.95 - 0.70) / 0.30 = 0.833
+        assert result["uri:k"] == pytest.approx(2.0 * 0.5 * (0.95 - 0.70) / 0.30)

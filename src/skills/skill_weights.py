@@ -117,6 +117,44 @@ def compute_median_idf(uri_idfs: dict[str, float]) -> float:
     return (vals[n // 2 - 1] + vals[n // 2]) / 2.0
 
 
+# ── Implicit confidence weighting (Step 37) ──────────────────────────────────
+
+IMPLICIT_CONF_FLOOR: float = 0.70   # filter threshold from Step 4b
+IMPLICIT_CONF_CEIL: float = 1.00
+_DEFAULT_IMPLICIT_WEIGHT: float = 0.5  # E3 from Gugnani & Misra (2020)
+
+
+def implicit_weight_factor(
+    confidence: float,
+    mode: str = "uniform",
+    base: float = _DEFAULT_IMPLICIT_WEIGHT,
+) -> float:
+    """
+    Map implicit-skill propagation confidence to a weight factor.
+
+    Modes
+    -----
+    ``uniform`` : returns ``base`` regardless of confidence.  Backward-compat
+                  default; reproduces the paper's E3 = 0.5 weighting.
+    ``linear``  : ``base * clip((conf - floor) / (ceil - floor), 0, 1)``.
+                  At ``floor`` → 0; at ``ceil`` → ``base``.
+    ``sqrt``    : ``base * sqrt(clip(...))``.  Gentler decay near the floor;
+                  preserves more weight at typical confidences (~0.74–0.86).
+    """
+    if mode == "uniform":
+        return base
+    span = IMPLICIT_CONF_CEIL - IMPLICIT_CONF_FLOOR
+    norm = max(0.0, min((confidence - IMPLICIT_CONF_FLOOR) / span, 1.0))
+    if mode == "linear":
+        return base * norm
+    if mode == "sqrt":
+        return base * (norm ** 0.5)
+    raise ValueError(
+        f"Unknown implicit_confidence_mode: {mode!r}. "
+        f"Expected one of 'uniform', 'linear', 'sqrt'."
+    )
+
+
 # ── Combined weight builder ──────────────────────────────────────────────────
 
 def build_weighted_skills(
@@ -126,6 +164,7 @@ def build_weighted_skills(
     default_idf: float = 1.0,
     idf_cap: float | None = DEFAULT_IDF_CAP,
     use_tiers: bool = False,
+    implicit_confidence_mode: str = "uniform",
 ) -> dict[str, float]:
     """
     Build {esco_uri: weight} using IDF × explicit/implicit factors.
@@ -133,7 +172,8 @@ def build_weighted_skills(
     Parameters
     ----------
     skill_details:
-        Row's skill_details list (dicts with esco_uri, explicit, implicit).
+        Row's skill_details list (dicts with esco_uri, explicit, implicit,
+        confidence).
     uri_reuse_levels:
         {uri: reuse_level_string} from ESCO CSV.  Only used when
         *use_tiers* is True.
@@ -147,6 +187,10 @@ def build_weighted_skills(
         If True, multiply by ESCO reuse-level tier weight.  Disabled by
         default — experiments showed tier weighting over-penalises
         transversal skills and creates too many false reranking.
+    implicit_confidence_mode:
+        How implicit-skill weight scales with propagation confidence.
+        ``uniform`` (default) — backward-compatible 0.5 for every implicit
+        skill.  ``linear`` / ``sqrt`` — see :func:`implicit_weight_factor`.
     """
     weights: dict[str, float] = {}
     for skill in skill_details:
@@ -158,7 +202,13 @@ def build_weighted_skills(
         idf = uri_idfs.get(uri, default_idf)
         if idf_cap is not None:
             idf = min(idf, idf_cap)
-        expl_impl = 1.0 if skill.get("explicit", False) else 0.5
+        if skill.get("explicit", False):
+            expl_impl = 1.0
+        else:
+            expl_impl = implicit_weight_factor(
+                skill.get("confidence", IMPLICIT_CONF_FLOOR),
+                mode=implicit_confidence_mode,
+            )
 
         w = t_w * idf * expl_impl
         weights[uri] = max(weights.get(uri, 0.0), w)
