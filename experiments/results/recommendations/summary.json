@@ -1,13 +1,13 @@
 {
-  "best_strategy": "semantic",
+  "best_strategy": "symbolic",
   "n_programmes": 45,
   "n_job_ads": 520,
   "top_n": 10,
   "top1_agreement_rate": 0.0,
   "spearman_means": {
-    "sym_sem": 0.2761723179142213,
-    "sym_hyb": 0.04972970335340365,
-    "sem_hyb": 0.14843163932239561
+    "sym_sem": 0.29012041823875223,
+    "sym_hyb": 0.0822264950238818,
+    "sem_hyb": -0.021609710550887017
   },
   "n_market_trend_skills": 50,
   "top_market_skills": [
