@@ -1,20 +1,20 @@
 {
-  "n_programmes": 46,
-  "n_jobs": 299,
-  "n_pairs": 13754,
+  "n_programmes": 45,
+  "n_jobs": 520,
+  "n_pairs": 23400,
   "top_n": 20,
   "weighted_jaccard_all": {
-    "mean": 0.03817371880454666,
-    "median": 0.0340555944403728,
-    "max": 0.18587190394353995
+    "mean": 0.04625886957655845,
+    "median": 0.04157220722735065,
+    "max": 0.4880362423003067
   },
   "weighted_jaccard_top_n": {
-    "mean": 0.0921562382848119,
-    "median": 0.09309121225594572
+    "mean": 0.1192639929733847,
+    "median": 0.11615777436908735
   },
   "overlap_coeff_all": {
-    "mean": 0.22403583671327207,
-    "median": 0.2052214742979356
+    "mean": 0.2165499018114561,
+    "median": 0.19320307786185228
   },
-  "n_skill_gap_entries": 17416
+  "n_skill_gap_entries": 19588
 }
