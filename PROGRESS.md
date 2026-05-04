@@ -499,9 +499,11 @@ Rebuild `all_jobs.json` without LinkedIn rows, re-run steps 3–11, re-validate 
 
 ---
 
-## Step 37 — Confidence-Weighted Implicit Skills (T2a) [ ]
+## Step 37 — Confidence-Weighted Implicit Skills (T2a) [x]
 
 Replace the blanket `0.5` weight currently assigned to every implicit skill with a confidence-proportional weight using the propagation cosine that is already stored in `skill_details.confidence` (range 0.70–1.00 after Step 4b filtering).
+
+**Result — sqrt selected and applied as default.** Three modes (uniform / linear / sqrt) compared on the full hybrid pipeline. All three preserve top-1 diversity (40/45). Sqrt reduces head-tied programmes (top-1↔top-2 gap < 0.02) from 15 → 12 (-20%) while keeping the top-1 max score at 0.677. Linear is too aggressive — drops max score 7% and removes only 2 tied heads. Top-1 score-mean cost of sqrt is 0.005 (negligible). Default `implicit_confidence_mode` flipped from `"uniform"` to `"sqrt"` across `build_weighted_skills`, `align_symbolic_weighted`, and `align_hybrid`. Full results: `experiments/results/exp_implicit_confidence/FINDINGS.md`.
 
 Proposed mapping:
 
