@@ -294,11 +294,22 @@ class TestImplicitWeightFactor:
 class TestBuildWeightedSkillsConfidence:
     """build_weighted_skills must honour implicit_confidence_mode."""
 
-    def test_uniform_default_matches_old_behaviour(self):
+    def test_uniform_mode_matches_paper_behaviour(self):
+        """Explicit uniform mode reproduces the paper's flat 0.5 weight."""
         s = _skill("uri:k", explicit=False)
         s["confidence"] = 0.85
-        result = build_weighted_skills([s], {}, {"uri:k": 2.0})
+        result = build_weighted_skills(
+            [s], {}, {"uri:k": 2.0}, implicit_confidence_mode="uniform",
+        )
         assert result["uri:k"] == pytest.approx(2.0 * 0.5)
+
+    def test_default_is_sqrt_mode(self):
+        """Step 37: the default implicit_confidence_mode is sqrt."""
+        s = _skill("uri:k", explicit=False)
+        s["confidence"] = 0.85  # midpoint
+        result = build_weighted_skills([s], {}, {"uri:k": 2.0})
+        # sqrt(0.5) * 0.5 ≈ 0.353553, weight = 2.0 * 0.353553
+        assert result["uri:k"] == pytest.approx(2.0 * 0.5 * (0.5 ** 0.5))
 
     def test_linear_scales_implicit_weight(self):
         s = _skill("uri:k", explicit=False)

@@ -126,7 +126,7 @@ _DEFAULT_IMPLICIT_WEIGHT: float = 0.5  # E3 from Gugnani & Misra (2020)
 
 def implicit_weight_factor(
     confidence: float,
-    mode: str = "uniform",
+    mode: str = "sqrt",
     base: float = _DEFAULT_IMPLICIT_WEIGHT,
 ) -> float:
     """
@@ -164,7 +164,7 @@ def build_weighted_skills(
     default_idf: float = 1.0,
     idf_cap: float | None = DEFAULT_IDF_CAP,
     use_tiers: bool = False,
-    implicit_confidence_mode: str = "uniform",
+    implicit_confidence_mode: str = "sqrt",
 ) -> dict[str, float]:
     """
     Build {esco_uri: weight} using IDF × explicit/implicit factors.
@@ -189,8 +189,9 @@ def build_weighted_skills(
         transversal skills and creates too many false reranking.
     implicit_confidence_mode:
         How implicit-skill weight scales with propagation confidence.
-        ``uniform`` (default) — backward-compatible 0.5 for every implicit
-        skill.  ``linear`` / ``sqrt`` — see :func:`implicit_weight_factor`.
+        ``sqrt`` (default, Step 37) — confidence-aware via
+        :func:`implicit_weight_factor`.  ``uniform`` reproduces the
+        paper's flat 0.5 weight for every implicit skill.
     """
     weights: dict[str, float] = {}
     for skill in skill_details:

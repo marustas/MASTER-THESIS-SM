@@ -285,7 +285,7 @@ def align_symbolic_weighted(
     idf_cap: float | None = 3.0,
     use_tiers: bool = False,
     use_programme_idf: bool = False,
-    implicit_confidence_mode: str = "uniform",
+    implicit_confidence_mode: str = "sqrt",
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Like ``align_symbolic`` but uses capped IDF weights instead of
@@ -310,9 +310,9 @@ def align_symbolic_weighted(
         weight than skills shared across all programmes.  Job skills
         still use corpus-wide IDF.
     implicit_confidence_mode:
-        Forwarded to ``build_weighted_skills``.  ``"uniform"`` (default)
-        applies the paper's flat 0.5 weight to every implicit skill;
-        ``"linear"`` / ``"sqrt"`` scale by propagation confidence.
+        Forwarded to ``build_weighted_skills``.  ``"sqrt"`` (default,
+        Step 37) scales implicit weight by propagation confidence;
+        ``"uniform"`` reproduces the paper's flat 0.5 weight.
 
     Returns
     -------

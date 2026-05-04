@@ -114,7 +114,7 @@ def align_hybrid(
     norm_confidence: bool = True,
     gamma: float = 0.3,
     use_programme_idf: bool = True,
-    implicit_confidence_mode: str = "uniform",
+    implicit_confidence_mode: str = "sqrt",
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -143,9 +143,10 @@ def align_hybrid(
                      IDF in the symbolic refinement stage.
     implicit_confidence_mode : how implicit-skill weight scales with the
                      propagation confidence stored in ``skill_details``.
-                     ``"uniform"`` keeps the paper's flat 0.5;
-                     ``"linear"`` / ``"sqrt"`` scale linearly / by sqrt
-                     between conf=0.70 (→ 0) and conf=1.0 (→ 0.5).
+                     ``"sqrt"`` (default, Step 37) scales by sqrt of
+                     normalised confidence; ``"uniform"`` keeps the paper's
+                     flat 0.5; ``"linear"`` scales linearly between
+                     conf=0.70 (→ 0) and conf=1.0 (→ 0.5).
 
     Returns
     -------
@@ -393,7 +394,7 @@ def run_hybrid_alignment(
     norm_confidence: bool = True,
     gamma: float = 0.3,
     use_programme_idf: bool = True,
-    implicit_confidence_mode: str = "uniform",
+    implicit_confidence_mode: str = "sqrt",
 ) -> None:
     """Load dataset, run hybrid alignment, persist results."""
     logger.info(f"Loading dataset from {dataset_path}…")
