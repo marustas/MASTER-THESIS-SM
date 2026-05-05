@@ -17,6 +17,7 @@ Steps:
   10  align_hybrid        experiments/results/exp3_hybrid/rankings.parquet
   11  evaluate            experiments/results/evaluation/per_programme.parquet
   12  recommend           experiments/results/recommendations/programme_recommendations.parquet
+  13  export              experiments/results/exports/programme_job_mapping.csv
 
 Usage:
     python -m src.pipeline                    # run all steps
@@ -58,9 +59,10 @@ _SENTINEL: dict[int, Path] = {
     10: RESULTS_DIR / "exp3_hybrid"     / "rankings.parquet",
     11: RESULTS_DIR / "evaluation"      / "per_programme.parquet",
     12: RESULTS_DIR / "recommendations" / "programme_recommendations.parquet",
+    13: RESULTS_DIR / "exports"         / "programme_job_mapping.csv",
 }
 
-ALL_STEPS = list(range(1, 13))
+ALL_STEPS = list(range(1, 14))
 
 
 # ── Step completion checks ─────────────────────────────────────────────────────
@@ -134,6 +136,10 @@ def _run_step(step: int) -> None:
 
     elif step == 12:
         from src.recommendations.generator import run_recommendations as _run
+        _run()
+
+    elif step == 13:
+        from src.export_results import export as _run
         _run()
 
     else:
@@ -232,11 +238,11 @@ def main(argv: list[str] | None = None) -> None:
             sys.exit(1)
         invalid = [s for s in steps if s not in ALL_STEPS]
         if invalid:
-            logger.error(f"Unknown step(s): {invalid}. Valid range: 1–12.")
+            logger.error(f"Unknown step(s): {invalid}. Valid range: 1–13.")
             sys.exit(1)
     elif args.from_step is not None:
         if args.from_step not in ALL_STEPS:
-            logger.error(f"--from must be between 1 and 12, got {args.from_step}.")
+            logger.error(f"--from must be between 1 and 13, got {args.from_step}.")
             sys.exit(1)
         steps = [s for s in ALL_STEPS if s >= args.from_step]
     else:
