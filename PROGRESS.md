@@ -523,23 +523,16 @@ w_implicit(u, d) = 0.5 × clip((conf - 0.70) / 0.30, 0, 1)   # → 0 at conf=0.7
 
 ---
 
-## Step 38 — Cross-Encoder Re-ranking of Top-N Candidates (T1a) [ ]
+## Step 38 — Cross-Encoder Re-ranking of Top-N Candidates (T1a) [x]
 
-Add a re-ranking stage after Stage 1 retrieval. For each programme, run a cross-encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2` or `BAAI/bge-reranker-base`) on programme-text × job-text pairs for the top-50 candidates. Use the cross-encoder score as a fresh signal that replaces or augments the bi-encoder cosine in the hybrid blend.
+Implemented the re-ranking stage as `src/alignment/cross_encoder.py` (with `score_pairs` and `score_pairs_sectioned`) plus `xe_alpha` / `xe_pool_mode` parameters on `align_hybrid`. Tested two re-ranker models (`cross-encoder/ms-marco-MiniLM-L-6-v2`, `BAAI/bge-reranker-base`) across single-pass + section-weighted + section-max pooling and three blend configurations. Section-aware variants reuse Step 34's section parser and weights.
 
-Variants to test:
+**Result — partial improvement, not adopted as default.** With MS MARCO-MiniLM, three-channel single-pass cuts head-tied programmes (gap<0.02) 12→5 at the cost of −2 unique top-1 and +1 generalist; section-weighted pooling improves diversity 40→43 and removes top-5 generalists 1→0 but loses the head-tie win. Per-programme top-1 quality is roughly even with baseline (10 better / 5 wash / 8 worse changes for secwm); aggregate diversity wins come from spreading picks. bge-reranker-base is more conservative (Spearman base↔hyb 0.91 vs 0.89), regresses head discrimination (gap<0.02 12→14), fixes only 1.5/4 persistent niche regressions. Default hybrid stays at α=0.55, no cross-encoder.
 
-1. Replace `cos_norm` with `xe_norm` (cross-encoder min-max per programme)
-2. Three-channel blend: `α₁·xe_norm + α₂·cos_norm + α₃·recall_norm` with constraint Σα = 1
-3. Cross-encoder as gate: only candidates above `xe_score > τ` proceed to symbolic refinement
+Persistent regressions (Game Designer → QA Tester, SOC analyst → Test Manager, AI Engineer → SysAdmin, Gameplay Programmer → Senior Java) trace to **specificity asymmetry**: long generic IT job descriptions over-cover broad curricula on lexical surface vs short specialised descriptions. Re-ranker model upgrades cannot fix this — belongs to Step 39 (LTR).
 
-**Why:** diagnostic shows cosine top-1 == hybrid top-1 in **0/45** programmes — the bi-encoder cosine has spent its variance on pool selection and contributes nothing at the head. A cross-encoder re-evaluates each pair from scratch with fine-grained token interaction; this is the standard modern fix for head-tie problems and is expected to move 15/45 sub-0.02-gap programmes into confident heads.
-
-**Risk:** ~2-3 min CPU for 2 250 pairs (acceptable). Adds one model dependency. May correlate with cosine more than expected — measure cross-encoder ↔ cosine Spearman before assuming independence.
-
-**Output:** `experiments/results/exp3_hybrid_xenc/`, comparison report
-**Module:** new `src/alignment/cross_encoder.py`, `src/alignment/hybrid.py` (re-rank stage)
-**Metrics to report:** top-1 diversity, top-1 mean score, top1↔top2 gap distribution, agreement with current hybrid, cost per query.
+**Output:** `experiments/results/exp3_hybrid_xenc/` (FINDINGS.md, summary.json, rankings_*.parquet, top1_diff.csv), `experiments/results/exp3_hybrid_xenc_bge/`
+**Module:** `src/alignment/cross_encoder.py` (new), `src/alignment/hybrid.py` (xe_alpha + xe_pool_mode), `src/evaluation/cross_encoder_experiment.py` (new), `tests/conftest.py` (MockCrossEncoder), `tests/alignment/test_cross_encoder.py` (23 tests)
 
 ---
 
