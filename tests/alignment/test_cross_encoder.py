@@ -14,9 +14,12 @@ import pytest
 
 from src.alignment.cross_encoder import (
     DEFAULT_MODEL,
+    chunk_text_by_tokens,
     load_cross_encoder,
     score_pairs,
+    score_pairs_chunked,
     score_pairs_sectioned,
+    score_pairs_sectioned_chunked,
 )
 from src.alignment.hybrid import align_hybrid
 
@@ -338,6 +341,134 @@ class TestScorePairsSectioned:
         scores = score_pairs_sectioned(
             mock_cross_encoder, [],
             section_parser=self._trivial_parser,
+            section_weights=self._WEIGHTS,
+        )
+        assert scores.shape == (0,)
+
+
+# ── chunk_text_by_tokens ─────────────────────────────────────────────────────
+
+class TestChunkTextByTokens:
+    def test_no_tokenizer_returns_single_chunk(self):
+        chunks = chunk_text_by_tokens("python data analysis", tokenizer=None)
+        assert chunks == ["python data analysis"]
+
+    def test_empty_text_returns_empty_list(self):
+        assert chunk_text_by_tokens("", tokenizer=None) == []
+        assert chunk_text_by_tokens("   ", tokenizer=None) == []
+
+    def test_short_text_returns_single_chunk(self):
+        class FakeTok:
+            def encode(self, text, add_special_tokens=False):
+                return text.split()  # 1 word = 1 token
+            def decode(self, ids, skip_special_tokens=True):
+                return " ".join(ids)
+        chunks = chunk_text_by_tokens("a b c", FakeTok(), max_tokens=8)
+        assert chunks == ["a b c"]
+
+    def test_long_text_is_split(self):
+        class FakeTok:
+            def encode(self, text, add_special_tokens=False):
+                return text.split()
+            def decode(self, ids, skip_special_tokens=True):
+                return " ".join(ids)
+        chunks = chunk_text_by_tokens(
+            "one two three four five six", FakeTok(), max_tokens=2,
+        )
+        assert chunks == ["one two", "three four", "five six"]
+
+
+# ── score_pairs_chunked (job-side only) ──────────────────────────────────────
+
+class TestScorePairsChunked:
+    def test_max_pool_runs(self, mock_cross_encoder):
+        # MockCrossEncoder has no tokenizer → falls back to single chunk
+        pairs = [
+            ("python data", "python data analysis machine learning"),
+            ("java", "kubernetes docker container orchestration"),
+        ]
+        scores = score_pairs_chunked(
+            mock_cross_encoder, pairs, pool="max",
+        )
+        assert scores.shape == (2,)
+        assert np.isfinite(scores).all()
+
+    def test_mean_pool_runs(self, mock_cross_encoder):
+        pairs = [("python", "python python python")]
+        scores = score_pairs_chunked(
+            mock_cross_encoder, pairs, pool="mean",
+        )
+        assert scores.shape == (1,)
+        assert np.isfinite(scores[0])
+
+    def test_invalid_pool_raises(self, mock_cross_encoder):
+        with pytest.raises(ValueError, match="pool"):
+            score_pairs_chunked(
+                mock_cross_encoder, [("a", "b")], pool="bogus",
+            )
+
+    def test_empty_input_returns_empty(self, mock_cross_encoder):
+        assert score_pairs_chunked(mock_cross_encoder, []).shape == (0,)
+
+    def test_empty_strings_get_neg_inf(self, mock_cross_encoder):
+        scores = score_pairs_chunked(
+            mock_cross_encoder, [("python", ""), ("python", "python")],
+        )
+        assert np.isneginf(scores[0])
+        assert np.isfinite(scores[1])
+
+
+# ── score_pairs_sectioned_chunked (two-sided) ────────────────────────────────
+
+class TestScorePairsSectionedChunked:
+    @staticmethod
+    def _parser(text: str) -> dict[str, str]:
+        groups = {"subjects": [], "outcomes": [], "_remainder": []}
+        cur = "_remainder"
+        for line in text.split("\n"):
+            if line.startswith("@"):
+                cur = line[1:].strip() if line[1:].strip() in groups else "_remainder"
+            else:
+                groups[cur].append(line)
+        return {g: "\n".join(v).strip() for g, v in groups.items()}
+
+    _WEIGHTS = {"subjects": 0.7, "outcomes": 0.3, "_remainder": 0.0}
+
+    def test_runs_with_mock(self, mock_cross_encoder):
+        pairs = [(
+            "@subjects\npython machine learning\n@outcomes\ndata analysis",
+            "python data analysis machine learning",
+        )]
+        scores = score_pairs_sectioned_chunked(
+            mock_cross_encoder, pairs,
+            section_parser=self._parser,
+            section_weights=self._WEIGHTS,
+        )
+        assert scores.shape == (1,)
+        assert np.isfinite(scores[0])
+
+    def test_invalid_prog_pool_raises(self, mock_cross_encoder):
+        with pytest.raises(ValueError, match="prog_pool"):
+            score_pairs_sectioned_chunked(
+                mock_cross_encoder, [("a", "b")],
+                section_parser=self._parser,
+                section_weights=self._WEIGHTS,
+                prog_pool="bogus",
+            )
+
+    def test_invalid_job_pool_raises(self, mock_cross_encoder):
+        with pytest.raises(ValueError, match="job_pool"):
+            score_pairs_sectioned_chunked(
+                mock_cross_encoder, [("a", "b")],
+                section_parser=self._parser,
+                section_weights=self._WEIGHTS,
+                job_pool="bogus",
+            )
+
+    def test_empty_input_returns_empty(self, mock_cross_encoder):
+        scores = score_pairs_sectioned_chunked(
+            mock_cross_encoder, [],
+            section_parser=self._parser,
             section_weights=self._WEIGHTS,
         )
         assert scores.shape == (0,)

@@ -29,6 +29,8 @@ from loguru import logger
 DEFAULT_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 DEFAULT_BATCH_SIZE = 64
 DEFAULT_MAX_LENGTH = 512
+# When chunking, give each side ~half of the cross-encoder's pair budget.
+DEFAULT_CHUNK_TOKENS = 256
 
 
 def load_cross_encoder(model: str | object = DEFAULT_MODEL):
@@ -179,4 +181,219 @@ def score_pairs_sectioned(
                 out[i] = s
 
     # Pairs that started empty (caller side) stay -inf — already initialised.
+    return out
+
+
+# ── Job-side chunking ─────────────────────────────────────────────────────────
+
+def chunk_text_by_tokens(
+    text: str,
+    tokenizer,
+    max_tokens: int = DEFAULT_CHUNK_TOKENS,
+) -> list[str]:
+    """
+    Split ``text`` into non-overlapping chunks of ``max_tokens`` tokens.
+
+    Returns a list with the original text as a single element when the
+    tokenizer is missing (mock models in tests) or the text fits in one
+    chunk.  Empty / whitespace-only input returns ``[]``.
+    """
+    if not text or not text.strip():
+        return []
+    if tokenizer is None or not hasattr(tokenizer, "encode"):
+        return [text]
+    token_ids = tokenizer.encode(text, add_special_tokens=False)
+    if len(token_ids) <= max_tokens:
+        return [text]
+    chunks: list[str] = []
+    for start in range(0, len(token_ids), max_tokens):
+        chunk_ids = token_ids[start : start + max_tokens]
+        chunk_text = tokenizer.decode(chunk_ids, skip_special_tokens=True)
+        if chunk_text.strip():
+            chunks.append(chunk_text)
+    return chunks if chunks else [text]
+
+
+def _model_tokenizer(model):
+    """Best-effort access to the underlying tokenizer of a CrossEncoder-like model."""
+    return getattr(model, "tokenizer", None)
+
+
+def score_pairs_chunked(
+    model,
+    pairs: Sequence[tuple[str, str]],
+    *,
+    max_job_tokens: int = DEFAULT_CHUNK_TOKENS,
+    pool: str = "max",
+    batch_size: int = DEFAULT_BATCH_SIZE,
+) -> np.ndarray:
+    """
+    Score (programme, job) pairs by chunking the *job* side only.
+
+    For each pair, the job text is split into chunks of ``max_job_tokens``
+    tokens and (full_programme_text, chunk) is scored.  The per-chunk
+    scores are pooled per pair.
+
+    Pool
+    ----
+    ``"max"``   :  best-matching chunk wins.  Rewards short specialised
+                    descriptions whose single most relevant chunk speaks
+                    loudly, and prevents long generic descriptions from
+                    averaging up to a high score.
+    ``"mean"``  :  arithmetic mean across chunks — penalises noisy chunks
+                    that don't all match.
+    """
+    if pool not in ("max", "mean"):
+        raise ValueError(f"pool must be 'max' or 'mean', got {pool!r}")
+
+    if len(pairs) == 0:
+        return np.zeros(0, dtype=np.float32)
+
+    tokenizer = _model_tokenizer(model)
+
+    flat_pairs: list[tuple[str, str]] = []
+    flat_pair_idx: list[int] = []
+    for i, (q, d) in enumerate(pairs):
+        if not q or not q.strip() or not d or not d.strip():
+            continue
+        chunks = chunk_text_by_tokens(d, tokenizer, max_tokens=max_job_tokens)
+        for chunk in chunks:
+            flat_pairs.append((q, chunk))
+            flat_pair_idx.append(i)
+
+    if not flat_pairs:
+        return np.full(len(pairs), -np.inf, dtype=np.float32)
+
+    raw = model.predict(
+        flat_pairs, batch_size=batch_size, show_progress_bar=False,
+    )
+    flat_scores = np.asarray(raw, dtype=np.float32).reshape(-1)
+
+    out = np.full(len(pairs), -np.inf, dtype=np.float32)
+    if pool == "max":
+        for s, i in zip(flat_scores, flat_pair_idx):
+            if s > out[i]:
+                out[i] = s
+    else:  # mean
+        sums = np.zeros(len(pairs), dtype=np.float64)
+        counts = np.zeros(len(pairs), dtype=np.int64)
+        for s, i in zip(flat_scores, flat_pair_idx):
+            sums[i] += s
+            counts[i] += 1
+        non_empty = counts > 0
+        out[non_empty] = (sums[non_empty] / counts[non_empty]).astype(np.float32)
+
+    return out
+
+
+def score_pairs_sectioned_chunked(
+    model,
+    pairs: Sequence[tuple[str, str]],
+    *,
+    section_parser: Callable[[str], dict[str, str]],
+    section_weights: dict[str, float],
+    prog_pool: str = "weighted_mean",
+    max_job_tokens: int = DEFAULT_CHUNK_TOKENS,
+    job_pool: str = "max",
+    batch_size: int = DEFAULT_BATCH_SIZE,
+) -> np.ndarray:
+    """
+    Score (programme, job) pairs with two-sided chunking — programme by
+    sections, job by token-budget chunks.  For each pair, every
+    (section_text, job_chunk) cross-product is scored, then pooled twice:
+
+      job axis     →  ``job_pool`` over chunks per (section, pair)
+      programme    →  ``prog_pool`` over sections per pair
+
+    The two-sided pooling lifts both truncation ceilings: the programme
+    side keeps its full curriculum content via section pooling (Step 34
+    pattern), and the job side gives short specialised descriptions a
+    chance to win on their best-matching chunk rather than being averaged
+    out by long generic alternatives.
+    """
+    if prog_pool not in ("weighted_mean", "max"):
+        raise ValueError(f"prog_pool must be 'weighted_mean' or 'max', got {prog_pool!r}")
+    if job_pool not in ("max", "mean"):
+        raise ValueError(f"job_pool must be 'max' or 'mean', got {job_pool!r}")
+
+    if len(pairs) == 0:
+        return np.zeros(0, dtype=np.float32)
+
+    tokenizer = _model_tokenizer(model)
+    parse_cache: dict[str, dict[str, str]] = {}
+    chunk_cache: dict[str, list[str]] = {}
+
+    flat_pairs: list[tuple[str, str]] = []
+    # (pair_idx, group, weight, job_chunk_idx)
+    flat_meta: list[tuple[int, str, float, int]] = []
+
+    for i, (q, d) in enumerate(pairs):
+        if not q or not q.strip() or not d or not d.strip():
+            continue
+        if q not in parse_cache:
+            parse_cache[q] = section_parser(q)
+        if d not in chunk_cache:
+            chunk_cache[d] = chunk_text_by_tokens(d, tokenizer, max_tokens=max_job_tokens)
+        sections = parse_cache[q]
+        chunks = chunk_cache[d]
+        if not chunks:
+            continue
+        for group, weight in section_weights.items():
+            text = sections.get(group, "").strip()
+            if not text:
+                continue
+            for c_idx, chunk in enumerate(chunks):
+                flat_pairs.append((text, chunk))
+                flat_meta.append((i, group, weight, c_idx))
+
+    if not flat_pairs:
+        return np.full(len(pairs), -np.inf, dtype=np.float32)
+
+    raw = model.predict(
+        flat_pairs, batch_size=batch_size, show_progress_bar=False,
+    )
+    flat_scores = np.asarray(raw, dtype=np.float32).reshape(-1)
+
+    # Step 1 — pool over job chunks per (pair, section)
+    section_scores: dict[tuple[int, str], dict] = {}
+    for s, (i, g, w, _c_idx) in zip(flat_scores, flat_meta):
+        key = (i, g)
+        if key not in section_scores:
+            section_scores[key] = {"weight": w,
+                                   "max": float(s),
+                                   "sum": float(s),
+                                   "count": 1}
+        else:
+            entry = section_scores[key]
+            entry["sum"] += float(s)
+            entry["count"] += 1
+            if s > entry["max"]:
+                entry["max"] = float(s)
+
+    pooled_section: dict[tuple[int, str], tuple[float, float]] = {}  # (score, weight)
+    for key, entry in section_scores.items():
+        if job_pool == "max":
+            section_score = entry["max"]
+        else:
+            section_score = entry["sum"] / entry["count"]
+        pooled_section[key] = (section_score, entry["weight"])
+
+    # Step 2 — pool over programme sections per pair
+    out = np.full(len(pairs), -np.inf, dtype=np.float32)
+    if prog_pool == "max":
+        per_pair_max: dict[int, float] = {}
+        for (i, _g), (score, _w) in pooled_section.items():
+            if i not in per_pair_max or score > per_pair_max[i]:
+                per_pair_max[i] = score
+        for i, val in per_pair_max.items():
+            out[i] = np.float32(val)
+    else:  # weighted_mean
+        per_pair_w: dict[int, list[float]] = {}
+        for (i, _g), (score, w) in pooled_section.items():
+            per_pair_w.setdefault(i, []).append((score, w))
+        for i, items in per_pair_w.items():
+            total_w = sum(w for _s, w in items)
+            if total_w > 0:
+                out[i] = np.float32(sum(s * w for s, w in items) / total_w)
+
     return out
