@@ -88,6 +88,50 @@
       "spearman_sem_hyb_mean": -0.23415979725223418,
       "spearman_base_hyb_mean": 0.8880405495531546,
       "top1_agreement_with_baseline": 23
+    },
+    "three_channel_jobchunk": {
+      "n_programmes": 45,
+      "unique_top1": 39,
+      "top1_diversity": 0.8667,
+      "top1_max_repeat": 2,
+      "top5_generalists": 1,
+      "top5_max_repeat": 7,
+      "top1_score_mean": 0.35130060970931204,
+      "top1_score_max": 0.5873506631017884,
+      "top1_score_min": 0.18367900738808732,
+      "top1_score_std": 0.0922970589779834,
+      "top1_score_cov": 0.26272957241479233,
+      "gap_mean": 0.06178266892093887,
+      "gap_median": 0.04279162253862434,
+      "gap_p10": 0.006838235823631811,
+      "gap_lt_002": 12,
+      "gap_lt_005": 24,
+      "spearman_sym_hyb_mean": 0.13726655621394487,
+      "spearman_sem_hyb_mean": -0.23579885287448318,
+      "spearman_base_hyb_mean": 0.8650404161664665,
+      "top1_agreement_with_baseline": 23
+    },
+    "three_channel_secxjob": {
+      "n_programmes": 45,
+      "unique_top1": 39,
+      "top1_diversity": 0.8667,
+      "top1_max_repeat": 2,
+      "top5_generalists": 0,
+      "top5_max_repeat": 5,
+      "top1_score_mean": 0.3496021478972859,
+      "top1_score_max": 0.6516483843326568,
+      "top1_score_min": 0.1575999561071962,
+      "top1_score_std": 0.1052564762352681,
+      "top1_score_cov": 0.3010750273370539,
+      "gap_mean": 0.06907604936279355,
+      "gap_median": 0.04295803391583336,
+      "gap_p10": 0.0057060220852863785,
+      "gap_lt_002": 14,
+      "gap_lt_005": 25,
+      "spearman_sym_hyb_mean": 0.12872237130292669,
+      "spearman_sem_hyb_mean": -0.21375270108043215,
+      "spearman_base_hyb_mean": 0.8827904495131388,
+      "top1_agreement_with_baseline": 26
     }
   },
   "deltas_vs_baseline": {
@@ -117,6 +161,24 @@
       "gap_lt_002": 1,
       "top1_score_cov": -0.07250043838982057,
       "top5_generalists": 0
+    },
+    "three_channel_jobchunk": {
+      "unique_top1": -1,
+      "top1_score_mean": 0.04668319475315602,
+      "top1_score_max": -0.08970722556114197,
+      "gap_mean": -0.007572931929563577,
+      "gap_lt_002": 0,
+      "top1_score_cov": -0.10906835835502121,
+      "top5_generalists": 0
+    },
+    "three_channel_secxjob": {
+      "unique_top1": -1,
+      "top1_score_mean": 0.04498473294112987,
+      "top1_score_max": -0.025409504330273558,
+      "gap_mean": -0.0002795514877089039,
+      "gap_lt_002": 2,
+      "top1_score_cov": -0.07072290343275967,
+      "top5_generalists": -1
     }
   }
 }

@@ -54,6 +54,8 @@ CONFIGS: dict[str, dict] = {
     "three_channel":          {"alpha": 0.275, "xe_alpha": 0.275, "xe_pool_mode": "single"},
     "three_channel_secwm":    {"alpha": 0.275, "xe_alpha": 0.275, "xe_pool_mode": "section_weighted"},
     "three_channel_secmax":   {"alpha": 0.275, "xe_alpha": 0.275, "xe_pool_mode": "section_max"},
+    "three_channel_jobchunk": {"alpha": 0.275, "xe_alpha": 0.275, "xe_pool_mode": "job_chunked_max"},
+    "three_channel_secxjob":  {"alpha": 0.275, "xe_alpha": 0.275, "xe_pool_mode": "section_x_job_max"},
 }
 
 

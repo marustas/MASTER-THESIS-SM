@@ -24,22 +24,22 @@ Cross-encoder: `cross-encoder/ms-marco-MiniLM-L-6-v2`
 
 ## Results
 
-| Metric | baseline | three_channel | three_channel_secwm | three_channel_secmax |
-|---|---|---|---|---|
-| Top-1 unique | 40 | 38 | 43 | 41 |
-| Top-1 diversity | 0.8889 | 0.8444 | 0.9556 | 0.9111 |
-| Top-1 max repeat | 2 | 3 | 2 | 2 |
-| Top-5 generalists (>5) | 1 | 2 | 0 | 1 |
-| Top-1 score mean | 0.3046 | 0.3661 | 0.3612 | 0.3656 |
-| Top-1 score max | 0.6771 | 0.5665 | 0.7446 | 0.6551 |
-| Top-1 score CoV | 0.3718 | 0.2421 | 0.3134 | 0.2993 |
-| Gap top1↔top2 mean | 0.0694 | 0.0759 | 0.0699 | 0.0678 |
-| Programmes with gap<0.02 | 12 | 5 | 12 | 13 |
-| Programmes with gap<0.05 | 24 | 22 | 26 | 29 |
-| Spearman sym↔hyb | 0.2634 | 0.1239 | 0.1178 | 0.1301 |
-| Spearman sem↔hyb | -0.0216 | -0.2445 | -0.2228 | -0.2342 |
-| Spearman base↔hyb | — | 0.8650 | 0.8936 | 0.8880 |
-| Top-1 agreement w/ base | — | 22 | 22 | 23 |
+| Metric | baseline | three_channel | three_channel_secwm | three_channel_secmax | three_channel_jobchunk | three_channel_secxjob |
+|---|---|---|---|---|---|---|
+| Top-1 unique | 40 | 38 | 43 | 41 | 39 | 39 |
+| Top-1 diversity | 0.8889 | 0.8444 | 0.9556 | 0.9111 | 0.8667 | 0.8667 |
+| Top-1 max repeat | 2 | 3 | 2 | 2 | 2 | 2 |
+| Top-5 generalists (>5) | 1 | 2 | 0 | 1 | 1 | 0 |
+| Top-1 score mean | 0.3046 | 0.3661 | 0.3612 | 0.3656 | 0.3513 | 0.3496 |
+| Top-1 score max | 0.6771 | 0.5665 | 0.7446 | 0.6551 | 0.5874 | 0.6516 |
+| Top-1 score CoV | 0.3718 | 0.2421 | 0.3134 | 0.2993 | 0.2627 | 0.3011 |
+| Gap top1↔top2 mean | 0.0694 | 0.0759 | 0.0699 | 0.0678 | 0.0618 | 0.0691 |
+| Programmes with gap<0.02 | 12 | 5 | 12 | 13 | 12 | 14 |
+| Programmes with gap<0.05 | 24 | 22 | 26 | 29 | 24 | 25 |
+| Spearman sym↔hyb | 0.2634 | 0.1239 | 0.1178 | 0.1301 | 0.1373 | 0.1287 |
+| Spearman sem↔hyb | -0.0216 | -0.2445 | -0.2228 | -0.2342 | -0.2358 | -0.2138 |
+| Spearman base↔hyb | — | 0.8650 | 0.8936 | 0.8880 | 0.8650 | 0.8828 |
+| Top-1 agreement w/ base | — | 22 | 22 | 23 | 23 | 26 |
 
 ## Deltas vs baseline
 
@@ -48,6 +48,8 @@ Cross-encoder: `cross-encoder/ms-marco-MiniLM-L-6-v2`
 | three_channel | -2 | +0.0615 | +0.0066 | -7 | +1 |
 | three_channel_secwm | +3 | +0.0566 | +0.0005 | +0 | -1 |
 | three_channel_secmax | +1 | +0.0609 | -0.0016 | +1 | +0 |
+| three_channel_jobchunk | -1 | +0.0467 | -0.0076 | +0 | +0 |
+| three_channel_secxjob | -1 | +0.0450 | -0.0003 | +2 | -1 |
 
 ## Notes
 

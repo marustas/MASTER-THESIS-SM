@@ -25,37 +25,39 @@ ranking signal in the candidate pool and reduce the head-tied programmes
 
 ## Configurations
 
-| Config                  | α (cos) | xe_alpha | recall | xe_pool_mode      | What changes vs. baseline |
-|-------------------------|---------|----------|--------|--------------------|----------------------------|
-| baseline                | 0.55    | 0.00     | 0.45   | —                  | current production hybrid  |
-| replace_cos             | 0.00    | 0.55     | 0.45   | single             | cosine channel removed; xe takes its weight |
-| three_channel           | 0.275   | 0.275    | 0.45   | single             | old cosine half split between cos and xe |
-| three_channel_secwm     | 0.275   | 0.275    | 0.45   | section_weighted   | xe scored per section, weighted-mean pooled |
-| three_channel_secmax    | 0.275   | 0.275    | 0.45   | section_max        | xe scored per section, max pooled |
+| Config                  | α (cos) | xe_alpha | recall | xe_pool_mode       | What changes vs. baseline |
+|-------------------------|---------|----------|--------|---------------------|----------------------------|
+| baseline                | 0.55    | 0.00     | 0.45   | —                   | current production hybrid  |
+| replace_cos             | 0.00    | 0.55     | 0.45   | single              | cosine channel removed; xe takes its weight |
+| three_channel           | 0.275   | 0.275    | 0.45   | single              | old cosine half split between cos and xe |
+| three_channel_secwm     | 0.275   | 0.275    | 0.45   | section_weighted    | xe scored per programme section (weighted-mean) |
+| three_channel_secmax    | 0.275   | 0.275    | 0.45   | section_max         | xe scored per programme section (max) |
+| three_channel_jobchunk  | 0.275   | 0.275    | 0.45   | job_chunked_max     | xe scored per 256-token job chunk (max-pool) |
+| three_channel_secxjob   | 0.275   | 0.275    | 0.45   | section_x_job_max   | two-sided: prog sections (weighted) × job chunks (max) |
 
 Section-aware variants split each programme into the same section groups used
 by Step 34 (subjects 0.35, outcomes 0.25, identity 0.15, specialisations 0.20,
 _remainder 0.05) and score each non-empty section against the full job text.
 This lifts the 512-token pair-budget ceiling for the programme side.
 
-## Aggregate metrics (full dataset)
+## Aggregate metrics (full dataset, MS MARCO-MiniLM)
 
-| Metric                     | baseline | replace_cos | three_channel | secwm  | secmax |
-|----------------------------|----------|-------------|----------------|--------|--------|
-| Top-1 unique               | 40       | 39          | 38             | **43** | 41     |
-| Top-1 diversity            | 0.889    | 0.867       | 0.844          | **0.956** | 0.911 |
-| Top-1 max repeat           | 2        | 3           | 3              | 2      | 2      |
-| Top-5 generalists (>5×)    | 1        | 2           | 2              | **0**  | 1      |
-| Top-1 score mean           | 0.305    | 0.439       | 0.366          | 0.361  | 0.366  |
-| Top-1 score max            | 0.677    | 0.715       | 0.566          | **0.745** | 0.655 |
-| Top-1 score CoV            | 0.372    | 0.218       | 0.242          | 0.313  | 0.299  |
-| Gap top1↔top2 mean        | 0.069    | 0.074       | 0.076          | 0.070  | 0.068  |
-| Programmes with gap<0.02   | 12       | 10          | **5**          | 12     | 13     |
-| Programmes with gap<0.05   | 24       | 20          | 22             | 26     | 29     |
-| Spearman sym↔hyb          | 0.263    | 0.144       | 0.124          | 0.118  | 0.130  |
-| Spearman sem↔hyb          | -0.022   | -0.306      | -0.245         | -0.223 | -0.234 |
-| Spearman base↔hyb         | —        | 0.711       | 0.865          | 0.894  | 0.888  |
-| Top-1 agreement w/ base    | —        | 12/45       | 22/45          | 22/45  | 23/45  |
+| Metric                     | baseline | replace_cos | three_ch | secwm     | secmax | jobchunk | secxjob |
+|----------------------------|----------|-------------|----------|-----------|--------|----------|---------|
+| Top-1 unique               | 40       | 39          | 38       | **43**    | 41     | 39       | 39      |
+| Top-1 diversity            | 0.889    | 0.867       | 0.844    | **0.956** | 0.911  | 0.867    | 0.867   |
+| Top-1 max repeat           | 2        | 3           | 3        | 2         | 2      | 2        | 2       |
+| Top-5 generalists (>5×)    | 1        | 2           | 2        | **0**     | 1      | 1        | **0**   |
+| Top-1 score mean           | 0.305    | 0.439       | 0.366    | 0.361     | 0.366  | 0.351    | 0.350   |
+| Top-1 score max            | 0.677    | 0.715       | 0.566    | **0.745** | 0.655  | 0.587    | 0.652   |
+| Top-1 score CoV            | 0.372    | 0.218       | 0.242    | 0.313     | 0.299  | 0.263    | 0.301   |
+| Gap top1↔top2 mean        | 0.069    | 0.074       | 0.076    | 0.070     | 0.068  | 0.062    | 0.069   |
+| Programmes with gap<0.02   | 12       | 10          | **5**    | 12        | 13     | 12       | 14      |
+| Programmes with gap<0.05   | 24       | 20          | 22       | 26        | 29     | 24       | 25      |
+| Spearman sym↔hyb          | 0.263    | 0.144       | 0.124    | 0.118     | 0.130  | 0.137    | 0.129   |
+| Spearman sem↔hyb          | -0.022   | -0.306      | -0.245   | -0.223    | -0.234 | -0.236   | -0.214  |
+| Spearman base↔hyb         | —        | 0.711       | 0.865    | 0.894     | 0.888  | 0.865    | 0.883   |
+| Top-1 agreement w/ base    | —        | 12/45       | 22/45    | 22/45     | 23/45  | 23/45    | 26/45   |
 
 ## Per-config impact
 
@@ -113,6 +115,39 @@ This lifts the 512-token pair-budget ceiling for the programme side.
 
 * In between `three_channel` and `secwm` on every metric.  No reason to
   prefer it over `secwm` in this run.
+
+### `three_channel_jobchunk` (job-side chunking, max-pool)
+
+* Programme is sent as a single pass; the job is chunked into 256-token
+  pieces and the highest-scoring chunk wins.  Hypothesis: short
+  specialised job descriptions get to put their best chunk forward
+  rather than being averaged out.
+* Result: marginal vs baseline.  Top-1 unique 39 (−1), gap<0.02 unchanged
+  at 12, top-5 generalists 1 (=).  Top-1 agreement with baseline 23/45.
+* On the persistent-regression list: **fixes Game Designer** (SMK
+  Computer games & animation regains its top-1 from secwm's QA Tester),
+  but does *not* recover SOC analyst, Gameplay Programmer, or AI Engineer.
+
+### `three_channel_secxjob` (two-sided: prog sections × job chunks)
+
+* For each pair, the cross-encoder sees every (section, job_chunk)
+  combination; pooled by max over chunks then weighted-mean over
+  sections.  ~5× the cost of `single`.
+* Result: aggregate metrics worse than `secwm` — top-1 unique 39 (−4),
+  gap<0.02 14 (worst of all configs), but top-5 generalists 0 (matches
+  secwm).
+* Top-1 agreement with baseline 26/45 (most conservative of all configs).
+* On the persistent-regression list: keeps baseline's correct picks for
+  SOC analyst (MRU) and AI Engineer (KTU Informatics Engineering) which
+  every other variant broke.  But still loses Game Designer and Gameplay
+  Programmer.
+* Per-programme tally of the 19 changed top-1 picks vs baseline:
+  | Verdict | Count |
+  |---------|-------|
+  | Better  | 8     |
+  | Wash    | 3     |
+  | Worse   | 8     |
+* Same 8/8 better-vs-worse ratio as `secwm` and `three_channel`.
 
 ## Hypothesis revisions (what I got wrong, and why)
 
@@ -210,24 +245,32 @@ curriculum.
 
 ## Decision
 
-* Cross-encoder re-ranking does not deliver a clean Pareto win on this
-  corpus, with either MS MARCO-MiniLM or bge-reranker-base.
-* The strongest single config is **`three_channel_secwm` with
-  MS MARCO-MiniLM** — diversity 40 → 43, generalists 1 → 0, top-1 score
-  max +0.07.  But per-programme top-1 quality is roughly even (10 better /
-  5 wash / 8 worse), and the win is on *spreading* picks, not *better*
-  picks.
-* Step 38 left as **tested, partial improvement available, not adopted as
-  default**.  The default hybrid stays as Step 35 baseline (α = 0.55, no
-  cross-encoder).
-* Section-aware cross-encoder + MS MARCO-MiniLM is documented as a
-  reproducible alternative configuration if downstream evaluation needs
-  it (e.g. reporting two ranking variants in the thesis).
+Across **5 cross-encoder pool modes** (single, secwm, secmax, jobchunk,
+secxjob) × **2 models** (MS MARCO-MiniLM, bge-reranker-base), the
+better-vs-worse-than-baseline ratio at the per-programme level is
+~10/8 ± 1 in every configuration.  Each variant fixes a different subset
+of regressions and breaks a different subset.  No single config Pareto-
+dominates baseline.
 
-The structural specificity-asymmetry issue belongs to Step 39 (LTR) —
-where features can include cosine, cross-encoder, programme_recall, IDF
-statistics, document length, etc., and a learned model can balance them
-without any single hand-tuned hyperparameter dominating.
+Aggregate-metric champions vary by metric:
+* `secwm` — best diversity (43/45) + zero top-5 generalists + highest
+  top-1 score max (0.745).
+* `three_channel` — best head discrimination (gap<0.02 = 5).
+* `secxjob` — most conservative w.r.t. baseline (Spearman 0.88, 26/45
+  agreement) and the only variant to preserve baseline's correct picks
+  for both SOC analyst and AI Engineer.
+
+The cross-encoder signal is **fundamentally noisy on this corpus**.
+That noise pattern is the textbook case for Step 39 (LTR): when no
+single ranker is consistently better, train a learner to choose which
+signal to trust per query using cosine, cross-encoder, programme_recall,
+IDF statistics, and document-length features as inputs.
+
+Step 38 left as **tested, no variant adopted as default**.  The default
+hybrid stays as Step 35 baseline (α = 0.55, no cross-encoder).
+Section-aware cross-encoder + MS MARCO-MiniLM (`secwm`) and the
+two-sided variant (`secxjob`) are documented as reproducible alternative
+configurations for downstream evaluation.
 
 ## Artefacts
 
