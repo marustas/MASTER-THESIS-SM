@@ -44,6 +44,11 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
+from src.alignment.cross_encoder import (
+    load_cross_encoder,
+    score_pairs,
+    score_pairs_sectioned,
+)
 from src.alignment.semantic import align_semantic
 from src.alignment.symbolic import align_symbolic_weighted
 from src.scraping.config import DATA_DIR
@@ -115,6 +120,10 @@ def align_hybrid(
     gamma: float = 0.3,
     use_programme_idf: bool = True,
     implicit_confidence_mode: str = "sqrt",
+    cross_encoder_model: str | object | None = None,
+    xe_alpha: float = 0.0,
+    xe_batch_size: int = 64,
+    xe_pool_mode: str = "single",
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -147,18 +156,56 @@ def align_hybrid(
                      normalised confidence; ``"uniform"`` keeps the paper's
                      flat 0.5; ``"linear"`` scales linearly between
                      conf=0.70 (→ 0) and conf=1.0 (→ 0.5).
+    cross_encoder_model : optional cross-encoder for re-ranking the candidate
+                     pool produced by Stage 1.  Either a HuggingFace model
+                     name (str) or any object exposing ``predict(pairs)``.
+                     Required when ``xe_alpha > 0``; ignored when
+                     ``xe_alpha == 0``.
+    xe_alpha       : weight on the cross-encoder channel in the hybrid
+                     blend.  Final formula is
+                     ``alpha · cos_norm + xe_alpha · xe_norm
+                     + (1 − alpha − xe_alpha) · recall_norm``.
+                     Set ``alpha=0`` for pure cross-encoder + recall (Step 38
+                     variant 1); use a non-zero ``alpha`` for the
+                     three-channel blend (variant 2).
+    xe_batch_size  : batch size passed to the cross-encoder (default 64).
+    xe_pool_mode   : how the cross-encoder scores a (programme, job) pair.
+                     ``"single"`` (default) sends the full ``cleaned_text``
+                     once — limited by the 512-token cross-encoder budget.
+                     ``"section_weighted"`` parses the programme into
+                     section groups (subjects, outcomes, identity,
+                     specialisations, _remainder), scores each non-empty
+                     section against the job, and weighted-pools using the
+                     same SECTION_WEIGHTS as Step 34's programme embeddings.
+                     ``"section_max"`` takes the best-scoring section
+                     (useful for niche programmes whose discriminator
+                     lives in one section).
 
     Returns
     -------
     rankings : pd.DataFrame
         Columns: programme_id, job_id, programme_name, job_title,
-                 cosine_score, programme_recall, hybrid_score.
+                 cosine_score, programme_recall, hybrid_score
+                 (and ``xe_score`` when ``xe_alpha > 0``).
         One row per (programme, candidate) pair — at most
         ``semantic_top_n`` rows per programme.
         Sorted by (programme_id asc, hybrid_score desc).
     """
     if not 0.0 <= alpha <= 1.0:
         raise ValueError(f"alpha must be in [0, 1], got {alpha}")
+    if not 0.0 <= xe_alpha <= 1.0:
+        raise ValueError(f"xe_alpha must be in [0, 1], got {xe_alpha}")
+    if alpha + xe_alpha > 1.0 + 1e-9:
+        raise ValueError(
+            f"alpha + xe_alpha must be ≤ 1, got {alpha} + {xe_alpha} = {alpha + xe_alpha}"
+        )
+    if xe_alpha > 0 and cross_encoder_model is None:
+        raise ValueError("cross_encoder_model is required when xe_alpha > 0")
+    if xe_pool_mode not in ("single", "section_weighted", "section_max"):
+        raise ValueError(
+            f"xe_pool_mode must be 'single' | 'section_weighted' | 'section_max', "
+            f"got {xe_pool_mode!r}"
+        )
 
     n_prog = (df["source_type"] == "programme").sum()
     n_jobs = (df["source_type"] == "job_ad").sum()
@@ -179,6 +226,36 @@ def align_hybrid(
         .head(semantic_top_n)
         .reset_index(drop=True)
     )
+
+    # ── Stage 1.5: cross-encoder re-ranking (optional) ──────────────────────
+    if xe_alpha > 0:
+        logger.info(
+            f"Stage 1.5: cross-encoder re-ranking ({len(candidates):,} pairs, "
+            f"pool={xe_pool_mode})…"
+        )
+        xe_model = load_cross_encoder(cross_encoder_model)
+        text_map = df["cleaned_text"].fillna("").to_dict()
+        pairs = [
+            (text_map.get(pid, ""), text_map.get(jid, ""))
+            for pid, jid in zip(candidates["programme_id"], candidates["job_id"])
+        ]
+        if xe_pool_mode == "single":
+            candidates["xe_score"] = score_pairs(
+                xe_model, pairs, batch_size=xe_batch_size,
+            )
+        else:
+            from src.embeddings.generator import (
+                SECTION_WEIGHTS,
+                parse_programme_sections,
+            )
+            pool = "max" if xe_pool_mode == "section_max" else "weighted_mean"
+            candidates["xe_score"] = score_pairs_sectioned(
+                xe_model, pairs,
+                section_parser=parse_programme_sections,
+                section_weights=SECTION_WEIGHTS,
+                pool=pool,
+                batch_size=xe_batch_size,
+            )
 
     # ── Stage 2: symbolic refinement (IDF-weighted programme recall) ────────
     logger.info(
@@ -283,10 +360,21 @@ def align_hybrid(
     # (skill overlap vs none), unlike narrow cosine which is genuinely noise.
     merged["recall_norm"] = merged.groupby("programme_id")["programme_recall"].transform(_minmax)
 
+    if xe_alpha > 0:
+        merged["xe_norm"] = _confident_minmax("xe_score")
+
     # ── Hybrid score ───────────────────────────────────────────────────────────
-    merged["hybrid_score"] = (
-        alpha * merged["cosine_norm"] + (1.0 - alpha) * merged["recall_norm"]
-    )
+    recall_weight = 1.0 - alpha - xe_alpha
+    if xe_alpha > 0:
+        merged["hybrid_score"] = (
+            alpha * merged["cosine_norm"]
+            + xe_alpha * merged["xe_norm"]
+            + recall_weight * merged["recall_norm"]
+        )
+    else:
+        merged["hybrid_score"] = (
+            alpha * merged["cosine_norm"] + recall_weight * merged["recall_norm"]
+        )
 
     # ── Inverse programme frequency (two-tier generalist penalty) ────────────
     if ipf_top_k > 0:
@@ -334,8 +422,11 @@ def align_hybrid(
         )
         merged = merged.drop(columns=["_rank", "_prog_count", "_ipf", "_ipf_norm"])
 
+    drop_cols = ["cosine_norm", "recall_norm"]
+    if "xe_norm" in merged.columns:
+        drop_cols.append("xe_norm")
     rankings = (
-        merged.drop(columns=["cosine_norm", "recall_norm"])
+        merged.drop(columns=drop_cols)
         .sort_values(["programme_id", "hybrid_score"], ascending=[True, False])
         .reset_index(drop=True)
     )
@@ -395,6 +486,10 @@ def run_hybrid_alignment(
     gamma: float = 0.3,
     use_programme_idf: bool = True,
     implicit_confidence_mode: str = "sqrt",
+    cross_encoder_model: str | object | None = None,
+    xe_alpha: float = 0.0,
+    xe_batch_size: int = 64,
+    xe_pool_mode: str = "single",
 ) -> None:
     """Load dataset, run hybrid alignment, persist results."""
     logger.info(f"Loading dataset from {dataset_path}…")
@@ -411,6 +506,10 @@ def run_hybrid_alignment(
         gamma=gamma,
         use_programme_idf=use_programme_idf,
         implicit_confidence_mode=implicit_confidence_mode,
+        cross_encoder_model=cross_encoder_model,
+        xe_alpha=xe_alpha,
+        xe_batch_size=xe_batch_size,
+        xe_pool_mode=xe_pool_mode,
     )
 
     rankings_path = output_dir / "rankings.parquet"
