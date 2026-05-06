@@ -119,11 +119,54 @@ class MockEmbeddingModel:
         return np.array(result, dtype=np.float32)
 
 
+# ── Deterministic mock cross-encoder ──────────────────────────────────────────
+
+class MockCrossEncoder:
+    """
+    Network-free cross-encoder for tests.
+
+    Scores a (query, document) pair by counting shared keywords from the
+    same vocabulary as ``MockEmbeddingModel`` plus a length penalty.
+    Output range is approximately [-1, 5]; absolute scale is irrelevant
+    because hybrid alignment min-max normalises per-programme.
+    """
+
+    _KW = MockEmbeddingModel._KW
+
+    def predict(
+        self,
+        pairs,
+        *,
+        batch_size: int = 64,
+        show_progress_bar: bool = False,
+    ) -> np.ndarray:
+        scores = []
+        for q, d in pairs:
+            ql = (q or "").lower()
+            dl = (d or "").lower()
+            q_kw = {kw for kw in self._KW if kw in ql}
+            d_kw = {kw for kw in self._KW if kw in dl}
+            if not q_kw and not d_kw:
+                scores.append(0.0)
+                continue
+            shared = len(q_kw & d_kw)
+            union = len(q_kw | d_kw)
+            jaccard = shared / union if union else 0.0
+            # 5·jaccard puts strong matches near 5, no-match near 0
+            scores.append(5.0 * jaccard)
+        return np.array(scores, dtype=np.float32)
+
+
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 
 @pytest.fixture(scope="session")
 def mock_embedding_model() -> MockEmbeddingModel:
     return MockEmbeddingModel()
+
+
+@pytest.fixture(scope="session")
+def mock_cross_encoder() -> MockCrossEncoder:
+    return MockCrossEncoder()
 
 
 @pytest.fixture(scope="session")
