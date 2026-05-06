@@ -47,7 +47,9 @@ from loguru import logger
 from src.alignment.cross_encoder import (
     load_cross_encoder,
     score_pairs,
+    score_pairs_chunked,
     score_pairs_sectioned,
+    score_pairs_sectioned_chunked,
 )
 from src.alignment.semantic import align_semantic
 from src.alignment.symbolic import align_symbolic_weighted
@@ -180,6 +182,15 @@ def align_hybrid(
                      ``"section_max"`` takes the best-scoring section
                      (useful for niche programmes whose discriminator
                      lives in one section).
+                     ``"job_chunked_max"`` keeps the programme as a single
+                     pass but chunks the job into 256-token pieces and
+                     keeps the highest-scoring chunk — reduces the
+                     long-generic-job advantage by letting short
+                     specialised descriptions win on their best chunk.
+                     ``"section_x_job_max"`` two-sided: programme by
+                     sections (weighted-mean) and job by chunks (max).
+                     Lifts both truncation ceilings; ~3-5× the cost of
+                     ``"single"``.
 
     Returns
     -------
@@ -201,10 +212,16 @@ def align_hybrid(
         )
     if xe_alpha > 0 and cross_encoder_model is None:
         raise ValueError("cross_encoder_model is required when xe_alpha > 0")
-    if xe_pool_mode not in ("single", "section_weighted", "section_max"):
+    valid_pool_modes = (
+        "single",
+        "section_weighted",
+        "section_max",
+        "job_chunked_max",
+        "section_x_job_max",
+    )
+    if xe_pool_mode not in valid_pool_modes:
         raise ValueError(
-            f"xe_pool_mode must be 'single' | 'section_weighted' | 'section_max', "
-            f"got {xe_pool_mode!r}"
+            f"xe_pool_mode must be one of {valid_pool_modes}, got {xe_pool_mode!r}"
         )
 
     n_prog = (df["source_type"] == "programme").sum()
@@ -243,19 +260,33 @@ def align_hybrid(
             candidates["xe_score"] = score_pairs(
                 xe_model, pairs, batch_size=xe_batch_size,
             )
+        elif xe_pool_mode == "job_chunked_max":
+            candidates["xe_score"] = score_pairs_chunked(
+                xe_model, pairs, pool="max", batch_size=xe_batch_size,
+            )
         else:
             from src.embeddings.generator import (
                 SECTION_WEIGHTS,
                 parse_programme_sections,
             )
-            pool = "max" if xe_pool_mode == "section_max" else "weighted_mean"
-            candidates["xe_score"] = score_pairs_sectioned(
-                xe_model, pairs,
-                section_parser=parse_programme_sections,
-                section_weights=SECTION_WEIGHTS,
-                pool=pool,
-                batch_size=xe_batch_size,
-            )
+            if xe_pool_mode == "section_x_job_max":
+                candidates["xe_score"] = score_pairs_sectioned_chunked(
+                    xe_model, pairs,
+                    section_parser=parse_programme_sections,
+                    section_weights=SECTION_WEIGHTS,
+                    prog_pool="weighted_mean",
+                    job_pool="max",
+                    batch_size=xe_batch_size,
+                )
+            else:
+                pool = "max" if xe_pool_mode == "section_max" else "weighted_mean"
+                candidates["xe_score"] = score_pairs_sectioned(
+                    xe_model, pairs,
+                    section_parser=parse_programme_sections,
+                    section_weights=SECTION_WEIGHTS,
+                    pool=pool,
+                    batch_size=xe_batch_size,
+                )
 
     # ── Stage 2: symbolic refinement (IDF-weighted programme recall) ────────
     logger.info(

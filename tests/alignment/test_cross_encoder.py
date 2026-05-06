@@ -472,3 +472,33 @@ class TestScorePairsSectionedChunked:
             section_weights=self._WEIGHTS,
         )
         assert scores.shape == (0,)
+
+
+# ── hybrid integration with new modes ────────────────────────────────────────
+
+class TestHybridNewPoolModes:
+    def test_job_chunked_max_runs(self, mock_cross_encoder):
+        df = _make_df(2, 4)
+        rankings = align_hybrid(
+            df, semantic_top_n=3,
+            alpha=0.0, xe_alpha=0.5,
+            cross_encoder_model=mock_cross_encoder,
+            xe_pool_mode="job_chunked_max",
+            ipf_top_k=0, norm_confidence=False,
+        )
+        assert "xe_score" in rankings.columns
+        assert rankings["xe_score"].notna().all()
+
+    def test_section_x_job_max_runs(self, mock_cross_encoder):
+        df = _make_df(2, 4)
+        df.loc[df["source_type"] == "programme", "cleaned_text"] = (
+            "subjects:\npython data analysis\noutcomes:\nmachine learning"
+        )
+        rankings = align_hybrid(
+            df, semantic_top_n=3,
+            alpha=0.0, xe_alpha=0.5,
+            cross_encoder_model=mock_cross_encoder,
+            xe_pool_mode="section_x_job_max",
+            ipf_top_k=0, norm_confidence=False,
+        )
+        assert "xe_score" in rankings.columns
