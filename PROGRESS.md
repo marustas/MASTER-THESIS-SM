@@ -536,25 +536,21 @@ Persistent regressions (Game Designer → QA Tester, SOC analyst → Test Manage
 
 ---
 
-## Step 39 — Learning-to-Rank with Cross-Strategy Consensus (T1b) [ ]
+## Step 39 — Learning-to-Rank with Cross-Strategy Consensus (T1b) [x] tried, not adopted — implementation removed
 
-Replace the hand-tuned hybrid formula (α, γ, IPF floors, normalisation) with a single learned ranker. Use cross-strategy consensus from `src/evaluation/ir_metrics.py` as soft binary labels: a (programme, job) pair is positive if the job is in the top-K of ≥2 of {symbolic, semantic, hybrid, BM25}. Train LightGBM-rank (or XGBoost-rank) with leave-one-programme-out cross-validation to avoid overfitting to current rankings.
+Prototyped LightGBM `LGBMRanker` (LambdaRank) over the per-programme top-50 semantic candidate pool (45 programmes × 50 = 2,250 pairs), trained with leave-one-programme-out CV. Features (13): `cosine_score`, `programme_recall`, `weighted_jaccard`, `overlap_coeff`, `bm25_score`, `n_matched_uris`, `mean_idf_matched`, `mean_idf_job_unmatched`, `count_top_k` (IPF input), `prog_skill_richness`, `job_skill_count`, `prog_implicit_ratio`, `job_implicit_ratio`. Consensus labels intentionally excluded hybrid (sources: symbolic ∪ semantic ∪ BM25, ≥ 2 of 3) so the learner was not trained against the formula it was meant to replace.
 
-Feature set (initial):
+**Result — not adopted; implementation removed.** Held-out IR metrics on consensus looked strong (NDCG@10 = 0.759, P@5 = 0.324, MRR = 0.750, Coverage@10 = 0.973 over 37/45 evaluable programmes). The number is misleading on its own. Two diagnostics killed adoption:
 
-- `cosine_score`, `cross_encoder_score` (if Step 38 done), `programme_recall`, `R*` (quality-multiplied recall)
-- `weighted_jaccard`, `overlap_coeff`, `bm25_score`
-- `n_matched_uris`, `mean_idf_matched`, `mean_idf_job_unmatched`
-- `count_top30(j)` (IPF input), `programme_skill_richness`, `job_skill_count`
-- `programme_implicit_ratio`, `job_implicit_ratio`
+1. Gain-based feature importance was dominated by `count_top_k` (1456) and `job_skill_count` (493) — both popularity proxies — almost 2× the next feature `weighted_jaccard` (729).
+2. Mean per-programme Spearman against the hybrid baseline was **−0.332** (anti-correlated, not just different).
 
-**Why:** the current formula has ~7 hand-tuned hyperparameters (α, γ, ipf_top_k, ipf_floor, ipf_strict_floor, ipf_strict_threshold, norm_confidence). Each was tuned independently against partial metrics. A learned ranker (i) replaces all of them with one fit, (ii) gives cross-programme calibration (current per-programme min-max destroys this), and (iii) is the legible, citeable answer to "why this formula?" in a thesis.
+Cross-strategy consensus surfaces jobs all three strategies pick precisely because long, generic IT job descriptions over-cover everything — the same specificity-asymmetry effect Step 38 traced for cross-encoders. The learner took the popularity shortcut and rediscovered the generalist bias that hybrid's IPF was designed to suppress. Adopting LTR would have undone Step 22b's diversity gains. NDCG-against-consensus is not a sufficient proxy for human relevance in this corpus.
 
-**Risk:** consensus labels are noisy by construction — must validate that the learned model doesn't merely memorise current rankings. Mitigation: leave-one-programme-out CV, plus a held-out manually-spot-checked set (10–20 pairs).
+Implementation deleted to keep `main` lean: `src/alignment/ltr.py`, `tests/alignment/test_ltr.py`, the regenerable artefacts under `experiments/results/exp4_ltr/`, and the `lightgbm` dependency are gone. **`experiments/results/exp4_ltr/FINDINGS.md` is retained as the experiment record** with full numbers, feature-importance table, and follow-up directions (`min_strategies=3`, drop popularity features, post-hoc IPF rescaling, hand-labelled spot-check before any future LTR attempt). Default rankings stay at hybrid (α=0.55, no cross-encoder).
 
-**Output:** `experiments/results/exp4_ltr/`, model artefacts, calibration report
-**Module:** new `src/alignment/ltr.py`, new `tests/alignment/test_ltr.py`, possibly `src/evaluation/calibration.py`
-**Metrics to report:** held-out NDCG@10, Precision@5 vs consensus, learned vs hand-tuned hybrid Spearman, feature-importance ranking, calibration plot (predicted score vs consensus precision).
+**Output:** `experiments/results/exp4_ltr/FINDINGS.md` (retained)
+**Code in tree:** none
 
 ---
 
