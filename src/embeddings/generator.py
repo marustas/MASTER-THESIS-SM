@@ -58,12 +58,18 @@ def embed_texts(
     model: SentenceTransformer,
     texts: list[str],
     batch_size: int = BATCH_SIZE,
+    prefix: str = "",
 ) -> np.ndarray:
     """
     Encode a list of texts to L2-normalised embeddings.
 
     Empty / None texts are replaced with a zero vector of the same dimension;
     downstream code treats zero-norm embeddings as "no text available".
+
+    ``prefix`` is prepended to every non-empty text before encoding.  Used by
+    asymmetric retrieval encoders (e.g. ``"query: "`` for queries and
+    ``"passage: "`` for documents under the E5 convention).  Empty texts are
+    not prefixed — they remain placeholders so the zero-vector contract holds.
     """
     # Identify non-empty positions
     placeholder = "__EMPTY__"
@@ -71,7 +77,10 @@ def embed_texts(
     non_empty_mask = [t != placeholder for t in safe_texts]
 
     # Encode only non-empty texts for efficiency
-    non_empty_texts = [t for t, ok in zip(safe_texts, non_empty_mask) if ok]
+    non_empty_texts = [
+        prefix + t if prefix else t
+        for t, ok in zip(safe_texts, non_empty_mask) if ok
+    ]
 
     if non_empty_texts:
         encoded = model.encode(
@@ -246,6 +255,7 @@ def embed_programme_sections(
     model: SentenceTransformer,
     texts: list[str],
     batch_size: int = BATCH_SIZE,
+    prefix: str = "",
 ) -> np.ndarray:
     """
     Produce a weighted-section embedding for each programme text.
@@ -253,6 +263,10 @@ def embed_programme_sections(
     Each text is split into section groups, each group is embedded independently
     (avoiding truncation), and the final embedding is the weighted average
     (L2-normalised).
+
+    ``prefix`` is forwarded to every per-section ``embed_texts`` call (and the
+    full-text fallback) so asymmetric retrieval encoders see consistent
+    formatting across all chunks of one programme.
     """
     dim = model.get_sentence_embedding_dimension()
     n = len(texts)
@@ -271,13 +285,13 @@ def embed_programme_sections(
 
     for group, weight in SECTION_WEIGHTS.items():
         group_texts = [s.get(group, "") for s in all_sections]
-        group_embs = embed_texts(model, group_texts, batch_size=batch_size)
+        group_embs = embed_texts(model, group_texts, batch_size=batch_size, prefix=prefix)
         result += weight * group_embs
 
     # Fall back: programmes without sections get a plain full-text embedding
     if no_sections:
         fallback_texts = [texts[i] for i in no_sections]
-        fallback_embs = embed_texts(model, fallback_texts, batch_size=batch_size)
+        fallback_embs = embed_texts(model, fallback_texts, batch_size=batch_size, prefix=prefix)
         for j, i in enumerate(no_sections):
             result[i] = fallback_embs[j]
         logger.info(f"  {len(no_sections)} programmes without sections — used full-text fallback")
@@ -297,6 +311,7 @@ def embed_chunked(
     texts: list[str],
     max_tokens: int = 256,
     batch_size: int = BATCH_SIZE,
+    prefix: str = "",
 ) -> np.ndarray:
     """
     Embed long texts by splitting into chunks and mean-pooling.
@@ -304,13 +319,19 @@ def embed_chunked(
     Each text is split into non-overlapping token-boundary chunks of
     ``max_tokens``. Each chunk is embedded, and the final embedding is
     the mean of all chunk embeddings (L2-normalised).
+
+    ``prefix`` (e.g. ``"passage: "``) is prepended to every chunk before
+    encoding.  Note that the chunk-token budget is not adjusted for the
+    prefix, so the prefix consumes a few tokens of the 256-token chunk;
+    in practice the prefix is short (~3 tokens for E5) and the impact is
+    negligible.
     """
     dim = model.get_sentence_embedding_dimension()
     tokenizer = getattr(model, "tokenizer", None)
 
     # Fall back to plain embedding if no tokenizer (e.g. mock models in tests)
     if tokenizer is None:
-        return embed_texts(model, texts, batch_size=batch_size)
+        return embed_texts(model, texts, batch_size=batch_size, prefix=prefix)
 
     # Tokenize all texts to find chunk boundaries (in characters)
     all_chunks: list[list[str]] = []
@@ -334,7 +355,7 @@ def embed_chunked(
     for doc_idx, chunks in enumerate(all_chunks):
         for chunk in chunks:
             chunk_map.append((doc_idx, len(flat_chunks)))
-            flat_chunks.append(chunk)
+            flat_chunks.append(prefix + chunk if prefix else chunk)
 
     if flat_chunks:
         flat_embs = model.encode(
@@ -371,6 +392,7 @@ def embed_programmes(
     input_path: Path = PROCESSED_PROGRAMMES,
     output_path: Path = PROGRAMMES_OUT,
     use_sections: bool = True,
+    prefix: str = "",
 ) -> pd.DataFrame:
     """
     Add embedding columns to the preprocessed programmes parquet.
@@ -379,6 +401,10 @@ def embed_programmes(
       embedding          — section-weighted (default) or from cleaned_text
       embedding_brief    — from brief_description
       embedding_extended — from extended_description
+
+    ``prefix`` (e.g. ``"query: "`` for E5) is prepended to every text before
+    encoding.  All three embedding columns share the same prefix so the
+    programme is treated consistently as a query under asymmetric encoders.
     """
     logger.info(f"Loading programmes from {input_path}")
     df = pd.read_parquet(input_path)
@@ -389,24 +415,24 @@ def embed_programmes(
     if use_sections:
         logger.info("Generating section-weighted embeddings …")
         df["embedding"] = _embeddings_to_list(
-            embed_programme_sections(model, cleaned)
+            embed_programme_sections(model, cleaned, prefix=prefix)
         )
     else:
         logger.info("Generating combined embeddings (cleaned_text) …")
         df["embedding"] = _embeddings_to_list(
-            embed_texts(model, cleaned)
+            embed_texts(model, cleaned, prefix=prefix)
         )
 
     if "brief_description" in df.columns:
         logger.info("Generating brief-description embeddings …")
         df["embedding_brief"] = _embeddings_to_list(
-            embed_texts(model, df["brief_description"].fillna("").tolist())
+            embed_texts(model, df["brief_description"].fillna("").tolist(), prefix=prefix)
         )
 
     if "extended_description" in df.columns:
         logger.info("Generating extended-description embeddings …")
         df["embedding_extended"] = _embeddings_to_list(
-            embed_texts(model, df["extended_description"].fillna("").tolist())
+            embed_texts(model, df["extended_description"].fillna("").tolist(), prefix=prefix)
         )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -422,12 +448,17 @@ def embed_job_ads(
     input_path: Path = PROCESSED_JOBS,
     output_path: Path = JOBS_OUT,
     use_chunked: bool = True,
+    prefix: str = "",
 ) -> pd.DataFrame:
     """
     Add an embedding column to the preprocessed job ads parquet.
 
     Column added:
       embedding — chunk-and-pool (default) or from cleaned_text
+
+    ``prefix`` (e.g. ``"passage: "`` for E5) is prepended to every text/chunk
+    before encoding so jobs are treated consistently as documents under
+    asymmetric encoders.
     """
     logger.info(f"Loading job ads from {input_path}")
     df = pd.read_parquet(input_path)
@@ -438,12 +469,12 @@ def embed_job_ads(
     if use_chunked:
         logger.info("Generating chunked embeddings (chunk-and-pool) …")
         df["embedding"] = _embeddings_to_list(
-            embed_chunked(model, cleaned)
+            embed_chunked(model, cleaned, prefix=prefix)
         )
     else:
         logger.info("Generating job ad embeddings (cleaned_text) …")
         df["embedding"] = _embeddings_to_list(
-            embed_texts(model, cleaned)
+            embed_texts(model, cleaned, prefix=prefix)
         )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -454,15 +485,58 @@ def embed_job_ads(
 
 # ── CLI entry-point ────────────────────────────────────────────────────────────
 
-def run(model_name: str = DEFAULT_MODEL) -> None:
+def run(
+    model_name: str = DEFAULT_MODEL,
+    programme_prefix: str = "",
+    job_prefix: str = "",
+    suffix: str = "",
+) -> None:
+    """
+    Generate programme and job embeddings.
+
+    ``programme_prefix`` / ``job_prefix`` enable asymmetric retrieval encoders
+    (pass ``"query: "`` and ``"passage: "`` for E5).  ``suffix``, when set,
+    redirects output to ``data/embeddings/<suffix>/`` so the new embeddings do
+    not overwrite the baseline 384-dim MiniLM artefacts.
+    """
     logger.info(f"Loading sentence-transformer model: {model_name}")
     model = SentenceTransformer(model_name)
 
-    embed_programmes(model)
-    embed_job_ads(model)
+    if suffix:
+        out_dir = EMBEDDINGS_DIR / suffix
+        out_dir.mkdir(parents=True, exist_ok=True)
+        prog_out = out_dir / PROGRAMMES_OUT.name
+        jobs_out = out_dir / JOBS_OUT.name
+    else:
+        prog_out = PROGRAMMES_OUT
+        jobs_out = JOBS_OUT
 
-    logger.info("Step 5 complete — embeddings saved to data/embeddings/")
+    embed_programmes(model, output_path=prog_out, prefix=programme_prefix)
+    embed_job_ads(model, output_path=jobs_out, prefix=job_prefix)
+
+    logger.info(
+        f"Step 5 complete — embeddings saved to {prog_out.parent}/"
+    )
 
 
 if __name__ == "__main__":
-    run()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate sentence embeddings.")
+    parser.add_argument("--model", default=DEFAULT_MODEL,
+                        help="HuggingFace model name (default: %(default)s)")
+    parser.add_argument("--programme-prefix", default="",
+                        help='Prefix for programme texts (e.g. "query: ")')
+    parser.add_argument("--job-prefix", default="",
+                        help='Prefix for job texts (e.g. "passage: ")')
+    parser.add_argument("--suffix", default="",
+                        help="Subdir under data/embeddings/ for the output "
+                             "(empty = overwrite baseline)")
+    args = parser.parse_args()
+
+    run(
+        model_name=args.model,
+        programme_prefix=args.programme_prefix,
+        job_prefix=args.job_prefix,
+        suffix=args.suffix,
+    )

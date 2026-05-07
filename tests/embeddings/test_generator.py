@@ -381,3 +381,71 @@ class TestEmbedChunked:
     def test_empty_text_zero_vector(self, mock_model: MockEmbeddingModel):
         result = embed_chunked(mock_model, [""])
         assert np.all(result[0] == 0.0)
+
+
+# ── prefix injection (Step 40) ────────────────────────────────────────────────
+
+class _RecordingModel:
+    """Embedding model that records every text passed to ``encode``."""
+
+    DIM = 4
+
+    def __init__(self) -> None:
+        self.seen: list[str] = []
+
+    def get_sentence_embedding_dimension(self) -> int:
+        return self.DIM
+
+    def encode(
+        self,
+        texts: list[str],
+        *,
+        normalize_embeddings: bool = True,
+        batch_size: int = 256,
+        show_progress_bar: bool = False,
+    ) -> np.ndarray:
+        self.seen.extend(texts)
+        # Return an arbitrary unit vector per text (content doesn't matter here)
+        out = np.zeros((len(texts), self.DIM), dtype=np.float32)
+        out[:, 0] = 1.0
+        return out
+
+
+class TestPrefixInjection:
+    def test_default_prefix_is_empty(self):
+        rec = _RecordingModel()
+        embed_texts(rec, ["alpha", "beta"])
+        assert rec.seen == ["alpha", "beta"]
+
+    def test_prefix_prepended_to_each_text(self):
+        rec = _RecordingModel()
+        embed_texts(rec, ["alpha", "beta"], prefix="query: ")
+        assert rec.seen == ["query: alpha", "query: beta"]
+
+    def test_prefix_skips_empty_texts(self):
+        rec = _RecordingModel()
+        # Empty / whitespace texts are not encoded at all (zero vector path).
+        embed_texts(rec, ["alpha", "", "  ", "beta"], prefix="passage: ")
+        assert rec.seen == ["passage: alpha", "passage: beta"]
+
+    def test_prefix_flows_through_section_embedder(self):
+        rec = _RecordingModel()
+        text = (
+            "Objective(s) of a study programme:\n"
+            "Be a programmer\n"
+            "Study subjects (modules), practical training:\n"
+            "Python machine learning\n"
+        )
+        embed_programme_sections(rec, [text], prefix="query: ")
+        # Every non-empty section text was prefixed; sections with no content
+        # for this programme are encoded as the placeholder zero-vector and
+        # therefore not seen by encode.
+        assert rec.seen, "expected at least one encoded section"
+        assert all(s.startswith("query: ") for s in rec.seen), rec.seen
+
+    def test_prefix_flows_through_chunked_fallback(self):
+        # Mock has no tokenizer → falls back to embed_texts, which must still
+        # apply the prefix.
+        rec = _RecordingModel()
+        embed_chunked(rec, ["alpha beta gamma"], prefix="passage: ")
+        assert rec.seen == ["passage: alpha beta gamma"]
