@@ -554,19 +554,30 @@ Implementation deleted to keep `main` lean: `src/alignment/ltr.py`, `tests/align
 
 ---
 
-## Step 40 — Asymmetric Retrieval Encoder (T1c) [ ]
+## Step 40 — Asymmetric Retrieval Encoder (T1c) [x] tried, not adopted
 
-Replace `all-MiniLM-L6-v2` for programme-vs-job retrieval with an encoder explicitly trained on asymmetric query/document retrieval: `intfloat/e5-large-v2` or `BAAI/bge-large-en-v1.5`. Use prefixed inputs (`query: {programme}` and `passage: {job}`) so the asymmetry between curriculum descriptions and recruitment text is modelled directly.
+Added prefix support (`query: ` / `passage: `) and an `--suffix` output-dir flag to `src/embeddings/generator.py` (Phase A — kept as a permanent capability with 5 new offline tests, suite is now 547 tests). Re-embedded the full corpus with `intfloat/e5-large-v2` (1024-dim) under `data/embeddings/e5_large/`, rebuilt the dataset against the new embeddings (baseline left untouched), re-ran the full hybrid pipeline with identical hyperparameters (α=0.55, γ=0.3, IPF top-30 with two-tier floor, sqrt implicit weighting, programme-IDF on).
 
-**Why deferred to last:** Step 25 already showed MPNet (a larger symmetric encoder) gives no improvement because both models share the 256-token truncation limit. Asymmetric encoders are a *different* change — they're trained with explicit query/document distinction and have higher MTEB retrieval scores — but they cost ~30 min to re-embed both corpora and re-run the full pipeline. Run only after Steps 37–39 land; if those bring head discrimination into a strong regime, the embedding upgrade may be unnecessary.
+**Result — not adopted; aggregate hybrid metrics regress.**
 
-Section-weighted programme embeddings (Step 34) and chunk-and-pool job embeddings already exist and must be preserved when swapping the encoder.
+| Metric | Baseline (MiniLM, 384-dim) | E5-large-v2 (1024-dim) | Δ |
+|---|---:|---:|---:|
+| Top-1 unique | 40 / 45 | 39 / 45 | −1 |
+| Head-tied (gap < 0.02) | 12 / 45 | 15 / 45 | +3 |
+| Top-5 generalists (freq > 5) | 1 | 6 | +5 |
+| Top-1 score mean | 0.305 | 0.275 | −0.030 |
+| Top-1 score max | 0.677 | 0.556 | −0.121 |
+| Candidate cosine mean | 0.513 | 0.847 | +0.334 |
+| Per-prog cosine range (mean) | 0.160 | 0.027 | **−0.133** |
 
-**Risk:** a 1024-dim embedding instead of 384-dim — must verify storage (`embedding`, `embedding_brief`, `embedding_extended`, `skill_embeddings.npz`) handles the new dimension everywhere. Model size ~1.3 GB instead of 80 MB.
+The diagnosis is unambiguous: per-programme cosine **range collapses ~6×** (0.16 → 0.027). E5 reports that programmes and jobs are all "kind of similar" instead of "specifically similar where it matters" — the asymmetric query/passage encoding inflates background similarity for all pairs rather than concentrating it on relevant ones. Confidence-damping in `align_hybrid` is *relative* (range / median-range), so it cannot bite when the whole population is compressed; the IPF popularity penalty also weakens because the cosine retrieval signal no longer separates relevant from irrelevant strongly enough, hence the 6× jump in top-5 generalists.
 
-**Output:** `experiments/results/evaluation/asymmetric_encoder/`, side-by-side hybrid metrics
-**Module:** `src/embeddings/generator.py` (model parameter + prefix handling), regenerated embeddings
-**Metrics to report:** programme-job cosine mean / range, top-1 diversity, top-1 mean score, head-discrimination gap, sensitivity to model choice.
+Mechanism — E5 was trained on web query/passage pairs (short query → web doc). Programmes are not short queries (they are 600+ token structured curricula), and jobs are not natural retrieval passages either (recruiter-written long-form with boilerplate). Both sides are long, similar-style documents, so the asymmetric distinction collapses. A handful of niche programmes did improve qualitatively (AI MSc → AI Engineer instead of MLOps engineer; Cyber Systems → Senior Cybersecurity Specialist instead of building automation programmer), but per-programme top-1 quality is roughly even by inspection (~10 better / ~10 wash / ~20 worse) and the diversity / head-tie / generalist regressions are unambiguous.
+
+Combined with Step 25 (larger symmetric encoder MPNet showed no improvement due to token truncation) this is the **second negative result on the embedding side**. Throwing bigger / better-trained sentence encoders at this corpus does not move the needle — the semantic side is not the bottleneck. The next leverage point is the **symbolic alignment formula** itself: mutual specificity (restrict overlap to high-IDF skills), a `programme_precision` term to balance the asymmetric `programme_recall`, and rank-based fusion (RRF) instead of per-programme min-max normalisation.
+
+**Output:** `experiments/results/evaluation/asymmetric_encoder/{FINDINGS.md, summary.json}` (rankings parquet removed as regenerable; embeddings under `data/embeddings/e5_large/` left untracked)
+**Module:** `src/embeddings/generator.py` (prefix kwarg + `--suffix` output dir, kept), `tests/embeddings/test_generator.py` (+5 prefix tests, kept)
 
 ---
 
