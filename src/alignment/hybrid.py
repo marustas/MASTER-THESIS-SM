@@ -122,6 +122,8 @@ def align_hybrid(
     gamma: float = 0.3,
     use_programme_idf: bool = True,
     implicit_confidence_mode: str = "sqrt",
+    symbolic_signal_mode: str = "recall",
+    hi_idf_blend_lambda: float = 0.3,
     cross_encoder_model: str | object | None = None,
     xe_alpha: float = 0.0,
     xe_batch_size: int = 64,
@@ -158,6 +160,21 @@ def align_hybrid(
                      normalised confidence; ``"uniform"`` keeps the paper's
                      flat 0.5; ``"linear"`` scales linearly between
                      conf=0.70 (→ 0) and conf=1.0 (→ 0.5).
+    symbolic_signal_mode : which symbolic signal drives the Stage 2 refinement.
+                     ``"recall"`` (default) uses ``programme_recall`` over
+                     all skills.  ``"recall_hi_idf"`` *replaces* it with
+                     ``programme_recall_high_idf`` — recall restricted to
+                     URIs with corpus IDF above the median (mutual
+                     specificity).  Tends to zero out the symbolic signal
+                     for jobs that are entirely transversal, leaving cosine
+                     to drive the ranking.  ``"recall_hi_idf_blend"``
+                     keeps both signals as a convex combination
+                     ``(1 − λ) · recall + λ · recall_hi_idf`` with λ set
+                     by ``hi_idf_blend_lambda``; intended as the safer
+                     default when the hard restriction is too aggressive.
+    hi_idf_blend_lambda : weight on the high-IDF channel when
+                     ``symbolic_signal_mode == "recall_hi_idf_blend"``.
+                     Must be in [0, 1]; ignored otherwise.
     cross_encoder_model : optional cross-encoder for re-ranking the candidate
                      pool produced by Stage 1.  Either a HuggingFace model
                      name (str) or any object exposing ``predict(pairs)``.
@@ -222,6 +239,16 @@ def align_hybrid(
     if xe_pool_mode not in valid_pool_modes:
         raise ValueError(
             f"xe_pool_mode must be one of {valid_pool_modes}, got {xe_pool_mode!r}"
+        )
+    valid_symbolic_modes = ("recall", "recall_hi_idf", "recall_hi_idf_blend")
+    if symbolic_signal_mode not in valid_symbolic_modes:
+        raise ValueError(
+            f"symbolic_signal_mode must be one of {valid_symbolic_modes}, "
+            f"got {symbolic_signal_mode!r}"
+        )
+    if not 0.0 <= hi_idf_blend_lambda <= 1.0:
+        raise ValueError(
+            f"hi_idf_blend_lambda must be in [0, 1], got {hi_idf_blend_lambda}"
         )
 
     n_prog = (df["source_type"] == "programme").sum()
@@ -291,16 +318,29 @@ def align_hybrid(
     # ── Stage 2: symbolic refinement (IDF-weighted programme recall) ────────
     logger.info(
         f"Stage 2: symbolic refinement "
-        f"(IDF-weighted programme_recall, implicit_mode={implicit_confidence_mode})…"
+        f"(signal={symbolic_signal_mode}, implicit_mode={implicit_confidence_mode})…"
     )
     sym, _ = align_symbolic_weighted(
         df, top_n=semantic_top_n, use_programme_idf=use_programme_idf,
         implicit_confidence_mode=implicit_confidence_mode,
     )
-    sym = sym[["programme_id", "job_id", "programme_recall"]]
+    sym = sym[["programme_id", "job_id", "programme_recall",
+               "programme_recall_high_idf"]]
 
     merged = candidates.merge(sym, on=["programme_id", "job_id"], how="left")
-    merged["programme_recall"] = merged["programme_recall"].fillna(0.0)
+    merged[["programme_recall", "programme_recall_high_idf"]] = (
+        merged[["programme_recall", "programme_recall_high_idf"]].fillna(0.0)
+    )
+
+    if symbolic_signal_mode == "recall_hi_idf":
+        merged["programme_recall"] = merged["programme_recall_high_idf"]
+    elif symbolic_signal_mode == "recall_hi_idf_blend":
+        merged["programme_recall"] = (
+            (1.0 - hi_idf_blend_lambda) * merged["programme_recall"]
+            + hi_idf_blend_lambda * merged["programme_recall_high_idf"]
+        )
+    # else "recall": leave programme_recall untouched.
+    merged = merged.drop(columns=["programme_recall_high_idf"])
 
     # ── Match quality refinement ───────────────────────────────────────────────
     if gamma != 0.0:
@@ -517,6 +557,8 @@ def run_hybrid_alignment(
     gamma: float = 0.3,
     use_programme_idf: bool = True,
     implicit_confidence_mode: str = "sqrt",
+    symbolic_signal_mode: str = "recall",
+    hi_idf_blend_lambda: float = 0.3,
     cross_encoder_model: str | object | None = None,
     xe_alpha: float = 0.0,
     xe_batch_size: int = 64,
@@ -537,6 +579,8 @@ def run_hybrid_alignment(
         gamma=gamma,
         use_programme_idf=use_programme_idf,
         implicit_confidence_mode=implicit_confidence_mode,
+        symbolic_signal_mode=symbolic_signal_mode,
+        hi_idf_blend_lambda=hi_idf_blend_lambda,
         cross_encoder_model=cross_encoder_model,
         xe_alpha=xe_alpha,
         xe_batch_size=xe_batch_size,

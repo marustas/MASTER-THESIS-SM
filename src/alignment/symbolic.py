@@ -40,6 +40,7 @@ from src.skills.skill_weights import (
     build_reuse_level_map,
     build_weighted_skills as _build_tiered_skills,
     compute_corpus_idf,
+    compute_median_idf,
     compute_programme_idf,
 )
 
@@ -135,6 +136,49 @@ def programme_recall(
     shared = sum(min(w_prog.get(u, 0.0), w_job[u]) for u in w_job)
     total_job = sum(w_job.values())
     return shared / total_job if total_job > 0.0 else 0.0
+
+
+# ── High-IDF restricted recall (mutual specificity) ──────────────────────────
+
+def _filter_high_idf(
+    weights: dict[str, float],
+    uri_idfs: dict[str, float],
+    threshold: float,
+) -> dict[str, float]:
+    """Subset of ``weights`` keeping only URIs with corpus IDF > threshold."""
+    return {u: w for u, w in weights.items() if uri_idfs.get(u, 0.0) > threshold}
+
+
+def programme_recall_high_idf(
+    w_prog: dict[str, float],
+    w_job: dict[str, float],
+    uri_idfs: dict[str, float],
+    threshold: float,
+) -> float:
+    """
+    Recall computed only over URIs whose corpus IDF exceeds ``threshold``.
+
+    Restricts both the programme and job skill sets to the discriminative half
+    of the vocabulary before applying ``programme_recall``.  Long generic jobs
+    lose their cheap-skill mass from the denominator, so a niche programme
+    that does not match a generic job's *specific* demands scores near zero.
+
+    Fallback for transversal programmes: when the programme has *no* high-IDF
+    skills at all (e.g. a transversal-skill BSc whose ESCO mappings are all
+    generic), restricting to high-IDF would force the score to zero against
+    every job, which is not what we want.  Instead we fall back to the full
+    ``programme_recall`` over the original weighted skill sets.
+
+    Generic jobs (no high-IDF skills) correctly score 0: a job that demands
+    only transversal skills should not match a niche programme on the
+    symbolic side.
+    """
+    p_high = _filter_high_idf(w_prog, uri_idfs, threshold)
+    if not p_high:
+        # Transversal programme — high-IDF restriction has nothing to act on.
+        return programme_recall(w_prog, w_job)
+    j_high = _filter_high_idf(w_job, uri_idfs, threshold)
+    return programme_recall(p_high, j_high)
 
 
 # ── Alignment ──────────────────────────────────────────────────────────────────
@@ -350,7 +394,11 @@ def align_symbolic_weighted(
         details = _safe_details(row)
         all_uri_lists.append([s.get("esco_uri", "") for s in details if s.get("esco_uri")])
     uri_idfs = compute_corpus_idf(all_uri_lists)
-    logger.info(f"  IDF computed for {len(uri_idfs)} URIs")
+    high_idf_threshold = compute_median_idf(uri_idfs)
+    logger.info(
+        f"  IDF computed for {len(uri_idfs)} URIs  "
+        f"(median IDF = {high_idf_threshold:.3f}, used as high-IDF threshold)"
+    )
 
     # ── Programme-level IDF (Step 31) ─────────────────────────────────────
     if use_programme_idf:
@@ -393,6 +441,9 @@ def align_symbolic_weighted(
                 "weighted_jaccard": weighted_jaccard(p_ws, j_ws),
                 "overlap_coeff": overlap_coefficient(p_ws, j_ws),
                 "programme_recall": programme_recall(p_ws, j_ws),
+                "programme_recall_high_idf": programme_recall_high_idf(
+                    p_ws, j_ws, uri_idfs, high_idf_threshold,
+                ),
             })
 
     rankings = (
