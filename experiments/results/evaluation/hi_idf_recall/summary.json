@@ -1,0 +1,227 @@
+{
+  "baseline_recall": {
+    "top1_unique": 40,
+    "top1_total": 45,
+    "head_tied_gap_lt_002": 12,
+    "top5_generalists_freq_gt5": 1,
+    "top5_max_freq": 6,
+    "top1_score_mean": 0.3046,
+    "top1_score_max": 0.6771,
+    "score_cov": 0.7882
+  },
+  "recall_hi_idf": {
+    "top1_unique": 33,
+    "top1_total": 45,
+    "head_tied_gap_lt_002": 14,
+    "top5_generalists_freq_gt5": 4,
+    "top5_max_freq": 7,
+    "top1_score_mean": 0.2149,
+    "top1_score_max": 0.4675,
+    "score_cov": 1.2632
+  },
+  "deltas": {
+    "top1_unique": -7,
+    "top1_total": 0,
+    "head_tied_gap_lt_002": 2,
+    "top5_generalists_freq_gt5": 3,
+    "top5_max_freq": 1,
+    "top1_score_mean": -0.0897,
+    "top1_score_max": -0.2096,
+    "score_cov": 0.475
+  },
+  "top1_changed_count": 32,
+  "top1_churn": [
+    {
+      "programme_id": 0,
+      "programme_name": "Information Systems and Cybersecurity",
+      "baseline_top1": "IT SISTEM\u0172 ADMINISTRATORI\u0172 (-\u0118)",
+      "hi_idf_top1": "IT skyriaus vadovas (-\u0117)"
+    },
+    {
+      "programme_id": 2,
+      "programme_name": "Information Systems",
+      "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+      "hi_idf_top1": "IT sistem\u0173 testuotojas (-a)"
+    },
+    {
+      "programme_id": 3,
+      "programme_name": "Information Systems",
+      "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+      "hi_idf_top1": "IT sistem\u0173 testuotojas (-a)"
+    },
+    {
+      "programme_id": 4,
+      "programme_name": "Marketing Technologies",
+      "baseline_top1": "E-commerce Customer Success Manager (Account Manager)",
+      "hi_idf_top1": "Analytics Engineer, Marketing DSA with verification"
+    },
+    {
+      "programme_id": 7,
+      "programme_name": "Information and Communication Technologies",
+      "baseline_top1": "Integration / Automation Engineer",
+      "hi_idf_top1": "Commissioning - Automation Engineer"
+    },
+    {
+      "programme_id": 8,
+      "programme_name": "Information Technologies",
+      "baseline_top1": "IT Sistem\u0173 administratorius (-\u0117)",
+      "hi_idf_top1": "IT PASLAUG\u0172 VALDYMO ANALITIK\u0116 (-AS)"
+    },
+    {
+      "programme_id": 10,
+      "programme_name": "Informatics",
+      "baseline_top1": "IT ADMINISTRATORIUS (-\u0116)",
+      "hi_idf_top1": "Senior / Mid Software Engineer (.NET / Delphi) I Teltonika Security"
+    },
+    {
+      "programme_id": 11,
+      "programme_name": "Informatics",
+      "baseline_top1": "MS Power Developer with verification",
+      "hi_idf_top1": "Software helpdesk \u2013 junior IT Analyst"
+    },
+    {
+      "programme_id": 12,
+      "programme_name": "Informatics",
+      "baseline_top1": "IT SUPPORTER with development opportunity in Data Integration",
+      "hi_idf_top1": "Vyr. sistem\u0173 analitikas (-\u0117) (Gyventoj\u0173 registrui)"
+    },
+    {
+      "programme_id": 14,
+      "programme_name": "Cybersecurity Technologies",
+      "baseline_top1": "Pa\u017eeid\u017eiamum\u0173 valdymo \u2013 \u012fsilau\u017eim\u0173 testavimo specialistas (-\u0117)",
+      "hi_idf_top1": "IRT specialistas (-\u0117) (SOC ir IT saugos sritis) | Technologij\u0173 skyrius"
+    },
+    {
+      "programme_id": 16,
+      "programme_name": "Media Technologies",
+      "baseline_top1": "Senior IT Project Manager (REMOTE)",
+      "hi_idf_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-\u0117) / IT projekt\u0173 specialistas (-\u0117)"
+    },
+    {
+      "programme_id": 17,
+      "programme_name": "Multimedia and Internet Technologies",
+      "baseline_top1": "Techninio aptarnavimo specialistas (-\u0117) - darbas studentams!",
+      "hi_idf_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-\u0117) / IT projekt\u0173 specialistas (-\u0117)"
+    },
+    {
+      "programme_id": 18,
+      "programme_name": "Programming and Internet Technologies",
+      "baseline_top1": "Dynamics 365 projekt\u0173 vadovas (-\u0117)",
+      "hi_idf_top1": "Paid Summer Internship in the IT Department"
+    },
+    {
+      "programme_id": 19,
+      "programme_name": "Digital Design Technologies",
+      "baseline_top1": "Vyr. IT projekt\u0173 vadovas (-\u0117)",
+      "hi_idf_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-\u0117) / IT projekt\u0173 specialistas (-\u0117)"
+    },
+    {
+      "programme_id": 20,
+      "programme_name": "Applied Informatics and Programming",
+      "baseline_top1": "JAVA programuotojas (-a) (Integraciniams sprendimams)",
+      "hi_idf_top1": ".NET programuotojas (-a)"
+    },
+    {
+      "programme_id": 21,
+      "programme_name": "Game Development",
+      "baseline_top1": "Paid Summer Internship in the IT Department",
+      "hi_idf_top1": "Gameplay Programmer"
+    },
+    {
+      "programme_id": 24,
+      "programme_name": "Information Systems and Cyber Security",
+      "baseline_top1": "Informacijos saugos specialistas (-\u0117)",
+      "hi_idf_top1": "IRT specialistas (-\u0117) (SOC ir IT saugos sritis) | Technologij\u0173 skyrius"
+    },
+    {
+      "programme_id": 25,
+      "programme_name": "Information Systems Engineering",
+      "baseline_top1": "IT in\u017einierius (-\u0117)",
+      "hi_idf_top1": "Technologij\u0173 departamento direktorius (-\u0117)"
+    },
+    {
+      "programme_id": 27,
+      "programme_name": "Information System Engineering",
+      "baseline_top1": "Data Scientist with verification",
+      "hi_idf_top1": "SAP DATA Services Developer with verification"
+    },
+    {
+      "programme_id": 28,
+      "programme_name": "Information Systems Technology",
+      "baseline_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+      "hi_idf_top1": "IT sistem\u0173 ir skaitmenizacijos vadovas (-\u0117)"
+    },
+    {
+      "programme_id": 30,
+      "programme_name": "Informatics engineering",
+      "baseline_top1": "IT in\u017einierius (-\u0117)",
+      "hi_idf_top1": "Experienced AI Engineer/Data Scientist"
+    },
+    {
+      "programme_id": 31,
+      "programme_name": "Informatics Engineering",
+      "baseline_top1": "PLV programuotojas",
+      "hi_idf_top1": "SAP DATA Services Developer with verification"
+    },
+    {
+      "programme_id": 32,
+      "programme_name": "Informatics Engineering",
+      "baseline_top1": "IT administratorius (-\u0117) (Vilniaus oro uostas)",
+      "hi_idf_top1": "Telekomunikacij\u0173 specialistas \u2013 bazini\u0173 sto\u010di\u0173 montuotojas LIETUVA"
+    },
+    {
+      "programme_id": 33,
+      "programme_name": "Cyber Systems and Security",
+      "baseline_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+      "hi_idf_top1": "Cyber Security Specialist"
+    },
+    {
+      "programme_id": 34,
+      "programme_name": "Multimedia design",
+      "baseline_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-\u0117) / IT projekt\u0173 specialistas (-\u0117)",
+      "hi_idf_top1": "UX/UI Designer with verification"
+    },
+    {
+      "programme_id": 35,
+      "programme_name": "Multimedia technology",
+      "baseline_top1": "Mid/Senior Meta Media Buyer",
+      "hi_idf_top1": "Product Manager"
+    },
+    {
+      "programme_id": 38,
+      "programme_name": "Digital technologies and cyber security",
+      "baseline_top1": "SOC analitikas (-\u0117) kibernetini\u0173 gr\u0117smi\u0173 paie\u0161kai",
+      "hi_idf_top1": "IRT specialistas (-\u0117) (SOC ir IT saugos sritis) | Technologij\u0173 skyrius"
+    },
+    {
+      "programme_id": 40,
+      "programme_name": "Software Systems",
+      "baseline_top1": "IT specialisto (-\u0117s) asistentas (-\u0117) Vilniuje",
+      "hi_idf_top1": "Experienced AI Engineer/Data Scientist"
+    },
+    {
+      "programme_id": 41,
+      "programme_name": "Software Systems",
+      "baseline_top1": "AI Engineer (Applied AI) with verification",
+      "hi_idf_top1": "Senior / Mid Software Engineer (.NET / Delphi) I Teltonika Security"
+    },
+    {
+      "programme_id": 42,
+      "programme_name": "Software Engineering",
+      "baseline_top1": ".NET programuotojas (-a)",
+      "hi_idf_top1": "FULL STACK PROGRAMUOTOJAS (-A)"
+    },
+    {
+      "programme_id": 43,
+      "programme_name": "Software Engineering",
+      "baseline_top1": "Full-Stack Developer \u2013 Remote",
+      "hi_idf_top1": "Python Developer"
+    },
+    {
+      "programme_id": 44,
+      "programme_name": "Software Engineering",
+      "baseline_top1": "Low-code programuotojas",
+      "hi_idf_top1": "Java programuotojas (-a)"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "lambda_sweep": {
+    "baseline (recall)": {
+      "u1": 40,
+      "ht": 12,
+      "g5": 1,
+      "max5": 6,
+      "m1": 0.3046,
+      "x1": 0.6771,
+      "cov": 0.788
+    },
+    "blend \u03bb=0.15": {
+      "u1": 41,
+      "ht": 10,
+      "g5": 1,
+      "max5": 6,
+      "m1": 0.3044,
+      "x1": 0.6771,
+      "cov": 0.787
+    },
+    "blend \u03bb=0.30": {
+      "u1": 41,
+      "ht": 9,
+      "g5": 1,
+      "max5": 6,
+      "m1": 0.308,
+      "x1": 0.6771,
+      "cov": 0.797
+    },
+    "blend \u03bb=0.50": {
+      "u1": 38,
+      "ht": 11,
+      "g5": 1,
+      "max5": 6,
+      "m1": 0.3143,
+      "x1": 0.6771,
+      "cov": 0.816
+    },
+    "blend \u03bb=0.70": {
+      "u1": 37,
+      "ht": 10,
+      "g5": 1,
+      "max5": 6,
+      "m1": 0.319,
+      "x1": 0.6771,
+      "cov": 0.848
+    },
+    "hi-idf only (1.0)": {
+      "u1": 33,
+      "ht": 14,
+      "g5": 4,
+      "max5": 7,
+      "m1": 0.2149,
+      "x1": 0.4675,
+      "cov": 1.263
+    }
+  },
+  "best_blend_label": "blend \u03bb=0.30",
+  "top1_churn_baseline_vs_best": [
+    {
+      "programme_id": 4,
+      "programme_name": "Marketing Technologies",
+      "baseline_top1": "E-commerce Customer Success Manager (Account Manager)",
+      "blend_top1": "Analytics Engineer, Marketing DSA with verification"
+    },
+    {
+      "programme_id": 34,
+      "programme_name": "Multimedia design",
+      "baseline_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-\u0117) / IT projekt\u0173 specialistas (-\u0117)",
+      "blend_top1": "UX/UI Designer with verification"
+    },
+    {
+      "programme_id": 38,
+      "programme_name": "Digital technologies and cyber security",
+      "baseline_top1": "SOC analitikas (-\u0117) kibernetini\u0173 gr\u0117smi\u0173 paie\u0161kai",
+      "blend_top1": "IRT specialistas (-\u0117) (SOC ir IT saugos sritis) | Technologij\u0173 skyrius"
+    }
+  ]
+}
