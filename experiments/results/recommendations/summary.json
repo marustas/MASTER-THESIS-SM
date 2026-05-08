@@ -6,8 +6,8 @@
   "top1_agreement_rate": 0.0,
   "spearman_means": {
     "sym_sem": 0.29012041823875223,
-    "sym_hyb": 0.0822264950238818,
-    "sem_hyb": -0.021609710550887017
+    "sym_hyb": 0.07778641190254933,
+    "sem_hyb": -0.01861544617847138
   },
   "n_market_trend_skills": 50,
   "top_market_skills": [

@@ -581,6 +581,30 @@ Combined with Step 25 (larger symmetric encoder MPNet showed no improvement due 
 
 ---
 
+## Step 41 — Symbolic Specificity Refinement (high-IDF recall blend) [x] adopted
+
+After three negative results from Steps 38 (cross-encoder), 39 (LTR), and 40 (asymmetric encoder), the bottleneck was clearly on the symbolic side, not the encoder or the blending function. Added a second symbolic recall signal `programme_recall_high_idf` restricted to ESCO URIs whose corpus IDF exceeds the median (4.27 in the canonical corpus), with a fallback for transversal-only programmes that uses the standard recall. Blended into Stage 2 of `align_hybrid` as `(1 − λ) · programme_recall + λ · programme_recall_high_idf`. Pure replacement (λ=1) regressed every metric — the median IDF is a high bar and many jobs zero out. The blend keeps the original recall as a floor while adding a specificity-bonus channel.
+
+**Sweep over λ ∈ {0.00, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50, 1.00}** identified λ = 0.25 as the Pareto-optimal setting:
+
+| metric | baseline (λ=0) | adopted (λ=0.25) | Δ |
+|---|---:|---:|---:|
+| top-1 unique | 40 / 45 | **41 / 45** | +1 |
+| head-tied (gap < 0.02) | 12 / 45 | **8 / 45** | −4 (33%) |
+| top-5 generalists (freq > 5) | 1 | 1 | = |
+| top-1 score mean | 0.305 | 0.307 | +0.002 |
+| top-1 score max | 0.677 | 0.677 | = |
+| top-10 Jaccard vs baseline (mean) | 1.0 | 0.956 | — |
+
+Two programmes flip top-1, both clean wins driven by a single shared on-domain high-IDF URI: **[4] Marketing Technologies** (E-commerce CSM → Analytics Engineer Marketing DSA via shared "marketing analytics") and **[34] Multimedia design** (junior social media → UX/UI Designer via shared "graphic design"). 34 of 45 programmes have *identical* top-10; mean per-programme top-10 Jaccard 0.956 — the change is gentle and surgical.
+
+**Adopted as the canonical hybrid default.** `align_hybrid` and `run_hybrid_alignment` now blend by default with `hi_idf_blend_lambda = 0.25`; the legacy `symbolic_signal_mode` dispatch and pure-replacement code path were removed, since the experiment confirmed the blend strictly dominates the alternatives. Canonical pipeline outputs (`exp3_hybrid/rankings.parquet`, cross-strategy summary, recommendations, exports) regenerated under the new default.
+
+**Output:** `experiments/results/evaluation/hi_idf_recall/{FINDINGS.md, summary.json, summary_blend.json}`, `experiments/results/exp3_hybrid/{rankings.parquet, summary.json}` regenerated, `experiments/results/exports/programme_job_mapping.csv` regenerated.
+**Module:** `src/alignment/symbolic.py` (added `programme_recall_high_idf`, `_filter_high_idf`, `programme_recall_high_idf` column in `align_symbolic_weighted`), `src/alignment/hybrid.py` (`hi_idf_blend_lambda` parameter, blend inlined as the only path), `tests/alignment/test_symbolic.py` (+12 tests), `tests/alignment/test_hybrid.py` (+2 tests for the blend lambda parameter). Suite now 561 tests.
+
+---
+
 ## Legend
 
 - `[ ]` Not started
