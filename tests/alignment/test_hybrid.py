@@ -596,3 +596,100 @@ class TestHybridMatchQuality:
         for p_id in rankings["programme_id"].unique():
             scores = rankings[rankings["programme_id"] == p_id]["hybrid_score"].tolist()
             assert scores == sorted(scores, reverse=True)
+
+
+# ── symbolic_signal_mode (high-IDF recall) ──────────────────────────────────
+
+class TestSymbolicSignalMode:
+    def test_default_mode_is_recall(self):
+        # Default should match the previous behaviour exactly.
+        df = _make_df(3, 6)
+        a = align_hybrid(df, semantic_top_n=5)
+        b = align_hybrid(df, semantic_top_n=5, symbolic_signal_mode="recall")
+        pd.testing.assert_frame_equal(
+            a.reset_index(drop=True), b.reset_index(drop=True)
+        )
+
+    def test_recall_hi_idf_mode_runs_and_keeps_schema(self):
+        df = _make_df(3, 6)
+        rankings = align_hybrid(
+            df, semantic_top_n=5, symbolic_signal_mode="recall_hi_idf",
+        )
+        for col in ("programme_id", "job_id", "cosine_score",
+                    "programme_recall", "hybrid_score"):
+            assert col in rankings.columns
+        assert (rankings["hybrid_score"] >= -1e-9).all()
+
+    def test_recall_hi_idf_changes_some_scores(self):
+        # Build a dataset with varied IDFs: some skills are common across many
+        # docs (low IDF), one is rare (high IDF).  The high-IDF mode must then
+        # produce different scores than full recall.
+        rng = np.random.default_rng(7)
+        common = [_skill("esco:common1"), _skill("esco:common2"), _skill("esco:common3")]
+        rare = [_skill("esco:rare")]
+        rows = []
+        for i in range(4):
+            # Programme 0 also has the rare skill; others are all common
+            details = list(common) + (list(rare) if i == 0 else [])
+            rows.append({
+                "source_type": "programme",
+                "embedding": _l2(rng.random(8).astype(np.float32)).tolist(),
+                "name": f"Prog{i}",
+                "skill_details": details,
+            })
+        for i in range(8):
+            # One job lists the rare skill; the rest are pure-common (long generic)
+            details = list(common) + (list(rare) if i == 0 else [])
+            rows.append({
+                "source_type": "job_ad",
+                "embedding": _l2(rng.random(8).astype(np.float32)).tolist(),
+                "job_title": f"Job{i}",
+                "skill_details": details,
+            })
+        df = pd.DataFrame(rows)
+
+        a = align_hybrid(df, semantic_top_n=5, symbolic_signal_mode="recall")
+        b = align_hybrid(df, semantic_top_n=5, symbolic_signal_mode="recall_hi_idf")
+        merged = a[["programme_id", "job_id", "programme_recall"]].merge(
+            b[["programme_id", "job_id", "programme_recall"]],
+            on=["programme_id", "job_id"], suffixes=("_a", "_b"),
+        )
+        # The two modes feed different recall values into the blend; some pairs
+        # must therefore have different programme_recall columns.
+        assert (merged["programme_recall_a"] - merged["programme_recall_b"]).abs().max() > 1e-6
+
+    def test_invalid_mode_raises(self):
+        df = _make_df(2, 4)
+        with pytest.raises(ValueError, match="symbolic_signal_mode"):
+            align_hybrid(df, semantic_top_n=4, symbolic_signal_mode="bogus")
+
+    def test_blend_mode_equivalent_to_recall_at_lambda_zero(self):
+        df = _make_df(3, 6)
+        a = align_hybrid(df, semantic_top_n=5, symbolic_signal_mode="recall")
+        b = align_hybrid(
+            df, semantic_top_n=5,
+            symbolic_signal_mode="recall_hi_idf_blend",
+            hi_idf_blend_lambda=0.0,
+        )
+        pd.testing.assert_frame_equal(
+            a.reset_index(drop=True), b.reset_index(drop=True)
+        )
+
+    def test_blend_mode_equivalent_to_hi_idf_at_lambda_one(self):
+        df = _make_df(3, 6)
+        a = align_hybrid(df, semantic_top_n=5, symbolic_signal_mode="recall_hi_idf")
+        b = align_hybrid(
+            df, semantic_top_n=5,
+            symbolic_signal_mode="recall_hi_idf_blend",
+            hi_idf_blend_lambda=1.0,
+        )
+        pd.testing.assert_frame_equal(
+            a.reset_index(drop=True), b.reset_index(drop=True)
+        )
+
+    def test_blend_lambda_out_of_range_raises(self):
+        df = _make_df(2, 4)
+        with pytest.raises(ValueError, match="hi_idf_blend_lambda"):
+            align_hybrid(df, semantic_top_n=4, hi_idf_blend_lambda=1.5)
+        with pytest.raises(ValueError, match="hi_idf_blend_lambda"):
+            align_hybrid(df, semantic_top_n=4, hi_idf_blend_lambda=-0.1)

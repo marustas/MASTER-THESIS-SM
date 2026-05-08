@@ -18,10 +18,12 @@ import pytest
 
 from src.alignment.symbolic import (
     _build_weighted_skills,
+    _filter_high_idf,
     align_symbolic,
     align_symbolic_weighted,
     overlap_coefficient,
     programme_recall,
+    programme_recall_high_idf,
     run_symbolic_alignment,
     weighted_jaccard,
 )
@@ -516,3 +518,118 @@ class TestProgrammeIdf:
         default_r, _ = align_symbolic_weighted(df, top_n=2)
         explicit_r, _ = align_symbolic_weighted(df, top_n=2, use_programme_idf=False)
         pd.testing.assert_frame_equal(default_r, explicit_r)
+
+
+# ── High-IDF restricted recall (mutual specificity) ──────────────────────────
+
+class TestFilterHighIdf:
+    def test_keeps_only_above_threshold(self):
+        weights = {"a": 1.0, "b": 0.5, "c": 1.0}
+        idfs = {"a": 2.5, "b": 0.3, "c": 1.5}
+        result = _filter_high_idf(weights, idfs, threshold=1.0)
+        assert result == {"a": 1.0, "c": 1.0}
+
+    def test_threshold_strict_inequality(self):
+        # idf == threshold is NOT included (we want strictly above)
+        weights = {"a": 1.0, "b": 1.0}
+        idfs = {"a": 1.0, "b": 1.5}
+        result = _filter_high_idf(weights, idfs, threshold=1.0)
+        assert result == {"b": 1.0}
+
+    def test_missing_idf_treated_as_zero(self):
+        weights = {"a": 1.0, "b": 1.0}
+        idfs = {"a": 2.0}  # b absent from idfs
+        result = _filter_high_idf(weights, idfs, threshold=0.5)
+        assert result == {"a": 1.0}
+
+    def test_empty_input(self):
+        assert _filter_high_idf({}, {}, threshold=1.0) == {}
+
+
+class TestProgrammeRecallHighIdf:
+    def test_filters_low_idf_skills_from_score(self):
+        # Programme matches a generic skill (low IDF) and a specific skill (high IDF).
+        # Job demands the same generic skill plus another low-IDF skill.
+        # High-IDF recall: programme has 1 high-IDF skill, job has 0 high-IDF → recall = 0.
+        prog = {"specific": 1.0, "generic": 1.0}
+        job = {"generic": 1.0, "boilerplate": 1.0}
+        idfs = {"specific": 3.0, "generic": 0.3, "boilerplate": 0.2}
+        threshold = 1.0
+        # Standard recall: shared=1.0 (generic), total=2.0 → 0.5
+        assert programme_recall(prog, job) == pytest.approx(0.5)
+        # High-IDF recall: programme has {specific}, job has {} above threshold
+        # → recall over filtered = 0.0 (job has no high-IDF demand for niche programme)
+        assert programme_recall_high_idf(prog, job, idfs, threshold) == pytest.approx(0.0)
+
+    def test_high_idf_overlap_scores_high(self):
+        # Programme and job both list a high-IDF skill → high score.
+        prog = {"specific": 1.0, "generic": 1.0}
+        job = {"specific": 1.0, "generic": 1.0, "filler": 1.0}
+        idfs = {"specific": 3.0, "generic": 0.3, "filler": 0.2}
+        threshold = 1.0
+        # High-IDF subset: prog={specific}, job={specific} → recall = 1.0
+        assert programme_recall_high_idf(prog, job, idfs, threshold) == pytest.approx(1.0)
+
+    def test_transversal_programme_falls_back_to_full_recall(self):
+        # Programme has no high-IDF skills (all transversal).  Fallback: use full recall.
+        prog = {"english": 1.0, "teamwork": 1.0}
+        job = {"english": 1.0, "teamwork": 1.0, "python": 1.0}
+        idfs = {"english": 0.2, "teamwork": 0.3, "python": 3.0}
+        threshold = 1.0
+        # No high-IDF in programme → fallback to programme_recall(prog, job)
+        # shared = 2.0 (english + teamwork), total = 3.0 → recall = 2/3
+        expected = programme_recall(prog, job)
+        assert programme_recall_high_idf(prog, job, idfs, threshold) == pytest.approx(expected)
+        assert expected == pytest.approx(2.0 / 3.0)
+
+    def test_generic_job_against_niche_programme_returns_zero(self):
+        # Programme has high-IDF skills; job has only low-IDF skills.
+        # The niche programme should NOT match the generic job.
+        prog = {"specific_a": 1.0, "specific_b": 1.0}
+        job = {"english": 1.0, "teamwork": 1.0, "communication": 1.0}
+        idfs = {"specific_a": 3.0, "specific_b": 2.5, "english": 0.2,
+                "teamwork": 0.3, "communication": 0.4}
+        threshold = 1.0
+        # programme has high-IDF, job has none → recall_hi = 0
+        assert programme_recall_high_idf(prog, job, idfs, threshold) == pytest.approx(0.0)
+
+    def test_high_idf_no_overlap_returns_zero(self):
+        # Both sides have high-IDF skills but they don't overlap (Game MSc vs SysAdmin pattern).
+        prog = {"unity": 1.0, "shader": 1.0}
+        job = {"linux": 1.0, "kubernetes": 1.0}
+        idfs = {"unity": 3.0, "shader": 3.5, "linux": 2.5, "kubernetes": 2.8}
+        threshold = 1.0
+        assert programme_recall_high_idf(prog, job, idfs, threshold) == pytest.approx(0.0)
+
+    def test_threshold_below_all_idfs_equivalent_to_full_recall(self):
+        # If the threshold is so low that every skill survives, recall_hi == recall.
+        prog = {"a": 1.0, "b": 1.0}
+        job = {"a": 1.0, "c": 1.0}
+        idfs = {"a": 1.0, "b": 1.0, "c": 1.0}
+        threshold = 0.0
+        full = programme_recall(prog, job)
+        assert programme_recall_high_idf(prog, job, idfs, threshold) == pytest.approx(full)
+
+    def test_threshold_above_all_idfs_triggers_fallback(self):
+        # No skill survives the threshold → programme has no high-IDF skills
+        # → fallback to full recall.
+        prog = {"a": 1.0, "b": 1.0}
+        job = {"a": 1.0, "c": 1.0}
+        idfs = {"a": 0.5, "b": 0.5, "c": 0.5}
+        threshold = 10.0
+        assert programme_recall_high_idf(prog, job, idfs, threshold) == pytest.approx(
+            programme_recall(prog, job)
+        )
+
+    def test_align_symbolic_weighted_includes_high_idf_column(self):
+        df = _make_df(
+            programmes=[[_skill("esco:python"), _skill("esco:ml")]],
+            jobs=[
+                [_skill("esco:python"), _skill("esco:ml"), _skill("esco:docker")],
+                [_skill("esco:python")],
+            ],
+        )
+        rankings, _ = align_symbolic_weighted(df, top_n=2)
+        assert "programme_recall_high_idf" in rankings.columns
+        assert (rankings["programme_recall_high_idf"] >= 0.0).all()
+        assert (rankings["programme_recall_high_idf"] <= 1.0).all()
