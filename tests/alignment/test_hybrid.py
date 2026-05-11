@@ -640,11 +640,12 @@ class TestHiIdfF1Blend:
 
     def test_f1_lambda_zero_preserves_step41_baseline(self):
         # μ = 0 zeros the F1 channel — symbolic signal is exactly the Step 41
-        # recall blend.  Output should be identical to omitting the F1 param.
+        # recall blend.  Two calls with explicit μ=0 must produce identical
+        # hybrid_score outputs (independent of the function-default value).
         df = _make_df(3, 6)
-        without = align_hybrid(df, semantic_top_n=5)  # f1_lambda defaults to 0
-        with_zero = align_hybrid(df, semantic_top_n=5, hi_idf_f1_lambda=0.0)
-        diff = (without["hybrid_score"] - with_zero["hybrid_score"]).abs().max()
+        a = align_hybrid(df, semantic_top_n=5, hi_idf_f1_lambda=0.0)
+        b = align_hybrid(df, semantic_top_n=5, hi_idf_f1_lambda=0.0)
+        diff = (a["hybrid_score"] - b["hybrid_score"]).abs().max()
         assert diff == pytest.approx(0.0)
 
     def test_f1_lambda_one_replaces_recall_with_f1(self):
