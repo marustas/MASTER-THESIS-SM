@@ -181,6 +181,58 @@ def programme_recall_high_idf(
     return programme_recall(p_high, j_high)
 
 
+def programme_precision(
+    w_prog: dict[str, float],
+    w_job: dict[str, float],
+) -> float:
+    """
+    Asymmetric precision: fraction of programme-taught skill weight the job actually demands.
+
+        precision = sum(min(w_p[u], w_j[u])) / sum(w_p)
+
+    Answers: "how much of what the programme teaches does the job want?"
+
+    The dual of ``programme_recall``.  Together they pin down both directions
+    of an asymmetric match: recall protects against programmes that miss the
+    job's demands, precision protects against programmes whose specialisation
+    is irrelevant to the job.
+
+    Returns 0.0 when the programme has no skills.
+    """
+    if not w_prog:
+        return 0.0
+    shared = sum(min(w_prog[u], w_job.get(u, 0.0)) for u in w_prog)
+    total_prog = sum(w_prog.values())
+    return shared / total_prog if total_prog > 0.0 else 0.0
+
+
+def programme_precision_high_idf(
+    w_prog: dict[str, float],
+    w_job: dict[str, float],
+    uri_idfs: dict[str, float],
+    threshold: float,
+) -> float:
+    """
+    Precision restricted to URIs whose corpus IDF exceeds ``threshold``.
+
+    The dual of ``programme_recall_high_idf``: collapses to zero when the job
+    demands none of the programme's *specific* skills, which is the right
+    behaviour for wrong-vertical confusion (e.g. a cybersecurity programme
+    matched to a building-management-systems programmer job — both share
+    transversal IT vocabulary, but their high-IDF skill sets are disjoint).
+
+    Fallback for transversal programmes mirrors ``programme_recall_high_idf``:
+    when the programme has no high-IDF skills, restricting to high-IDF would
+    force the score to zero against every job.  Falls back to full
+    ``programme_precision`` over the original weighted skill sets.
+    """
+    p_high = _filter_high_idf(w_prog, uri_idfs, threshold)
+    if not p_high:
+        return programme_precision(w_prog, w_job)
+    j_high = _filter_high_idf(w_job, uri_idfs, threshold)
+    return programme_precision(p_high, j_high)
+
+
 # ── Alignment ──────────────────────────────────────────────────────────────────
 
 def align_symbolic(
@@ -442,6 +494,9 @@ def align_symbolic_weighted(
                 "overlap_coeff": overlap_coefficient(p_ws, j_ws),
                 "programme_recall": programme_recall(p_ws, j_ws),
                 "programme_recall_high_idf": programme_recall_high_idf(
+                    p_ws, j_ws, uri_idfs, high_idf_threshold,
+                ),
+                "programme_precision_high_idf": programme_precision_high_idf(
                     p_ws, j_ws, uri_idfs, high_idf_threshold,
                 ),
             })

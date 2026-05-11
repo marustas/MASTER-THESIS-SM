@@ -123,6 +123,7 @@ def align_hybrid(
     use_programme_idf: bool = True,
     implicit_confidence_mode: str = "sqrt",
     hi_idf_blend_lambda: float = 0.25,
+    hi_idf_f1_lambda: float = 0.0,
     cross_encoder_model: str | object | None = None,
     xe_alpha: float = 0.0,
     xe_batch_size: int = 64,
@@ -170,6 +171,21 @@ def align_hybrid(
                      selected by sweep — see
                      ``experiments/results/evaluation/hi_idf_recall/FINDINGS.md``.
                      Must be in [0, 1].
+    hi_idf_f1_lambda : weight on the high-IDF F1 channel in the Stage 2
+                     symbolic signal (Step 42).  The final symbolic signal is
+                     ``(1 − μ) · recall_blend + μ · F1_high_idf``, where
+                     ``recall_blend`` is the Step-41 output above and
+                     ``F1_high_idf = 2·P·R / (P + R)`` is the harmonic mean of
+                     ``programme_precision_high_idf`` and
+                     ``programme_recall_high_idf``.  The F1 channel adds the
+                     missing precision direction — recall_blend already
+                     penalises programmes that miss the job's specific
+                     demands; F1 additionally penalises wrong-vertical
+                     matches where the job demands none of the *programme's*
+                     specific skills (e.g. cybersecurity → BMS programmer,
+                     where transversal IT vocabulary inflates recall but the
+                     high-IDF skill sets are disjoint).  μ = 0 reduces to
+                     Step 41 behaviour.  Must be in [0, 1].
     cross_encoder_model : optional cross-encoder for re-ranking the candidate
                      pool produced by Stage 1.  Either a HuggingFace model
                      name (str) or any object exposing ``predict(pairs)``.
@@ -238,6 +254,10 @@ def align_hybrid(
     if not 0.0 <= hi_idf_blend_lambda <= 1.0:
         raise ValueError(
             f"hi_idf_blend_lambda must be in [0, 1], got {hi_idf_blend_lambda}"
+        )
+    if not 0.0 <= hi_idf_f1_lambda <= 1.0:
+        raise ValueError(
+            f"hi_idf_f1_lambda must be in [0, 1], got {hi_idf_f1_lambda}"
         )
 
     n_prog = (df["source_type"] == "programme").sum()
@@ -308,6 +328,7 @@ def align_hybrid(
     logger.info(
         f"Stage 2: symbolic refinement "
         f"(hi_idf_blend_lambda={hi_idf_blend_lambda}, "
+        f"hi_idf_f1_lambda={hi_idf_f1_lambda}, "
         f"implicit_mode={implicit_confidence_mode})…"
     )
     sym, _ = align_symbolic_weighted(
@@ -315,18 +336,35 @@ def align_hybrid(
         implicit_confidence_mode=implicit_confidence_mode,
     )
     sym = sym[["programme_id", "job_id", "programme_recall",
-               "programme_recall_high_idf"]]
+               "programme_recall_high_idf", "programme_precision_high_idf"]]
 
     merged = candidates.merge(sym, on=["programme_id", "job_id"], how="left")
-    merged[["programme_recall", "programme_recall_high_idf"]] = (
-        merged[["programme_recall", "programme_recall_high_idf"]].fillna(0.0)
-    )
-    # Blend the full-skill recall with the specificity-restricted recall.
-    merged["programme_recall"] = (
+    sym_cols = ["programme_recall", "programme_recall_high_idf",
+                "programme_precision_high_idf"]
+    merged[sym_cols] = merged[sym_cols].fillna(0.0)
+
+    # Step 41 — blend full-skill recall with specificity-restricted recall.
+    recall_blend = (
         (1.0 - hi_idf_blend_lambda) * merged["programme_recall"]
         + hi_idf_blend_lambda * merged["programme_recall_high_idf"]
     )
-    merged = merged.drop(columns=["programme_recall_high_idf"])
+
+    # Step 42 — F1 of high-IDF precision and recall (mutual specificity, both
+    # directions).  Safe-divides where P + R = 0 (no high-IDF overlap).
+    p_hi = merged["programme_precision_high_idf"]
+    r_hi = merged["programme_recall_high_idf"]
+    pr_sum = p_hi + r_hi
+    f1_hi = pd.Series(0.0, index=merged.index)
+    f1_mask = pr_sum > 0
+    f1_hi.loc[f1_mask] = (2.0 * p_hi[f1_mask] * r_hi[f1_mask]) / pr_sum[f1_mask]
+
+    # Final symbolic signal — blend Step 41 recall with Step 42 F1.
+    merged["programme_recall"] = (
+        (1.0 - hi_idf_f1_lambda) * recall_blend
+        + hi_idf_f1_lambda * f1_hi
+    )
+    merged = merged.drop(columns=["programme_recall_high_idf",
+                                  "programme_precision_high_idf"])
 
     # ── Match quality refinement ───────────────────────────────────────────────
     if gamma != 0.0:
@@ -544,6 +582,7 @@ def run_hybrid_alignment(
     use_programme_idf: bool = True,
     implicit_confidence_mode: str = "sqrt",
     hi_idf_blend_lambda: float = 0.25,
+    hi_idf_f1_lambda: float = 0.0,
     cross_encoder_model: str | object | None = None,
     xe_alpha: float = 0.0,
     xe_batch_size: int = 64,
@@ -565,6 +604,7 @@ def run_hybrid_alignment(
         use_programme_idf=use_programme_idf,
         implicit_confidence_mode=implicit_confidence_mode,
         hi_idf_blend_lambda=hi_idf_blend_lambda,
+        hi_idf_f1_lambda=hi_idf_f1_lambda,
         cross_encoder_model=cross_encoder_model,
         xe_alpha=xe_alpha,
         xe_batch_size=xe_batch_size,
