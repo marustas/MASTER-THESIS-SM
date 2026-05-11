@@ -633,3 +633,64 @@ class TestProgrammeRecallHighIdf:
         assert "programme_recall_high_idf" in rankings.columns
         assert (rankings["programme_recall_high_idf"] >= 0.0).all()
         assert (rankings["programme_recall_high_idf"] <= 1.0).all()
+
+
+class TestProgrammePrecisionHighIdf:
+    def test_collapses_on_wrong_vertical_match(self):
+        # The motivating case: cybersec programme matched to a BMS programmer
+        # job.  Both share transversal IT vocabulary (low IDF) but their
+        # high-IDF skill sets are disjoint.  Standard recall is non-zero
+        # because of transversals; precision_hi must zero it out.
+        from src.alignment.symbolic import programme_precision_high_idf
+        prog = {"pentesting": 1.0, "vuln_assessment": 1.0, "communication": 1.0}
+        job = {"plc": 1.0, "bacnet": 1.0, "communication": 1.0}
+        idfs = {
+            "pentesting": 3.0, "vuln_assessment": 3.0,
+            "plc": 3.0, "bacnet": 3.0,
+            "communication": 0.2,
+        }
+        threshold = 1.0
+        # programme_high = {pentesting, vuln_assessment}; job_high = {plc, bacnet}
+        # Disjoint → precision_hi = 0
+        assert programme_precision_high_idf(prog, job, idfs, threshold) == pytest.approx(0.0)
+
+    def test_high_idf_overlap_scores_high(self):
+        from src.alignment.symbolic import programme_precision, programme_precision_high_idf
+        prog = {"specific": 1.0, "generic": 1.0}
+        job = {"specific": 1.0, "filler": 1.0}
+        idfs = {"specific": 3.0, "generic": 0.3, "filler": 0.2}
+        threshold = 1.0
+        # programme_high = {specific}, job_high = {specific} → precision = 1/1 = 1.0
+        assert programme_precision_high_idf(prog, job, idfs, threshold) == pytest.approx(1.0)
+        # Standard precision: shared=1, total=2 → 0.5
+        assert programme_precision(prog, job) == pytest.approx(0.5)
+
+    def test_transversal_programme_falls_back_to_full_precision(self):
+        from src.alignment.symbolic import programme_precision, programme_precision_high_idf
+        prog = {"english": 1.0, "teamwork": 1.0}
+        job = {"english": 1.0, "python": 1.0, "ml": 1.0}
+        idfs = {"english": 0.2, "teamwork": 0.3, "python": 3.0, "ml": 2.5}
+        threshold = 1.0
+        # No high-IDF in programme → fallback to programme_precision
+        # shared = 1.0 (english), total_prog = 2.0 → 0.5
+        expected = programme_precision(prog, job)
+        assert programme_precision_high_idf(prog, job, idfs, threshold) == pytest.approx(expected)
+        assert expected == pytest.approx(0.5)
+
+    def test_empty_programme_returns_zero(self):
+        from src.alignment.symbolic import programme_precision, programme_precision_high_idf
+        assert programme_precision({}, {"a": 1.0}) == pytest.approx(0.0)
+        assert programme_precision_high_idf({}, {"a": 1.0}, {"a": 3.0}, 1.0) == pytest.approx(0.0)
+
+    def test_align_symbolic_weighted_includes_precision_column(self):
+        df = _make_df(
+            programmes=[[_skill("esco:python"), _skill("esco:ml")]],
+            jobs=[
+                [_skill("esco:python"), _skill("esco:ml"), _skill("esco:docker")],
+                [_skill("esco:python")],
+            ],
+        )
+        rankings, _ = align_symbolic_weighted(df, top_n=2)
+        assert "programme_precision_high_idf" in rankings.columns
+        assert (rankings["programme_precision_high_idf"] >= 0.0).all()
+        assert (rankings["programme_precision_high_idf"] <= 1.0).all()

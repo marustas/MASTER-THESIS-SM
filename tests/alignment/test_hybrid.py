@@ -626,3 +626,33 @@ class TestHiIdfBlend:
         assert max_diff >= 0.0  # sanity — function ran
         # Required: lambda=0 reverts to the pure-recall semantics.
         assert (baseline["programme_recall"] >= 0.0).all()
+
+
+# ── high-IDF F1 blend (Step 42) ──────────────────────────────────────────────
+
+class TestHiIdfF1Blend:
+    def test_f1_lambda_out_of_range_raises(self):
+        df = _make_df(2, 4)
+        with pytest.raises(ValueError, match="hi_idf_f1_lambda"):
+            align_hybrid(df, semantic_top_n=4, hi_idf_f1_lambda=1.5)
+        with pytest.raises(ValueError, match="hi_idf_f1_lambda"):
+            align_hybrid(df, semantic_top_n=4, hi_idf_f1_lambda=-0.1)
+
+    def test_f1_lambda_zero_preserves_step41_baseline(self):
+        # μ = 0 zeros the F1 channel — symbolic signal is exactly the Step 41
+        # recall blend.  Output should be identical to omitting the F1 param.
+        df = _make_df(3, 6)
+        without = align_hybrid(df, semantic_top_n=5)  # f1_lambda defaults to 0
+        with_zero = align_hybrid(df, semantic_top_n=5, hi_idf_f1_lambda=0.0)
+        diff = (without["hybrid_score"] - with_zero["hybrid_score"]).abs().max()
+        assert diff == pytest.approx(0.0)
+
+    def test_f1_lambda_one_replaces_recall_with_f1(self):
+        # μ = 1 fully replaces the Step 41 recall_blend with F1_high_idf.
+        # This must not crash and output must remain in [0, 1] for valid pairs.
+        df = _make_df(3, 6)
+        out = align_hybrid(df, semantic_top_n=5, hi_idf_f1_lambda=1.0)
+        # programme_recall column now stores the F1 signal — must be bounded
+        assert (out["programme_recall"] >= 0.0).all()
+        assert (out["programme_recall"] <= 1.0).all()
+        assert (out["hybrid_score"] >= 0.0).all()
