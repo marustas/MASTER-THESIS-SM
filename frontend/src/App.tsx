@@ -19,10 +19,9 @@ const programmes = rankings as Programme[];
 
 // Top-1 displayed score below this is treated as "limited corpus coverage" —
 // the algorithm picked the least-bad available match rather than a confident
-// fit.  Threshold of 40/100 catches the documented misfires (Informatics →
-// admin, Cyber → BMS programmer, generic multimedia) while leaving genuinely
-// strong matches (≥40) untouched.
-const LOW_CONFIDENCE_THRESHOLD = 40;
+// fit.  Threshold of 35/100 flags the worst third of programmes (15/45) and
+// matches the heuristic identified in the domain-expert review.
+const LOW_CONFIDENCE_THRESHOLD = 35;
 
 export default function App() {
   const [selected, setSelected] = useState<Programme | null>(null);
