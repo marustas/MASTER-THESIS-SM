@@ -1,0 +1,894 @@
+{
+  "config": {
+    "kappas": [
+      0.0,
+      0.1,
+      0.2,
+      0.3,
+      0.5,
+      0.8
+    ]
+  },
+  "by_kappa": {
+    "0.00": {
+      "n_programmes": 45,
+      "unique_top1": 39,
+      "top1_diversity": 0.8667,
+      "top1_max_repeat": 2,
+      "top5_generalists": 0,
+      "top5_max_repeat": 5,
+      "top1_score_mean": 0.3076748133066383,
+      "top1_score_max": 0.6770578767420015,
+      "top1_score_cov": 0.36527479519400624,
+      "gap_mean": 0.07382261157124476,
+      "gap_lt_002": 8,
+      "gap_lt_005": 24,
+      "spearman_sym_hyb_mean": 0.25962625513323506,
+      "spearman_sem_hyb_mean": -0.012725090036014401
+    },
+    "0.10": {
+      "n_programmes": 45,
+      "unique_top1": 42,
+      "top1_diversity": 0.9333,
+      "top1_max_repeat": 2,
+      "top5_generalists": 1,
+      "top5_max_repeat": 6,
+      "top1_score_mean": 0.2981654141664192,
+      "top1_score_max": 0.6893025854927506,
+      "top1_score_cov": 0.37418284990215894,
+      "gap_mean": 0.0653158741331204,
+      "gap_lt_002": 12,
+      "gap_lt_005": 25,
+      "spearman_sym_hyb_mean": 0.24346277086416268,
+      "spearman_sem_hyb_mean": -0.013587301587301585
+    },
+    "0.20": {
+      "n_programmes": 45,
+      "unique_top1": 40,
+      "top1_diversity": 0.8889,
+      "top1_max_repeat": 3,
+      "top5_generalists": 2,
+      "top5_max_repeat": 6,
+      "top1_score_mean": 0.2916634161731854,
+      "top1_score_max": 0.7058896995280913,
+      "top1_score_cov": 0.37746347777099487,
+      "gap_mean": 0.05877234524695978,
+      "gap_lt_002": 11,
+      "gap_lt_005": 27,
+      "spearman_sym_hyb_mean": 0.22052872710983068,
+      "spearman_sem_hyb_mean": -0.022119781245831666
+    },
+    "0.30": {
+      "n_programmes": 45,
+      "unique_top1": 41,
+      "top1_diversity": 0.9111,
+      "top1_max_repeat": 2,
+      "top5_generalists": 1,
+      "top5_max_repeat": 6,
+      "top1_score_mean": 0.2828628919698892,
+      "top1_score_max": 0.7201792335885917,
+      "top1_score_cov": 0.3900984413154475,
+      "gap_mean": 0.05397062107844416,
+      "gap_lt_002": 16,
+      "gap_lt_005": 28,
+      "spearman_sym_hyb_mean": 0.2056687549079043,
+      "spearman_sem_hyb_mean": -0.023575296785380815
+    },
+    "0.50": {
+      "n_programmes": 45,
+      "unique_top1": 37,
+      "top1_diversity": 0.8222,
+      "top1_max_repeat": 3,
+      "top5_generalists": 3,
+      "top5_max_repeat": 9,
+      "top1_score_mean": 0.2743565702496783,
+      "top1_score_max": 0.7406501871389053,
+      "top1_score_cov": 0.41393490418192713,
+      "gap_mean": 0.050287157704042115,
+      "gap_lt_002": 18,
+      "gap_lt_005": 30,
+      "spearman_sym_hyb_mean": 0.16902296183956675,
+      "spearman_sem_hyb_mean": -0.0337062825130052
+    },
+    "0.80": {
+      "n_programmes": 45,
+      "unique_top1": 38,
+      "top1_diversity": 0.8444,
+      "top1_max_repeat": 3,
+      "top5_generalists": 3,
+      "top5_max_repeat": 8,
+      "top1_score_mean": 0.2612138632027111,
+      "top1_score_max": 0.6040054936951917,
+      "top1_score_cov": 0.40572144568578883,
+      "gap_mean": 0.03891048669635736,
+      "gap_lt_002": 22,
+      "gap_lt_005": 36,
+      "spearman_sym_hyb_mean": 0.13056839777264762,
+      "spearman_sem_hyb_mean": -0.03320048019207684
+    }
+  },
+  "deltas_vs_baseline": {
+    "0.10": {
+      "unique_top1": 3,
+      "top1_score_mean": -0.0095,
+      "top1_score_max": 0.0122,
+      "top1_score_cov": 0.0089,
+      "gap_lt_002": 4,
+      "gap_lt_005": 1,
+      "top5_generalists": 1,
+      "top5_max_repeat": 1
+    },
+    "0.20": {
+      "unique_top1": 1,
+      "top1_score_mean": -0.016,
+      "top1_score_max": 0.0288,
+      "top1_score_cov": 0.0122,
+      "gap_lt_002": 3,
+      "gap_lt_005": 3,
+      "top5_generalists": 2,
+      "top5_max_repeat": 1
+    },
+    "0.30": {
+      "unique_top1": 2,
+      "top1_score_mean": -0.0248,
+      "top1_score_max": 0.0431,
+      "top1_score_cov": 0.0248,
+      "gap_lt_002": 8,
+      "gap_lt_005": 4,
+      "top5_generalists": 1,
+      "top5_max_repeat": 1
+    },
+    "0.50": {
+      "unique_top1": -2,
+      "top1_score_mean": -0.0333,
+      "top1_score_max": 0.0636,
+      "top1_score_cov": 0.0487,
+      "gap_lt_002": 10,
+      "gap_lt_005": 6,
+      "top5_generalists": 3,
+      "top5_max_repeat": 4
+    },
+    "0.80": {
+      "unique_top1": -1,
+      "top1_score_mean": -0.0465,
+      "top1_score_max": -0.0731,
+      "top1_score_cov": 0.0404,
+      "gap_lt_002": 14,
+      "gap_lt_005": 12,
+      "top5_generalists": 3,
+      "top5_max_repeat": 3
+    }
+  },
+  "suspect_changes": {
+    "0.10": [
+      {
+        "programme": "Informatics",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "candidate_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "score_b": 0.2607,
+        "score_c": 0.253,
+        "changed": false
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117da University",
+        "baseline_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "candidate_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "score_b": 0.3281,
+        "score_c": 0.2758,
+        "changed": false
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117dos valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "BI programuotojas (-a)",
+        "candidate_top1": "MS Power Developer with verification",
+        "score_b": 0.1328,
+        "score_c": 0.1259,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Vilnius University",
+        "baseline_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "candidate_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "score_b": 0.2347,
+        "score_c": 0.2152,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "Verslo sistem\u0173 ir proces\u0173 analitikas (-\u0117)",
+        "score_b": 0.2621,
+        "score_c": 0.2306,
+        "changed": true
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Vilnius Gediminas Technical University",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.3344,
+        "score_c": 0.2958,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Utena College",
+        "baseline_top1": "IT On-site in\u017einierius",
+        "candidate_top1": "IT On-site in\u017einierius",
+        "score_b": 0.2261,
+        "score_c": 0.2122,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "candidate_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "score_b": 0.5307,
+        "score_c": 0.4775,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": ".NET programuotojas (-a)",
+        "candidate_top1": ".NET programuotojas (-a)",
+        "score_b": 0.2914,
+        "score_c": 0.2737,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Full-Stack Developer \u2013 Remote",
+        "candidate_top1": "Full-Stack Developer \u2013 Remote",
+        "score_b": 0.2198,
+        "score_c": 0.22,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilnius University",
+        "baseline_top1": "Low-code programuotojas",
+        "candidate_top1": "Low-code programuotojas",
+        "score_b": 0.4891,
+        "score_c": 0.4891,
+        "changed": false
+      },
+      {
+        "programme": "Cyber Systems and Security",
+        "institution": "Kauno kolegija / Higher Education Institution",
+        "baseline_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "candidate_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "score_b": 0.2646,
+        "score_c": 0.2482,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Technology",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "candidate_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "score_b": 0.3064,
+        "score_c": 0.281,
+        "changed": false
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "Gameplay Programmer",
+        "candidate_top1": "Gameplay Programmer",
+        "score_b": 0.2239,
+        "score_c": 0.2204,
+        "changed": false
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "candidate_top1": "IT Technikas",
+        "score_b": 0.1991,
+        "score_c": 0.2094,
+        "changed": true
+      },
+      {
+        "programme": "Media Technologies",
+        "institution": "Vilnius Business College",
+        "baseline_top1": "Senior IT Project Manager (REMOTE)",
+        "candidate_top1": "Senior IT Project Manager (REMOTE)",
+        "score_b": 0.3223,
+        "score_c": 0.3223,
+        "changed": false
+      }
+    ],
+    "0.20": [
+      {
+        "programme": "Informatics",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "candidate_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "score_b": 0.2607,
+        "score_c": 0.2469,
+        "changed": false
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117da University",
+        "baseline_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "candidate_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "score_b": 0.3281,
+        "score_c": 0.2392,
+        "changed": false
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117dos valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "BI programuotojas (-a)",
+        "candidate_top1": "MS Power Developer with verification",
+        "score_b": 0.1328,
+        "score_c": 0.1564,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Vilnius University",
+        "baseline_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "candidate_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "score_b": 0.2347,
+        "score_c": 0.1951,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.2621,
+        "score_c": 0.2156,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Vilnius Gediminas Technical University",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.3344,
+        "score_c": 0.3055,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Utena College",
+        "baseline_top1": "IT On-site in\u017einierius",
+        "candidate_top1": "IT On-site in\u017einierius",
+        "score_b": 0.2261,
+        "score_c": 0.2011,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "candidate_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "score_b": 0.5307,
+        "score_c": 0.4029,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": ".NET programuotojas (-a)",
+        "candidate_top1": ".NET programuotojas (-a)",
+        "score_b": 0.2914,
+        "score_c": 0.24,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Full-Stack Developer \u2013 Remote",
+        "candidate_top1": "Full-Stack Developer \u2013 Remote",
+        "score_b": 0.2198,
+        "score_c": 0.2214,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilnius University",
+        "baseline_top1": "Low-code programuotojas",
+        "candidate_top1": "Low-code programuotojas",
+        "score_b": 0.4891,
+        "score_c": 0.4891,
+        "changed": false
+      },
+      {
+        "programme": "Cyber Systems and Security",
+        "institution": "Kauno kolegija / Higher Education Institution",
+        "baseline_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "candidate_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "score_b": 0.2646,
+        "score_c": 0.2866,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Technology",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "candidate_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "score_b": 0.3064,
+        "score_c": 0.2792,
+        "changed": false
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "Gameplay Programmer",
+        "candidate_top1": "Gameplay Programmer",
+        "score_b": 0.2239,
+        "score_c": 0.2169,
+        "changed": false
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "candidate_top1": "IT Technikas",
+        "score_b": 0.1991,
+        "score_c": 0.2019,
+        "changed": true
+      },
+      {
+        "programme": "Media Technologies",
+        "institution": "Vilnius Business College",
+        "baseline_top1": "Senior IT Project Manager (REMOTE)",
+        "candidate_top1": "Senior IT Project Manager (REMOTE)",
+        "score_b": 0.3223,
+        "score_c": 0.3223,
+        "changed": false
+      }
+    ],
+    "0.30": [
+      {
+        "programme": "Informatics",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "candidate_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "score_b": 0.2607,
+        "score_c": 0.2421,
+        "changed": false
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117da University",
+        "baseline_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "candidate_top1": "Senior / Mid Software Engineer (.NET / Delphi) I Teltonika S",
+        "score_b": 0.3281,
+        "score_c": 0.2358,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117dos valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "BI programuotojas (-a)",
+        "candidate_top1": "MS Power Developer with verification",
+        "score_b": 0.1328,
+        "score_c": 0.1579,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Vilnius University",
+        "baseline_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "candidate_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "score_b": 0.2347,
+        "score_c": 0.1817,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.2621,
+        "score_c": 0.1971,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Vilnius Gediminas Technical University",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.3344,
+        "score_c": 0.2869,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Utena College",
+        "baseline_top1": "IT On-site in\u017einierius",
+        "candidate_top1": "IT On-site in\u017einierius",
+        "score_b": 0.2261,
+        "score_c": 0.1922,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "candidate_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "score_b": 0.5307,
+        "score_c": 0.3457,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": ".NET programuotojas (-a)",
+        "candidate_top1": ".NET programuotojas (-a)",
+        "score_b": 0.2914,
+        "score_c": 0.2121,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Full-Stack Developer \u2013 Remote",
+        "candidate_top1": "Full-Stack Developer \u2013 Remote",
+        "score_b": 0.2198,
+        "score_c": 0.223,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilnius University",
+        "baseline_top1": "Low-code programuotojas",
+        "candidate_top1": "Low-code programuotojas",
+        "score_b": 0.4891,
+        "score_c": 0.4891,
+        "changed": false
+      },
+      {
+        "programme": "Cyber Systems and Security",
+        "institution": "Kauno kolegija / Higher Education Institution",
+        "baseline_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "candidate_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "score_b": 0.2646,
+        "score_c": 0.2475,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Technology",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "candidate_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "score_b": 0.3064,
+        "score_c": 0.2578,
+        "changed": false
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "Gameplay Programmer",
+        "candidate_top1": "DevOps and Cloud Engineer",
+        "score_b": 0.2239,
+        "score_c": 0.2174,
+        "changed": true
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "candidate_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "score_b": 0.1991,
+        "score_c": 0.1978,
+        "changed": false
+      },
+      {
+        "programme": "Media Technologies",
+        "institution": "Vilnius Business College",
+        "baseline_top1": "Senior IT Project Manager (REMOTE)",
+        "candidate_top1": "Senior IT Project Manager (REMOTE)",
+        "score_b": 0.3223,
+        "score_c": 0.3223,
+        "changed": false
+      }
+    ],
+    "0.50": [
+      {
+        "programme": "Informatics",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "candidate_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "score_b": 0.2607,
+        "score_c": 0.2347,
+        "changed": false
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117da University",
+        "baseline_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "candidate_top1": "SENIOR ERP SISTEM\u0172 (JAVA/KITA KALBA) PROGRAMUOTOJAS",
+        "score_b": 0.3281,
+        "score_c": 0.2493,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117dos valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "BI programuotojas (-a)",
+        "candidate_top1": "MS Power Developer with verification",
+        "score_b": 0.1328,
+        "score_c": 0.23,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Vilnius University",
+        "baseline_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "candidate_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "score_b": 0.2347,
+        "score_c": 0.1649,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.2621,
+        "score_c": 0.1669,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Vilnius Gediminas Technical University",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.3344,
+        "score_c": 0.2557,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Utena College",
+        "baseline_top1": "IT On-site in\u017einierius",
+        "candidate_top1": "IT On-site in\u017einierius",
+        "score_b": 0.2261,
+        "score_c": 0.1786,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "candidate_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "score_b": 0.5307,
+        "score_c": 0.2675,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": ".NET programuotojas (-a)",
+        "candidate_top1": ".NET programuotojas (-a)",
+        "score_b": 0.2914,
+        "score_c": 0.1727,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Full-Stack Developer \u2013 Remote",
+        "candidate_top1": "Python Developer",
+        "score_b": 0.2198,
+        "score_c": 0.2276,
+        "changed": true
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilnius University",
+        "baseline_top1": "Low-code programuotojas",
+        "candidate_top1": "Low-code programuotojas",
+        "score_b": 0.4891,
+        "score_c": 0.4891,
+        "changed": false
+      },
+      {
+        "programme": "Cyber Systems and Security",
+        "institution": "Kauno kolegija / Higher Education Institution",
+        "baseline_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "candidate_top1": "SOC analitikas (-\u0117) kibernetini\u0173 gr\u0117smi\u0173 paie\u0161kai",
+        "score_b": 0.2646,
+        "score_c": 0.2422,
+        "changed": true
+      },
+      {
+        "programme": "Information Systems Technology",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "candidate_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "score_b": 0.3064,
+        "score_c": 0.2252,
+        "changed": false
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "Gameplay Programmer",
+        "candidate_top1": "DevOps and Cloud Engineer",
+        "score_b": 0.2239,
+        "score_c": 0.2374,
+        "changed": true
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "candidate_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "score_b": 0.1991,
+        "score_c": 0.1972,
+        "changed": false
+      },
+      {
+        "programme": "Media Technologies",
+        "institution": "Vilnius Business College",
+        "baseline_top1": "Senior IT Project Manager (REMOTE)",
+        "candidate_top1": "Senior IT Project Manager (REMOTE)",
+        "score_b": 0.3223,
+        "score_c": 0.3223,
+        "changed": false
+      }
+    ],
+    "0.80": [
+      {
+        "programme": "Informatics",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "candidate_top1": "IT sistem\u0173 administratorius (-\u0117)",
+        "score_b": 0.2607,
+        "score_c": 0.2272,
+        "changed": false
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117da University",
+        "baseline_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "candidate_top1": "SENIOR ERP SISTEM\u0172 (JAVA/KITA KALBA) PROGRAMUOTOJAS",
+        "score_b": 0.3281,
+        "score_c": 0.2392,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Klaip\u0117dos valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "BI programuotojas (-a)",
+        "candidate_top1": "MS Power Developer with verification",
+        "score_b": 0.1328,
+        "score_c": 0.2339,
+        "changed": true
+      },
+      {
+        "programme": "Informatics",
+        "institution": "Vilnius University",
+        "baseline_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "candidate_top1": "IT SUPPORTER with development opportunity in Data Integratio",
+        "score_b": 0.2347,
+        "score_c": 0.1511,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT ADMINISTRATORIUS (-\u0116)",
+        "score_b": 0.2621,
+        "score_c": 0.1393,
+        "changed": true
+      },
+      {
+        "programme": "Information Systems",
+        "institution": "Vilnius Gediminas Technical University",
+        "baseline_top1": "IT sistem\u0173 testuotojas (-a)",
+        "candidate_top1": "IT sistem\u0173 testuotojas (-a)",
+        "score_b": 0.3344,
+        "score_c": 0.1988,
+        "changed": false
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Utena College",
+        "baseline_top1": "IT On-site in\u017einierius",
+        "candidate_top1": "Telekomunikacij\u0173 specialistas \u2013 bazini\u0173 sto\u010di\u0173 montuotojas L",
+        "score_b": 0.2261,
+        "score_c": 0.1735,
+        "changed": true
+      },
+      {
+        "programme": "Information Systems Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "candidate_top1": "Robotizacijos ir automatizavimo vadovas (-\u0117) (valymo versle)",
+        "score_b": 0.5307,
+        "score_c": 0.202,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": ".NET programuotojas (-a)",
+        "candidate_top1": "BI programuotojas (-a)",
+        "score_b": 0.2914,
+        "score_c": 0.1583,
+        "changed": true
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilniaus kolegija / Higher Education Institution",
+        "baseline_top1": "Full-Stack Developer \u2013 Remote",
+        "candidate_top1": "Full-Stack Developer \u2013 Remote",
+        "score_b": 0.2198,
+        "score_c": 0.2119,
+        "changed": false
+      },
+      {
+        "programme": "Software Engineering",
+        "institution": "Vilnius University",
+        "baseline_top1": "Low-code programuotojas",
+        "candidate_top1": "Low-code programuotojas",
+        "score_b": 0.4891,
+        "score_c": 0.4891,
+        "changed": false
+      },
+      {
+        "programme": "Cyber Systems and Security",
+        "institution": "Kauno kolegija / Higher Education Institution",
+        "baseline_top1": "PROGRAMUOTOJAS (-A) (PASTAT\u0172 VALDYMAS)",
+        "candidate_top1": "SOC analitikas (-\u0117) kibernetini\u0173 gr\u0117smi\u0173 paie\u0161kai",
+        "score_b": 0.2646,
+        "score_c": 0.2315,
+        "changed": true
+      },
+      {
+        "programme": "Information Systems Technology",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Pardavim\u0173 in\u017einierius (-\u0117) KLAIP\u0116DA",
+        "candidate_top1": "IT sistem\u0173 ir skaitmenizacijos vadovas (-\u0117)",
+        "score_b": 0.3064,
+        "score_c": 0.1933,
+        "changed": true
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "Kaunas University of Technology",
+        "baseline_top1": "Gameplay Programmer",
+        "candidate_top1": "DevOps and Cloud Engineer",
+        "score_b": 0.2239,
+        "score_c": 0.2642,
+        "changed": true
+      },
+      {
+        "programme": "Multimedia Technologies",
+        "institution": "\u0160iauli\u0173 valstybin\u0117 kolegija / Higher Education Institution",
+        "baseline_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "candidate_top1": "Jaunesnysis (-ioji) socialini\u0173 tinkl\u0173 reklamos dizaineris (-",
+        "score_b": 0.1991,
+        "score_c": 0.184,
+        "changed": false
+      },
+      {
+        "programme": "Media Technologies",
+        "institution": "Vilnius Business College",
+        "baseline_top1": "Senior IT Project Manager (REMOTE)",
+        "candidate_top1": "Senior IT Project Manager (REMOTE)",
+        "score_b": 0.3223,
+        "score_c": 0.3223,
+        "changed": false
+      }
+    ]
+  }
+}
