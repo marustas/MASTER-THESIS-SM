@@ -54,14 +54,7 @@ from src.alignment.cross_encoder import (
 from src.alignment.semantic import align_semantic
 from src.alignment.symbolic import align_symbolic_weighted
 from src.scraping.config import DATA_DIR
-from src.alignment.symbolic import programme_recall as _programme_recall
-from src.skills.skill_weights import (
-    build_weighted_skills,
-    cluster_centroid_skills,
-    compute_corpus_idf,
-    compute_median_idf,
-    programme_generalist_score,
-)
+from src.skills.skill_weights import compute_corpus_idf, compute_median_idf
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
@@ -135,10 +128,6 @@ def align_hybrid(
     xe_alpha: float = 0.0,
     xe_batch_size: int = 64,
     xe_pool_mode: str = "single",
-    adaptive_alpha: bool = False,
-    alpha_generalist_decay: float = 0.20,
-    alpha_floor: float = 0.35,
-    cluster_prior_weight: float = 0.0,
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -230,35 +219,6 @@ def align_hybrid(
                      sections (weighted-mean) and job by chunks (max).
                      Lifts both truncation ceilings; ~3-5× the cost of
                      ``"single"``.
-    adaptive_alpha : when True, replace the global ``alpha`` with a
-                     per-programme alpha that decreases with the programme's
-                     generalist score (Step 43).  Generalist programmes
-                     (those whose skill weight sits mostly on low-IDF
-                     ubiquitous URIs) shift toward the symbolic /
-                     specificity-restricted signal — exactly the channel
-                     that distinguishes a true cybersecurity match from a
-                     building-management programmer for an "Informatics"
-                     curriculum.  Specialist programmes are unaffected.
-                     Off by default for backward compatibility.
-    alpha_generalist_decay : slope of the per-programme alpha schedule.
-                     ``alpha_p = max(alpha_floor, alpha - decay · generalist_score(p))``.
-                     With defaults, a pure generalist (gen=1) drops to
-                     alpha=0.35; a pure specialist (gen=0) stays at the
-                     base alpha.  Ignored unless ``adaptive_alpha=True``.
-    alpha_floor    : lower bound on the per-programme alpha.  Prevents
-                     pathological zero-cosine weighting on highly generalist
-                     programmes.  Ignored unless ``adaptive_alpha=True``.
-    cluster_prior_weight : weight κ on the cluster-pooled recall channel
-                     (Step 44).  The final Stage 2 symbolic signal becomes
-                     ``(1 − κ) · programme_recall + κ · cluster_recall(p, j)``
-                     where ``cluster_recall`` is the recall of the job's
-                     skill set against the programme cluster's centroid
-                     (mean weighted-skill profile across the cluster's
-                     members).  Denoises thin curricula by pooling within
-                     the cluster.  Requires ``cluster_label`` to be present
-                     on programme rows.  κ = 0 (default) disables the
-                     prior — the symbolic signal is unchanged from
-                     Step 42.  Must be in [0, 1].
 
     Returns
     -------
@@ -298,25 +258,6 @@ def align_hybrid(
     if not 0.0 <= hi_idf_f1_lambda <= 1.0:
         raise ValueError(
             f"hi_idf_f1_lambda must be in [0, 1], got {hi_idf_f1_lambda}"
-        )
-    if adaptive_alpha and not 0.0 <= alpha_floor <= alpha:
-        raise ValueError(
-            f"alpha_floor must satisfy 0 <= alpha_floor <= alpha "
-            f"(got alpha_floor={alpha_floor}, alpha={alpha})"
-        )
-    if adaptive_alpha and alpha_generalist_decay < 0:
-        raise ValueError(
-            f"alpha_generalist_decay must be non-negative, "
-            f"got {alpha_generalist_decay}"
-        )
-    if not 0.0 <= cluster_prior_weight <= 1.0:
-        raise ValueError(
-            f"cluster_prior_weight must be in [0, 1], got {cluster_prior_weight}"
-        )
-    if cluster_prior_weight > 0 and "cluster_label" not in df.columns:
-        raise ValueError(
-            "cluster_prior_weight > 0 requires the 'cluster_label' column on "
-            "programme rows — run src/clustering/programme_clustering.py first"
         )
 
     n_prog = (df["source_type"] == "programme").sum()
@@ -425,86 +366,6 @@ def align_hybrid(
     merged = merged.drop(columns=["programme_recall_high_idf",
                                   "programme_precision_high_idf"])
 
-    # ── Cluster prior (Step 44) ────────────────────────────────────────────────
-    # Blend per-programme recall with cluster-pooled recall.  Pools each
-    # programme's weighted-skill profile across the cluster, recalls the job
-    # against that pooled centroid, and weighted-averages with the per-row
-    # recall.  Denoises thin curricula without double-counting cosine.
-    if cluster_prior_weight > 0:
-        logger.info(
-            f"  Applying cluster prior (cluster_prior_weight={cluster_prior_weight})…"
-        )
-
-        # Corpus IDF (reuse computation if already done by adaptive_alpha branch
-        # would be nice, but the two features are independent — recompute).
-        cp_uri_lists: list[list[str]] = []
-        for _, row in df.iterrows():
-            details = row.get("skill_details", [])
-            if not isinstance(details, (list, np.ndarray)):
-                details = []
-            cp_uri_lists.append(
-                [s.get("esco_uri", "") for s in details if s.get("esco_uri")]
-            )
-        cp_uri_idfs = compute_corpus_idf(cp_uri_lists)
-
-        # Build per-programme weighted skills
-        prog_weights: dict[int, dict[str, float]] = {}
-        prog_cluster: dict[int, int] = {}
-        for idx, row in df[df["source_type"] == "programme"].iterrows():
-            details = row.get("skill_details", [])
-            if not isinstance(details, (list, np.ndarray)):
-                details = []
-            prog_weights[int(idx)] = build_weighted_skills(
-                list(details),
-                uri_reuse_levels={},
-                uri_idfs=cp_uri_idfs,
-                implicit_confidence_mode=implicit_confidence_mode,
-            )
-            prog_cluster[int(idx)] = int(row["cluster_label"])
-
-        # Build per-job weighted skills
-        job_weights: dict[int, dict[str, float]] = {}
-        for idx, row in df[df["source_type"] == "job_ad"].iterrows():
-            details = row.get("skill_details", [])
-            if not isinstance(details, (list, np.ndarray)):
-                details = []
-            job_weights[int(idx)] = build_weighted_skills(
-                list(details),
-                uri_reuse_levels={},
-                uri_idfs=cp_uri_idfs,
-                implicit_confidence_mode=implicit_confidence_mode,
-            )
-
-        # Build cluster centroids
-        cluster_members: dict[int, list[dict[str, float]]] = {}
-        for pid, w in prog_weights.items():
-            c = prog_cluster[pid]
-            cluster_members.setdefault(c, []).append(w)
-        centroids: dict[int, dict[str, float]] = {
-            c: cluster_centroid_skills(members)
-            for c, members in cluster_members.items()
-        }
-
-        # Compute cluster_recall per row and blend with programme_recall
-        cluster_recall_vals: list[float] = []
-        for _, row in merged.iterrows():
-            pid = int(row["programme_id"])
-            jid = int(row["job_id"])
-            cid = prog_cluster.get(pid)
-            if cid is None:
-                cluster_recall_vals.append(float(row["programme_recall"]))
-                continue
-            centroid = centroids.get(cid, {})
-            j_w = job_weights.get(jid, {})
-            cluster_recall_vals.append(_programme_recall(centroid, j_w))
-        merged["cluster_recall"] = cluster_recall_vals
-
-        merged["programme_recall"] = (
-            (1.0 - cluster_prior_weight) * merged["programme_recall"]
-            + cluster_prior_weight * merged["cluster_recall"]
-        )
-        merged = merged.drop(columns=["cluster_recall"])
-
     # ── Match quality refinement ───────────────────────────────────────────────
     if gamma != 0.0:
         logger.info(f"  Applying match quality refinement (γ={gamma})…")
@@ -597,56 +458,17 @@ def align_hybrid(
     if xe_alpha > 0:
         merged["xe_norm"] = _confident_minmax("xe_score")
 
-    # ── Per-programme alpha (Step 43 — adaptive_alpha) ────────────────────────
-    # When enabled, alpha is computed per programme from its generalist score:
-    # generalist programmes get pushed toward the symbolic side, specialists
-    # keep the base alpha.  When disabled, every row uses the global alpha.
-    if adaptive_alpha:
-        all_uri_lists: list[list[str]] = []
-        for _, row in df.iterrows():
-            details = row.get("skill_details", [])
-            if not isinstance(details, (list, np.ndarray)):
-                details = []
-            all_uri_lists.append(
-                [s.get("esco_uri", "") for s in details if s.get("esco_uri")]
-            )
-        uri_idfs_alpha = compute_corpus_idf(all_uri_lists)
-        high_idf_thr = compute_median_idf(uri_idfs_alpha)
-
-        prog_alpha: dict[int, float] = {}
-        for idx, row in df[df["source_type"] == "programme"].iterrows():
-            details = row.get("skill_details", [])
-            if not isinstance(details, (list, np.ndarray)):
-                details = []
-            w_skills = build_weighted_skills(
-                list(details),
-                uri_reuse_levels={},
-                uri_idfs=uri_idfs_alpha,
-                implicit_confidence_mode=implicit_confidence_mode,
-            )
-            gen = programme_generalist_score(w_skills, uri_idfs_alpha, high_idf_thr)
-            prog_alpha[idx] = max(alpha_floor, alpha - alpha_generalist_decay * gen)
-
-        alpha_series = merged["programme_id"].map(prog_alpha).astype(float)
-        logger.info(
-            f"  adaptive_alpha enabled: per-programme alpha range "
-            f"[{alpha_series.min():.3f}, {alpha_series.max():.3f}] "
-            f"(mean {alpha_series.mean():.3f}, base {alpha})"
-        )
-    else:
-        alpha_series = pd.Series(alpha, index=merged.index, dtype=float)
-
     # ── Hybrid score ───────────────────────────────────────────────────────────
-    recall_weight = 1.0 - alpha_series - xe_alpha
+    recall_weight = 1.0 - alpha - xe_alpha
     if xe_alpha > 0:
         merged["hybrid_score"] = (
-            alpha_series * merged["cosine_norm"]
+            alpha * merged["cosine_norm"]
             + xe_alpha * merged["xe_norm"]
             + recall_weight * merged["recall_norm"]
         )
     else:
         merged["hybrid_score"] = (
-            alpha_series * merged["cosine_norm"] + recall_weight * merged["recall_norm"]
+            alpha * merged["cosine_norm"] + recall_weight * merged["recall_norm"]
         )
 
     # ── Inverse programme frequency (two-tier generalist penalty) ────────────
