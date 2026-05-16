@@ -657,3 +657,57 @@ class TestHiIdfF1Blend:
         assert (out["programme_recall"] >= 0.0).all()
         assert (out["programme_recall"] <= 1.0).all()
         assert (out["hybrid_score"] >= 0.0).all()
+
+
+# ── Adaptive alpha (Step 43) ─────────────────────────────────────────────────
+
+class TestAdaptiveAlpha:
+    def test_alpha_floor_validation(self):
+        df = _make_df(2, 4)
+        with pytest.raises(ValueError, match="alpha_floor"):
+            align_hybrid(df, semantic_top_n=4, adaptive_alpha=True,
+                         alpha=0.5, alpha_floor=0.7)
+
+    def test_negative_decay_rejected(self):
+        df = _make_df(2, 4)
+        with pytest.raises(ValueError, match="alpha_generalist_decay"):
+            align_hybrid(df, semantic_top_n=4, adaptive_alpha=True,
+                         alpha_generalist_decay=-0.1)
+
+    def test_disabled_matches_global_alpha(self):
+        # adaptive_alpha=False (the default) must produce identical hybrid_scores
+        # whether the user passes the adaptive-only knobs or not.
+        df = _make_df(3, 6)
+        baseline = align_hybrid(df, semantic_top_n=5, alpha=0.55)
+        with_unused_knobs = align_hybrid(
+            df, semantic_top_n=5, alpha=0.55,
+            adaptive_alpha=False,
+            alpha_generalist_decay=0.30, alpha_floor=0.20,
+        )
+        diff = (baseline["hybrid_score"] - with_unused_knobs["hybrid_score"]).abs().max()
+        assert diff == pytest.approx(0.0)
+
+    def test_zero_decay_reduces_to_global_alpha(self):
+        # adaptive_alpha=True with decay=0 → every programme gets the base alpha
+        # → result must equal the non-adaptive baseline exactly.
+        df = _make_df(3, 6)
+        baseline = align_hybrid(df, semantic_top_n=5, alpha=0.55)
+        adaptive = align_hybrid(
+            df, semantic_top_n=5, alpha=0.55,
+            adaptive_alpha=True, alpha_generalist_decay=0.0, alpha_floor=0.0,
+        )
+        diff = (baseline["hybrid_score"] - adaptive["hybrid_score"]).abs().max()
+        assert diff == pytest.approx(0.0)
+
+    def test_alpha_floor_caps_decay(self):
+        # decay so large that the unconstrained alpha would go below the floor;
+        # the floor must hold and the run must still complete.
+        df = _make_df(3, 6)
+        out = align_hybrid(
+            df, semantic_top_n=5, alpha=0.55,
+            adaptive_alpha=True, alpha_generalist_decay=10.0, alpha_floor=0.40,
+        )
+        assert (out["hybrid_score"] >= 0.0).all()
+        # Floor=0.40 must mean cosine weight never drops below 0.40 — recall
+        # weight never exceeds 0.60.  Smoke-tested via finite scores.
+        assert out["hybrid_score"].notna().all()

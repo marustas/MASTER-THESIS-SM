@@ -54,7 +54,12 @@ from src.alignment.cross_encoder import (
 from src.alignment.semantic import align_semantic
 from src.alignment.symbolic import align_symbolic_weighted
 from src.scraping.config import DATA_DIR
-from src.skills.skill_weights import compute_corpus_idf, compute_median_idf
+from src.skills.skill_weights import (
+    build_weighted_skills,
+    compute_corpus_idf,
+    compute_median_idf,
+    programme_generalist_score,
+)
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 
@@ -128,6 +133,9 @@ def align_hybrid(
     xe_alpha: float = 0.0,
     xe_batch_size: int = 64,
     xe_pool_mode: str = "single",
+    adaptive_alpha: bool = False,
+    alpha_generalist_decay: float = 0.20,
+    alpha_floor: float = 0.35,
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -219,6 +227,24 @@ def align_hybrid(
                      sections (weighted-mean) and job by chunks (max).
                      Lifts both truncation ceilings; ~3-5× the cost of
                      ``"single"``.
+    adaptive_alpha : when True, replace the global ``alpha`` with a
+                     per-programme alpha that decreases with the programme's
+                     generalist score (Step 43).  Generalist programmes
+                     (those whose skill weight sits mostly on low-IDF
+                     ubiquitous URIs) shift toward the symbolic /
+                     specificity-restricted signal — exactly the channel
+                     that distinguishes a true cybersecurity match from a
+                     building-management programmer for an "Informatics"
+                     curriculum.  Specialist programmes are unaffected.
+                     Off by default for backward compatibility.
+    alpha_generalist_decay : slope of the per-programme alpha schedule.
+                     ``alpha_p = max(alpha_floor, alpha - decay · generalist_score(p))``.
+                     With defaults, a pure generalist (gen=1) drops to
+                     alpha=0.35; a pure specialist (gen=0) stays at the
+                     base alpha.  Ignored unless ``adaptive_alpha=True``.
+    alpha_floor    : lower bound on the per-programme alpha.  Prevents
+                     pathological zero-cosine weighting on highly generalist
+                     programmes.  Ignored unless ``adaptive_alpha=True``.
 
     Returns
     -------
@@ -258,6 +284,16 @@ def align_hybrid(
     if not 0.0 <= hi_idf_f1_lambda <= 1.0:
         raise ValueError(
             f"hi_idf_f1_lambda must be in [0, 1], got {hi_idf_f1_lambda}"
+        )
+    if adaptive_alpha and not 0.0 <= alpha_floor <= alpha:
+        raise ValueError(
+            f"alpha_floor must satisfy 0 <= alpha_floor <= alpha "
+            f"(got alpha_floor={alpha_floor}, alpha={alpha})"
+        )
+    if adaptive_alpha and alpha_generalist_decay < 0:
+        raise ValueError(
+            f"alpha_generalist_decay must be non-negative, "
+            f"got {alpha_generalist_decay}"
         )
 
     n_prog = (df["source_type"] == "programme").sum()
@@ -458,17 +494,56 @@ def align_hybrid(
     if xe_alpha > 0:
         merged["xe_norm"] = _confident_minmax("xe_score")
 
+    # ── Per-programme alpha (Step 43 — adaptive_alpha) ────────────────────────
+    # When enabled, alpha is computed per programme from its generalist score:
+    # generalist programmes get pushed toward the symbolic side, specialists
+    # keep the base alpha.  When disabled, every row uses the global alpha.
+    if adaptive_alpha:
+        all_uri_lists: list[list[str]] = []
+        for _, row in df.iterrows():
+            details = row.get("skill_details", [])
+            if not isinstance(details, (list, np.ndarray)):
+                details = []
+            all_uri_lists.append(
+                [s.get("esco_uri", "") for s in details if s.get("esco_uri")]
+            )
+        uri_idfs_alpha = compute_corpus_idf(all_uri_lists)
+        high_idf_thr = compute_median_idf(uri_idfs_alpha)
+
+        prog_alpha: dict[int, float] = {}
+        for idx, row in df[df["source_type"] == "programme"].iterrows():
+            details = row.get("skill_details", [])
+            if not isinstance(details, (list, np.ndarray)):
+                details = []
+            w_skills = build_weighted_skills(
+                list(details),
+                uri_reuse_levels={},
+                uri_idfs=uri_idfs_alpha,
+                implicit_confidence_mode=implicit_confidence_mode,
+            )
+            gen = programme_generalist_score(w_skills, uri_idfs_alpha, high_idf_thr)
+            prog_alpha[idx] = max(alpha_floor, alpha - alpha_generalist_decay * gen)
+
+        alpha_series = merged["programme_id"].map(prog_alpha).astype(float)
+        logger.info(
+            f"  adaptive_alpha enabled: per-programme alpha range "
+            f"[{alpha_series.min():.3f}, {alpha_series.max():.3f}] "
+            f"(mean {alpha_series.mean():.3f}, base {alpha})"
+        )
+    else:
+        alpha_series = pd.Series(alpha, index=merged.index, dtype=float)
+
     # ── Hybrid score ───────────────────────────────────────────────────────────
-    recall_weight = 1.0 - alpha - xe_alpha
+    recall_weight = 1.0 - alpha_series - xe_alpha
     if xe_alpha > 0:
         merged["hybrid_score"] = (
-            alpha * merged["cosine_norm"]
+            alpha_series * merged["cosine_norm"]
             + xe_alpha * merged["xe_norm"]
             + recall_weight * merged["recall_norm"]
         )
     else:
         merged["hybrid_score"] = (
-            alpha * merged["cosine_norm"] + recall_weight * merged["recall_norm"]
+            alpha_series * merged["cosine_norm"] + recall_weight * merged["recall_norm"]
         )
 
     # ── Inverse programme frequency (two-tier generalist penalty) ────────────
