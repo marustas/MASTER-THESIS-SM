@@ -15,15 +15,21 @@ Columns:
     job_url               – link to the original job posting
     hybrid_score          – combined alignment score (0–1, higher = better match)
     semantic_score        – embedding cosine similarity (0–1)
-    top_skill_gaps        – up to 3 ESCO skill labels the programme lacks vs. this job
+    top_skill_gaps        – up to 10 ESCO skill labels the programme lacks vs. this job
 """
 
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from src.scraping.config import DATA_DIR
+
+# Same weighting scheme used inside src/alignment/symbolic.py
+_EXPLICIT_WEIGHT = 1.0
+_IMPLICIT_WEIGHT = 0.5
+_TOP_GAPS_PER_JOB = 10
 
 RESULTS_DIR = DATA_DIR.parent / "experiments" / "results"
 DATASET_PATH = DATA_DIR / "dataset" / "dataset.parquet"
@@ -37,31 +43,46 @@ def _load_esco_labels(path: Path) -> dict[str, str]:
     return dict(zip(esco["conceptUri"], esco["preferredLabel"]))
 
 
+def _skill_weights(details) -> dict[str, float]:
+    weights: dict[str, float] = {}
+    if details is None or (isinstance(details, float) and np.isnan(details)):
+        return weights
+    for skill in details:
+        uri = skill.get("esco_uri", "")
+        if not uri:
+            continue
+        w = _EXPLICIT_WEIGHT if skill.get("explicit", False) else _IMPLICIT_WEIGHT
+        weights[uri] = max(weights.get(uri, 0.0), w)
+    return weights
+
+
 def _top_gap_labels(
-    skill_gaps: pd.DataFrame,
-    programme_id: int,
-    job_id: int,
+    prog_details,
+    job_details,
     uri_to_label: dict[str, str],
-    n: int = 3,
+    n: int = _TOP_GAPS_PER_JOB,
 ) -> str:
-    mask = (skill_gaps["programme_id"] == programme_id) & (skill_gaps["job_id"] == job_id)
-    rows = skill_gaps[mask].sort_values("gap_weight", ascending=False).head(n)
-    labels = [uri_to_label.get(uri, uri) for uri in rows["gap_uri"]]
+    p = _skill_weights(prog_details)
+    j = _skill_weights(job_details)
+    gaps = [(uri, w - p.get(uri, 0.0)) for uri, w in j.items() if w > p.get(uri, 0.0)]
+    gaps.sort(key=lambda x: -x[1])
+    labels = [uri_to_label.get(uri, uri) for uri, _ in gaps[:n]]
     return "; ".join(labels)
 
 
 def export() -> None:
     # Load base data
     rankings = pd.read_parquet(RESULTS_DIR / "exp3_hybrid" / "rankings.parquet")
-    skill_gaps = pd.read_parquet(RESULTS_DIR / "exp1_symbolic" / "skill_gaps.parquet")
     dataset = pd.read_parquet(DATASET_PATH)
     uri_to_label = _load_esco_labels(ESCO_PATH)
 
     # Index lookup tables
-    programmes = dataset[dataset["source_type"] == "programme"][["institution"]].copy()
+    programmes = dataset[dataset["source_type"] == "programme"][["institution", "skill_details"]].copy()
     jobs = dataset[dataset["source_type"] == "job_ad"][
-        ["job_title", "url", "employer_sector", "location"]
+        ["job_title", "url", "employer_sector", "location", "skill_details"]
     ].copy()
+    prog_details = programmes["skill_details"]
+    job_details = jobs["skill_details"]
 
     # Add rank within each programme (hybrid score already sorted per programme)
     rankings = rankings.sort_values(
@@ -76,9 +97,14 @@ def export() -> None:
     rankings["employer_sector"] = rankings["job_id"].map(jobs["employer_sector"])
     rankings["location"] = rankings["job_id"].map(jobs["location"])
 
-    # Resolve top skill gaps
+    # Compute top skill gaps directly from skill_details — independent of any
+    # pre-computed symbolic top-N cap so every job shown in the UI has data.
     rankings["top_skill_gaps"] = rankings.apply(
-        lambda r: _top_gap_labels(skill_gaps, r["programme_id"], r["job_id"], uri_to_label),
+        lambda r: _top_gap_labels(
+            prog_details.get(r["programme_id"]),
+            job_details.get(r["job_id"]),
+            uri_to_label,
+        ),
         axis=1,
     )
 
