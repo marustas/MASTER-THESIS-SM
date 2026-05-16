@@ -111,58 +111,6 @@ def compute_median_idf(uri_idfs: dict[str, float]) -> float:
     return (vals[n // 2 - 1] + vals[n // 2]) / 2.0
 
 
-def cluster_centroid_skills(
-    cluster_weighted_skills: list[dict[str, float]],
-) -> dict[str, float]:
-    """
-    Mean weighted-skill vector across a cluster's members.
-
-    Each member contributes its ``{uri: weight}`` dict; the centroid stores
-    the per-URI mean weight (URIs missing from a member are treated as 0).
-    Empty cluster → empty centroid.
-
-    Used by ``align_hybrid``'s cluster-prior mode (Step 44) to denoise
-    thin-curriculum programmes by averaging their skill profile with the
-    rest of their cluster.
-    """
-    n = len(cluster_weighted_skills)
-    if n == 0:
-        return {}
-    sums: dict[str, float] = {}
-    for member in cluster_weighted_skills:
-        for uri, w in member.items():
-            sums[uri] = sums.get(uri, 0.0) + w
-    return {uri: w / n for uri, w in sums.items()}
-
-
-def programme_generalist_score(
-    weighted_skills: dict[str, float],
-    uri_idfs: dict[str, float],
-    high_idf_threshold: float,
-) -> float:
-    """
-    How "generalist" a programme is, in [0, 1].
-
-    0.0 — every unit of skill weight sits on a *high-IDF* (rare, distinctive) URI.
-    1.0 — every unit of skill weight sits on a low-IDF (common) URI.
-    Degenerate empty programmes (no weights) are treated as 1.0 — maximally
-    generalist — because they offer no specificity signal to anchor on.
-
-    Used by ``align_hybrid``'s adaptive-alpha mode (Step 43) to push generalist
-    programmes toward the symbolic / specificity-restricted signal and away
-    from raw semantic similarity, which favours generic IT roles whenever the
-    curriculum mentions a bit of everything.
-    """
-    total = sum(weighted_skills.values())
-    if total <= 0:
-        return 1.0
-    high = sum(
-        w for uri, w in weighted_skills.items()
-        if uri_idfs.get(uri, 0.0) >= high_idf_threshold
-    )
-    return max(0.0, min(1.0, 1.0 - high / total))
-
-
 # ── Implicit confidence weighting (Step 37) ──────────────────────────────────
 
 IMPLICIT_CONF_FLOOR: float = 0.70   # filter threshold from Step 4b
