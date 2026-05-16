@@ -19,11 +19,9 @@ from src.skills.skill_weights import (
     IMPLICIT_CONF_FLOOR,
     REUSE_TIER_WEIGHTS,
     build_weighted_skills,
-    cluster_centroid_skills,
     compute_corpus_idf,
     compute_median_idf,
     implicit_weight_factor,
-    programme_generalist_score,
     tier_weight,
 )
 
@@ -100,67 +98,6 @@ class TestComputeMedianIdf:
     def test_even_count(self):
         idfs = {"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0}
         assert compute_median_idf(idfs) == pytest.approx(2.5)
-
-
-# ── programme_generalist_score ──────────────────────────────────────────────
-
-class TestProgrammeGeneralistScore:
-    IDFS = {"rare1": 5.0, "rare2": 4.5, "common1": 0.5, "common2": 0.6}
-    THR = 2.0  # high-IDF cutoff
-
-    def test_empty_is_max_generalist(self):
-        assert programme_generalist_score({}, self.IDFS, self.THR) == 1.0
-
-    def test_pure_specialist(self):
-        skills = {"rare1": 1.0, "rare2": 1.0}
-        assert programme_generalist_score(skills, self.IDFS, self.THR) == pytest.approx(0.0)
-
-    def test_pure_generalist(self):
-        skills = {"common1": 1.0, "common2": 1.0}
-        assert programme_generalist_score(skills, self.IDFS, self.THR) == pytest.approx(1.0)
-
-    def test_balanced_mix(self):
-        skills = {"rare1": 1.0, "common1": 1.0}
-        # half weight on high-IDF → generalist score = 0.5
-        assert programme_generalist_score(skills, self.IDFS, self.THR) == pytest.approx(0.5)
-
-    def test_weight_aware_not_count_aware(self):
-        # Three common skills (weight 1.0 each) vs one rare with weight 3.0:
-        # high-IDF mass = 3.0 / 6.0 = 0.5 → generalist = 0.5
-        skills = {"rare1": 3.0, "common1": 1.0, "common2": 1.0, "extra": 1.0}
-        idfs = {**self.IDFS, "extra": 0.2}
-        assert programme_generalist_score(skills, idfs, self.THR) == pytest.approx(0.5)
-
-    def test_missing_uri_treated_as_low_idf(self):
-        skills = {"unknown_uri": 1.0, "rare1": 1.0}
-        # unknown_uri defaults to IDF 0.0 → below threshold → counts as generalist
-        assert programme_generalist_score(skills, self.IDFS, self.THR) == pytest.approx(0.5)
-
-
-# ── cluster_centroid_skills ─────────────────────────────────────────────────
-
-class TestClusterCentroidSkills:
-    def test_empty_cluster(self):
-        assert cluster_centroid_skills([]) == {}
-
-    def test_single_member_returns_same_weights(self):
-        member = {"a": 1.0, "b": 0.5}
-        assert cluster_centroid_skills([member]) == pytest.approx(member)
-
-    def test_two_disjoint_members_averages_to_half(self):
-        # Each URI appears in only one of two members → centroid weight = w/2.
-        m1 = {"a": 1.0}
-        m2 = {"b": 1.0}
-        c = cluster_centroid_skills([m1, m2])
-        assert c == {"a": pytest.approx(0.5), "b": pytest.approx(0.5)}
-
-    def test_overlap_averages_per_uri(self):
-        m1 = {"shared": 1.0, "x": 1.0}
-        m2 = {"shared": 0.5, "y": 1.0}
-        c = cluster_centroid_skills([m1, m2])
-        assert c["shared"] == pytest.approx(0.75)
-        assert c["x"] == pytest.approx(0.5)
-        assert c["y"] == pytest.approx(0.5)
 
 
 # ── build_weighted_skills ────────────────────────────────────────────────────
