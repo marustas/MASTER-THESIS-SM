@@ -17,13 +17,13 @@ import { brand } from "../theme";
 
 interface Props {
   job: Job;
-  maxScore: number;
+  corpusMaxScore: number;
   delayMs: number;
 }
 
-export function JobAccordion({ job, maxScore, delayMs }: Props) {
+export function JobAccordion({ job, corpusMaxScore, delayMs }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const scorePct = maxScore === 0 ? 0 : (job.hybrid_score / maxScore) * 100;
+  const rankQuality = corpusMaxScore === 0 ? 0 : (job.hybrid_score / corpusMaxScore) * 100;
   const meta = [job.employer_sector, job.location].filter(Boolean).join(" · ");
 
   return (
@@ -76,7 +76,7 @@ export function JobAccordion({ job, maxScore, delayMs }: Props) {
           <Box sx={{ flex: 1 }}>
             <LinearProgress
               variant="determinate"
-              value={scorePct}
+              value={rankQuality}
               sx={{
                 height: 7,
                 borderRadius: 4,
@@ -98,7 +98,7 @@ export function JobAccordion({ job, maxScore, delayMs }: Props) {
               textAlign: "right",
             }}
           >
-            {Math.round(job.hybrid_score * 100)} / 100
+            {Math.round(rankQuality)} / 100
           </Typography>
         </Stack>
 

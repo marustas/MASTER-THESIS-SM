@@ -26,9 +26,12 @@ export default function App() {
     [],
   );
 
-  const maxScore = useMemo(
-    () => (selected ? Math.max(...selected.jobs.map((j) => j.hybrid_score)) : 0),
-    [selected],
+  const corpusMaxScore = useMemo(
+    () =>
+      Math.max(
+        ...programmes.flatMap((p) => p.jobs.map((j) => j.hybrid_score)),
+      ),
+    [],
   );
 
   return (
@@ -94,7 +97,7 @@ export default function App() {
                 <JobAccordion
                   key={`${selected.programme_name}-${job.rank}`}
                   job={job}
-                  maxScore={maxScore}
+                  corpusMaxScore={corpusMaxScore}
                   delayMs={60 * i}
                 />
               ))}
