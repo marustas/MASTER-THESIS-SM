@@ -111,6 +111,30 @@ def compute_median_idf(uri_idfs: dict[str, float]) -> float:
     return (vals[n // 2 - 1] + vals[n // 2]) / 2.0
 
 
+def cluster_centroid_skills(
+    cluster_weighted_skills: list[dict[str, float]],
+) -> dict[str, float]:
+    """
+    Mean weighted-skill vector across a cluster's members.
+
+    Each member contributes its ``{uri: weight}`` dict; the centroid stores
+    the per-URI mean weight (URIs missing from a member are treated as 0).
+    Empty cluster → empty centroid.
+
+    Used by ``align_hybrid``'s cluster-prior mode (Step 44) to denoise
+    thin-curriculum programmes by averaging their skill profile with the
+    rest of their cluster.
+    """
+    n = len(cluster_weighted_skills)
+    if n == 0:
+        return {}
+    sums: dict[str, float] = {}
+    for member in cluster_weighted_skills:
+        for uri, w in member.items():
+            sums[uri] = sums.get(uri, 0.0) + w
+    return {uri: w / n for uri, w in sums.items()}
+
+
 def programme_generalist_score(
     weighted_skills: dict[str, float],
     uri_idfs: dict[str, float],
