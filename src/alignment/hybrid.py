@@ -54,8 +54,10 @@ from src.alignment.cross_encoder import (
 from src.alignment.semantic import align_semantic
 from src.alignment.symbolic import align_symbolic_weighted
 from src.scraping.config import DATA_DIR
+from src.alignment.symbolic import programme_recall as _programme_recall
 from src.skills.skill_weights import (
     build_weighted_skills,
+    cluster_centroid_skills,
     compute_corpus_idf,
     compute_median_idf,
     programme_generalist_score,
@@ -136,6 +138,7 @@ def align_hybrid(
     adaptive_alpha: bool = False,
     alpha_generalist_decay: float = 0.20,
     alpha_floor: float = 0.35,
+    cluster_prior_weight: float = 0.0,
 ) -> pd.DataFrame:
     """
     Two-stage hybrid alignment for all programmes × job ads.
@@ -245,6 +248,17 @@ def align_hybrid(
     alpha_floor    : lower bound on the per-programme alpha.  Prevents
                      pathological zero-cosine weighting on highly generalist
                      programmes.  Ignored unless ``adaptive_alpha=True``.
+    cluster_prior_weight : weight κ on the cluster-pooled recall channel
+                     (Step 44).  The final Stage 2 symbolic signal becomes
+                     ``(1 − κ) · programme_recall + κ · cluster_recall(p, j)``
+                     where ``cluster_recall`` is the recall of the job's
+                     skill set against the programme cluster's centroid
+                     (mean weighted-skill profile across the cluster's
+                     members).  Denoises thin curricula by pooling within
+                     the cluster.  Requires ``cluster_label`` to be present
+                     on programme rows.  κ = 0 (default) disables the
+                     prior — the symbolic signal is unchanged from
+                     Step 42.  Must be in [0, 1].
 
     Returns
     -------
@@ -294,6 +308,15 @@ def align_hybrid(
         raise ValueError(
             f"alpha_generalist_decay must be non-negative, "
             f"got {alpha_generalist_decay}"
+        )
+    if not 0.0 <= cluster_prior_weight <= 1.0:
+        raise ValueError(
+            f"cluster_prior_weight must be in [0, 1], got {cluster_prior_weight}"
+        )
+    if cluster_prior_weight > 0 and "cluster_label" not in df.columns:
+        raise ValueError(
+            "cluster_prior_weight > 0 requires the 'cluster_label' column on "
+            "programme rows — run src/clustering/programme_clustering.py first"
         )
 
     n_prog = (df["source_type"] == "programme").sum()
@@ -401,6 +424,86 @@ def align_hybrid(
     )
     merged = merged.drop(columns=["programme_recall_high_idf",
                                   "programme_precision_high_idf"])
+
+    # ── Cluster prior (Step 44) ────────────────────────────────────────────────
+    # Blend per-programme recall with cluster-pooled recall.  Pools each
+    # programme's weighted-skill profile across the cluster, recalls the job
+    # against that pooled centroid, and weighted-averages with the per-row
+    # recall.  Denoises thin curricula without double-counting cosine.
+    if cluster_prior_weight > 0:
+        logger.info(
+            f"  Applying cluster prior (cluster_prior_weight={cluster_prior_weight})…"
+        )
+
+        # Corpus IDF (reuse computation if already done by adaptive_alpha branch
+        # would be nice, but the two features are independent — recompute).
+        cp_uri_lists: list[list[str]] = []
+        for _, row in df.iterrows():
+            details = row.get("skill_details", [])
+            if not isinstance(details, (list, np.ndarray)):
+                details = []
+            cp_uri_lists.append(
+                [s.get("esco_uri", "") for s in details if s.get("esco_uri")]
+            )
+        cp_uri_idfs = compute_corpus_idf(cp_uri_lists)
+
+        # Build per-programme weighted skills
+        prog_weights: dict[int, dict[str, float]] = {}
+        prog_cluster: dict[int, int] = {}
+        for idx, row in df[df["source_type"] == "programme"].iterrows():
+            details = row.get("skill_details", [])
+            if not isinstance(details, (list, np.ndarray)):
+                details = []
+            prog_weights[int(idx)] = build_weighted_skills(
+                list(details),
+                uri_reuse_levels={},
+                uri_idfs=cp_uri_idfs,
+                implicit_confidence_mode=implicit_confidence_mode,
+            )
+            prog_cluster[int(idx)] = int(row["cluster_label"])
+
+        # Build per-job weighted skills
+        job_weights: dict[int, dict[str, float]] = {}
+        for idx, row in df[df["source_type"] == "job_ad"].iterrows():
+            details = row.get("skill_details", [])
+            if not isinstance(details, (list, np.ndarray)):
+                details = []
+            job_weights[int(idx)] = build_weighted_skills(
+                list(details),
+                uri_reuse_levels={},
+                uri_idfs=cp_uri_idfs,
+                implicit_confidence_mode=implicit_confidence_mode,
+            )
+
+        # Build cluster centroids
+        cluster_members: dict[int, list[dict[str, float]]] = {}
+        for pid, w in prog_weights.items():
+            c = prog_cluster[pid]
+            cluster_members.setdefault(c, []).append(w)
+        centroids: dict[int, dict[str, float]] = {
+            c: cluster_centroid_skills(members)
+            for c, members in cluster_members.items()
+        }
+
+        # Compute cluster_recall per row and blend with programme_recall
+        cluster_recall_vals: list[float] = []
+        for _, row in merged.iterrows():
+            pid = int(row["programme_id"])
+            jid = int(row["job_id"])
+            cid = prog_cluster.get(pid)
+            if cid is None:
+                cluster_recall_vals.append(float(row["programme_recall"]))
+                continue
+            centroid = centroids.get(cid, {})
+            j_w = job_weights.get(jid, {})
+            cluster_recall_vals.append(_programme_recall(centroid, j_w))
+        merged["cluster_recall"] = cluster_recall_vals
+
+        merged["programme_recall"] = (
+            (1.0 - cluster_prior_weight) * merged["programme_recall"]
+            + cluster_prior_weight * merged["cluster_recall"]
+        )
+        merged = merged.drop(columns=["cluster_recall"])
 
     # ── Match quality refinement ───────────────────────────────────────────────
     if gamma != 0.0:

@@ -711,3 +711,54 @@ class TestAdaptiveAlpha:
         # Floor=0.40 must mean cosine weight never drops below 0.40 — recall
         # weight never exceeds 0.60.  Smoke-tested via finite scores.
         assert out["hybrid_score"].notna().all()
+
+
+# ── Cluster prior (Step 44) ──────────────────────────────────────────────────
+
+def _make_df_with_clusters(n_prog: int, n_jobs: int, dim: int = 8) -> pd.DataFrame:
+    df = _make_df(n_prog, n_jobs, dim=dim)
+    # Two programme clusters, three job clusters — arbitrary deterministic mapping
+    prog_mask = df["source_type"] == "programme"
+    job_mask = df["source_type"] == "job_ad"
+    df.loc[prog_mask, "cluster_label"] = [i % 2 for i in range(prog_mask.sum())]
+    df.loc[job_mask, "cluster_label"] = [i % 3 for i in range(job_mask.sum())]
+    df["cluster_label"] = df["cluster_label"].astype(int)
+    return df
+
+
+class TestClusterPrior:
+    def test_weight_out_of_range_raises(self):
+        df = _make_df_with_clusters(3, 6)
+        with pytest.raises(ValueError, match="cluster_prior_weight"):
+            align_hybrid(df, semantic_top_n=4, cluster_prior_weight=1.5)
+        with pytest.raises(ValueError, match="cluster_prior_weight"):
+            align_hybrid(df, semantic_top_n=4, cluster_prior_weight=-0.1)
+
+    def test_missing_cluster_column_raises(self):
+        df = _make_df(3, 6)  # no cluster_label column
+        with pytest.raises(ValueError, match="cluster_label"):
+            align_hybrid(df, semantic_top_n=4, cluster_prior_weight=0.2)
+
+    def test_zero_weight_matches_baseline(self):
+        # κ = 0 → cluster channel never touched → identical to default hybrid.
+        df = _make_df_with_clusters(3, 6)
+        baseline = align_hybrid(df, semantic_top_n=5)  # no cluster prior
+        explicit = align_hybrid(df, semantic_top_n=5, cluster_prior_weight=0.0)
+        diff = (baseline["hybrid_score"] - explicit["hybrid_score"]).abs().max()
+        assert diff == pytest.approx(0.0)
+
+    def test_nonzero_weight_alters_scores(self):
+        # κ > 0 should change at least one score relative to baseline as long as
+        # the cluster centroid differs from the per-programme weighted skills.
+        df = _make_df_with_clusters(4, 6)
+        baseline = align_hybrid(df, semantic_top_n=5)
+        with_prior = align_hybrid(df, semantic_top_n=5, cluster_prior_weight=0.3)
+        diff = (baseline["hybrid_score"] - with_prior["hybrid_score"]).abs()
+        # At least one pair must differ — otherwise the cluster blend is a no-op.
+        assert diff.max() > 1e-6
+
+    def test_scores_remain_bounded(self):
+        df = _make_df_with_clusters(4, 8)
+        out = align_hybrid(df, semantic_top_n=5, cluster_prior_weight=0.5)
+        assert (out["hybrid_score"] >= -1e-9).all()
+        assert (out["hybrid_score"] <= 1.0 + 1e-9).all()
