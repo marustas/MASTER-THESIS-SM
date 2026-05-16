@@ -53,6 +53,9 @@ dev = [
     "jupyter>=1.0",
     "ipykernel>=6.29",
 ]
+ui = [
+    "streamlit>=1.36",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
