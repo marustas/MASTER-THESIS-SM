@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  Alert,
   Autocomplete,
   Box,
   Container,
@@ -8,12 +9,20 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { theme, brand } from "./theme";
 import rankings from "./data/rankings.json";
 import type { Programme } from "./types";
 import { JobAccordion } from "./components/JobAccordion";
 
 const programmes = rankings as Programme[];
+
+// Top-1 displayed score below this is treated as "limited corpus coverage" —
+// the algorithm picked the least-bad available match rather than a confident
+// fit.  Threshold of 40/100 catches the documented misfires (Informatics →
+// admin, Cyber → BMS programmer, generic multimedia) while leaving genuinely
+// strong matches (≥40) untouched.
+const LOW_CONFIDENCE_THRESHOLD = 40;
 
 export default function App() {
   const [selected, setSelected] = useState<Programme | null>(null);
@@ -33,6 +42,14 @@ export default function App() {
       ),
     [],
   );
+
+  const top1RankQuality = useMemo(() => {
+    if (!selected || selected.jobs.length === 0) return 0;
+    const topScore = selected.jobs[0].hybrid_score;
+    return corpusMaxScore === 0 ? 0 : (topScore / corpusMaxScore) * 100;
+  }, [selected, corpusMaxScore]);
+
+  const isLowConfidence = selected !== null && top1RankQuality < LOW_CONFIDENCE_THRESHOLD;
 
   return (
     <ThemeProvider theme={theme}>
@@ -92,6 +109,26 @@ export default function App() {
                   {selected.institution}
                 </Typography>
               </Box>
+
+              {isLowConfidence && (
+                <Alert
+                  severity="info"
+                  icon={<InfoOutlinedIcon sx={{ color: brand.purple }} />}
+                  sx={{
+                    mb: 2.5,
+                    bgcolor: "#F0F2F8",
+                    color: brand.blueDark,
+                    border: `1px solid ${brand.greyLightV2}`,
+                    "& .MuiAlert-message": { fontSize: "0.85rem" },
+                    animation: "fadeUp 0.4s ease-out both",
+                  }}
+                >
+                  Limited corpus coverage — the best match scores
+                  {" "}<strong>{Math.round(top1RankQuality)}/100</strong>.
+                  Treat the ranking below as candidates to review, not
+                  as a confident recommendation.
+                </Alert>
+              )}
 
               {selected.jobs.map((job, i) => (
                 <JobAccordion
