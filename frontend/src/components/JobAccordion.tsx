@@ -94,11 +94,11 @@ export function JobAccordion({ job, maxScore, delayMs }: Props) {
               fontWeight: 600,
               color: brand.blue,
               fontVariantNumeric: "tabular-nums",
-              minWidth: 48,
+              minWidth: 64,
               textAlign: "right",
             }}
           >
-            {job.hybrid_score.toFixed(3)}
+            {Math.round(job.hybrid_score * 100)} / 100
           </Typography>
         </Stack>
 
