@@ -10,6 +10,8 @@ Columns:
     programme_name        – study programme name
     institution           – university / college name
     job_title             – job advertisement title
+    employer_sector       – industry / sector tag scraped with the job ad (may be empty)
+    location              – job location string (may be empty)
     job_url               – link to the original job posting
     hybrid_score          – combined alignment score (0–1, higher = better match)
     semantic_score        – embedding cosine similarity (0–1)
@@ -57,7 +59,9 @@ def export() -> None:
 
     # Index lookup tables
     programmes = dataset[dataset["source_type"] == "programme"][["institution"]].copy()
-    jobs = dataset[dataset["source_type"] == "job_ad"][["job_title", "url"]].copy()
+    jobs = dataset[dataset["source_type"] == "job_ad"][
+        ["job_title", "url", "employer_sector", "location"]
+    ].copy()
 
     # Add rank within each programme (hybrid score already sorted per programme)
     rankings = rankings.sort_values(
@@ -66,9 +70,11 @@ def export() -> None:
     rankings["rank"] = rankings.groupby("programme_id").cumcount() + 1
     rankings = rankings[rankings["rank"] <= 10]
 
-    # Enrich with institution and job URL
+    # Enrich with institution and job metadata
     rankings["institution"] = rankings["programme_id"].map(programmes["institution"])
     rankings["job_url"] = rankings["job_id"].map(jobs["url"])
+    rankings["employer_sector"] = rankings["job_id"].map(jobs["employer_sector"])
+    rankings["location"] = rankings["job_id"].map(jobs["location"])
 
     # Resolve top skill gaps
     rankings["top_skill_gaps"] = rankings.apply(
@@ -83,6 +89,8 @@ def export() -> None:
             "programme_name",
             "institution",
             "job_title",
+            "employer_sector",
+            "location",
             "job_url",
             "hybrid_score",
             "cosine_score",
