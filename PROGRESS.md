@@ -605,6 +605,43 @@ Two programmes flip top-1, both clean wins driven by a single shared on-domain h
 
 ---
 
+## Step 42 — High-IDF F1 Blend (mutual specificity, both directions) [x] adopted
+
+Step 41 attacked specificity asymmetry from the **recall** side. The dual problem — a programme whose specialisation is *not* demanded by the job — is invisible to `programme_recall_high_idf`. The diagnostic identified six wrong-vertical Bad matches (cybersec→BMS programmer, IS-tech→sales engineering, design→PM) where transversal IT vocabulary inflates recall but the high-IDF skill sets are disjoint.
+
+Added `programme_precision_high_idf` (fraction of the programme's high-IDF skills the job demands) with the same transversal-fallback semantics as `programme_recall_high_idf`. Combined as `F1_high_idf = 2·P·R / (P + R)`. Blended into the Stage 2 symbolic signal:
+
+```
+final_signal = (1 − μ) · recall_blend + μ · F1_high_idf
+```
+
+where `recall_blend` is the Step 41 output. μ = 0 reduces to Step 41 behaviour; μ = 1 fully replaces recall with F1.
+
+**Sweep over μ ∈ {0.00, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 0.75, 1.00}** identified μ = 0.20 as Pareto-optimal:
+
+| metric | baseline (μ=0) | adopted (μ=0.20) | Δ |
+|---|---:|---:|---:|
+| top-1 unique | 41 / 45 | 39 / 45 | −2 |
+| head-tied (gap < 0.02) | 8 / 45 | 8 / 45 | = |
+| top-5 generalists (freq > 5) | 1 | **0** | −1 |
+| top-5 max freq | 6 | **5** | −1 |
+| top-1 score mean | 0.307 | 0.308 | +0.001 |
+| top-1 score max | 0.677 | 0.677 | = |
+| top-10 Jaccard vs baseline | 1.0 | 0.948 | — |
+
+**Per-programme net quality at μ=0.20: 2 Bad→better, 0 regressions, 3 lateral changes.** Removes the last top-5 generalist. The 2 quality wins: **[11] Informatics (Klaipėdos kol.)** MS Power Developer → BI programuotojas (B→N); **[21] Game Development (VVK)** Paid Summer IT Internship → Gameplay Programmer (B→G).
+
+**μ = 1.00 confirmed unstable** (mirroring Step 41's λ=1): 33 unique top-1, 14 head-tied, 3 generalists. Many transversal-only programmes have F1_hi = 0 against most candidates, so the symbolic signal collapses and cosine drives the ranking — reintroducing the generalist bias.
+
+**Limitation:** of 6 wrong-vertical Bad matches the experiment targeted, only 1 (#33 Cyber Systems & Security → BMS programmer) is fixable by F1, and only at μ = 0.75 (which costs top-1 score max 0.677 → 0.547 and 3 unique). The other 5 are **role-level mismatches** (Senior PM, Manager, Sales engineer matched to fresh-grad curricula) — the senior-job descriptions are dominated by transversal management vocabulary below the median IDF threshold, so F1_hi has nothing to penalise. These cases need a **job-title seniority filter** (Phase 2), not further symbolic-formula refinement.
+
+**Adopted as the canonical hybrid default.** `align_hybrid` and `run_hybrid_alignment` now blend the Step 41 recall_blend with F1_high_idf at `hi_idf_f1_lambda = 0.20` by default. μ = 0.40 and μ = 0.75 are documented as escalation options.
+
+**Output:** `experiments/results/evaluation/f1_high_idf_blend/{FINDINGS.md, sweep.json, top1_per_mu.parquet}`, `experiments/scripts/f1_high_idf_sweep.py` (reproducer).
+**Module:** `src/alignment/symbolic.py` (added `programme_precision_high_idf`), `src/alignment/hybrid.py` (`hi_idf_f1_lambda` parameter, F1 blend inlined into Stage 2), `tests/alignment/test_symbolic.py` (+5 tests), `tests/alignment/test_hybrid.py` (+3 tests). Suite now 569 tests.
+
+---
+
 ## Legend
 
 - `[ ]` Not started
