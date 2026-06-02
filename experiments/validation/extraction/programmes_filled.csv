@@ -1,0 +1,86 @@
+doc_kind,doc_id,doc_title,esco_uri,preferred_label,annotation_type,annotator_confidence,notes
+programme,21,Game Development,http://data.europa.eu/esco/skill/69bbd53f-fbb0-4476-b4b2-ef7844464e28,web programming,explicit,high,user term: web development
+programme,21,Game Development,http://data.europa.eu/esco/skill/a520b743-8f40-43ac-a2d5-755899120844,audio technology,explicit,high,user term: audio processing
+programme,21,Game Development,http://data.europa.eu/esco/skill/cfa2be0d-96d5-4017-a866-962efb9c5070,signal processing,implicit,high,
+programme,21,Game Development,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,explicit,high,user term: algorithms and data structures (data structures = vocab gap)
+programme,21,Game Development,http://data.europa.eu/esco/skill/97965983-0da4-4902-9daf-d5cd2693ef73,3D modelling,explicit,high,
+programme,21,Game Development,http://data.europa.eu/esco/skill/966f2fd3-3de6-42da-b87c-da924c6d7960,digital game creation systems,explicit,high,user term: game development
+programme,21,Game Development,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,explicit,high,
+programme,21,Game Development,http://data.europa.eu/esco/skill/29fb0fb5-dfc4-4098-ac9b-3a712000f48f,manage database,implicit,high,user term: database management
+programme,21,Game Development,http://data.europa.eu/esco/skill/6a322874-e32f-4cd8-9683-badce67a7f73,develop automated software tests,implicit,high,user term: testing automation
+programme,21,Game Development,http://data.europa.eu/esco/skill/75d8e5d9-bef3-418b-9011-01bff9f27207,lead others,explicit,high,user term: leadership
+programme,21,Game Development,http://data.europa.eu/esco/skill/60c78287-22eb-4103-9c8c-28deaa460da0,work in teams,explicit,high,user term: teamwork
+programme,21,Game Development,http://data.europa.eu/esco/skill/d1a86399-24d8-415f-98b9-e8cbb6b04a26,Unity (digital game creation systems),implicit,high,
+programme,21,Game Development,http://data.europa.eu/esco/skill/d9013e0e-e937-43d5-ab71-0e917ee882b8,manage time,explicit,high,user term: time-planning
+programme,21,Game Development,http://data.europa.eu/esco/skill/52e53619-fa77-4f72-b237-5e4aae784dc2,financial management,explicit,high,user term: finance management
+programme,21,Game Development,http://data.europa.eu/esco/skill/afda6ca0-7aa8-41ef-ba5e-8dc607839daf,computer graphics,explicit,high,
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/fae27053-8924-4bfd-b565-c9fe502044c9,system design,explicit,high,
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/3f86173d-e101-4fcd-934f-ff9de29c081c,perform system analysis,explicit,high,user term: system analysis
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/69bbd53f-fbb0-4476-b4b2-ef7844464e28,web programming,explicit,high,user term: web development
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/02058de6-4b98-449f-8a45-8588b0eb2446,network engineering,explicit,high,user term: computer networks (1 of 2)
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/2164e860-7f20-48bc-b98c-5d9f8a561550,design computer network,explicit,high,user term: computer networks (2 of 2)
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/94dd823c-148e-4614-a6e8-99249b16357d,ICT project management,explicit,high,user term: management
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,explicit,high,user term: programming
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/b8c01891-e3df-4a4b-948d-95b45e1788f5,mobile device software frameworks,explicit,high,user term: mobile development
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/b633eb55-8f1f-4ae6-ab4c-2022ffe2cb7f,C++,explicit,high,
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/29fb0fb5-dfc4-4098-ac9b-3a712000f48f,manage database,explicit,high,user term: database management
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/598de5b0-5b58-4ea7-8058-a4bc4d18c742,SQL,implicit,high,
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/a8d07b5a-c1a1-42c6-9d53-db9c7a2ca996,PostgreSQL,implicit,high,user term: Postgres
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/95c35c3a-035f-47c2-90cf-7e934d20fc08,electronics,explicit,high,
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/8088750d-8388-4170-a76f-48354c469c44,cyber security,implicit,high,user term: cybersecurity
+programme,21,Game Development,http://data.europa.eu/esco/skill/4463a721-69f3-413d-8321-43e3af13a4f1,use databases,implicit,high,user term: database management (retroactive expansion to trio)
+programme,21,Game Development,http://data.europa.eu/esco/skill/43ae58b9-5e56-4524-b45a-b422777a0576,database,implicit,high,user term: database management (retroactive expansion to trio)
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/4463a721-69f3-413d-8321-43e3af13a4f1,use databases,explicit,high,user term: database management (retroactive expansion to trio)
+programme,25,Information Systems Engineering,http://data.europa.eu/esco/skill/43ae58b9-5e56-4524-b45a-b422777a0576,database,explicit,high,user term: database management (retroactive expansion to trio)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/02058de6-4b98-449f-8a45-8588b0eb2446,network engineering,explicit,high,user term: computer networks (1 of 2)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/2164e860-7f20-48bc-b98c-5d9f8a561550,design computer network,explicit,high,user term: computer networks (2 of 2)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/4463a721-69f3-413d-8321-43e3af13a4f1,use databases,explicit,high,user term: databases (1 of 3)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/43ae58b9-5e56-4524-b45a-b422777a0576,database,explicit,high,user term: databases (2 of 3)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/29fb0fb5-dfc4-4098-ac9b-3a712000f48f,manage database,explicit,high,user term: databases (3 of 3)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/1d86f05e-e9cc-40ce-99d8-2b21cc71b16b,solution deployment,explicit,high,user term: Deployment
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,implicit,high,
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,implicit,high,proxy for user terms: Terraform Kubernetes AWS Azure (no platform-specific URIs in ESCO v1.2.1)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,explicit,high,
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/adc6dc11-3376-467b-96c5-9b0a21edc869,solve problems,explicit,high,user term: problem solving
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/fae27053-8924-4bfd-b565-c9fe502044c9,system design,explicit,high,
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/f7e2eb04-3e50-4561-bce1-7e51a1fec308,define software architecture,explicit,high,user term: system architecture (1 of 2)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/2450c3b3-e78e-435b-b84d-e05d984e71dc,software architecture models,explicit,high,user term: system architecture (2 of 2)
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,explicit,high,user term: programming
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/8088750d-8388-4170-a76f-48354c469c44,cyber security,explicit,high,user term: cybersecurity
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/bf6c5ed4-84af-440f-abcc-7fa5ba19c738,real-time computing,explicit,high,user term: real time systems
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/f049d050-12da-4e40-813a-2b5eb6df6b51,Internet of Things,explicit,high,
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,explicit,high,user term: computer systems
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/967b60c2-4657-4ffc-bcaf-aab565793f97,philosophy,explicit,high,
+programme,29,Informatics Engineering,http://data.europa.eu/esco/skill/88af9294-b697-4687-ae19-aefbb6234dfa,economics,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/02058de6-4b98-449f-8a45-8588b0eb2446,network engineering,explicit,high,user term: computer networks (1 of 2)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/2164e860-7f20-48bc-b98c-5d9f8a561550,design computer network,explicit,high,user term: computer networks (2 of 2)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,explicit,high,user term: computer systems
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/89f6560b-2194-45c9-9ece-d33049a73eef,computer engineering,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/7111b95d-0ce3-441a-9d92-4c75d05c4388,project management,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/24c200e5-be20-4370-a137-ab53797f3a17,software frameworks,explicit,high,user term: software engineering
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,explicit,high,user term: programming
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/4463a721-69f3-413d-8321-43e3af13a4f1,use databases,explicit,high,user term: databases (1 of 3)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/43ae58b9-5e56-4524-b45a-b422777a0576,database,explicit,high,user term: databases (2 of 3)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/29fb0fb5-dfc4-4098-ac9b-3a712000f48f,manage database,explicit,high,user term: databases (3 of 3)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/8088750d-8388-4170-a76f-48354c469c44,cyber security,explicit,high,user term: cybersecurity
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/f049d050-12da-4e40-813a-2b5eb6df6b51,Internet of Things,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/59ea80e1-463a-4dba-82c6-d0b6d577d532,technical drawings,explicit,high,user term: engineering graphics (1 of 2)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/b07daddc-8625-4360-946e-ad2b0e56ebf6,read engineering drawings,explicit,high,user term: engineering graphics (2 of 2)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/60c78287-22eb-4103-9c8c-28deaa460da0,work in teams,explicit,high,user term: teamwork
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,explicit,high,
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/913e7e83-b8f8-4574-b1ca-1b38f3fd974a,execute software tests,explicit,high,user term: testing (1 of 2)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/5d74614d-32c8-4ca4-9818-6980e52424b1,plan software testing,explicit,high,user term: testing (2 of 2)
+programme,26,Information Systems Engineering,http://data.europa.eu/esco/skill/6a322874-e32f-4cd8-9683-badce67a7f73,develop automated software tests,implicit,high,user term: testing automation
+programme,12,Informatics,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,explicit,high,user terms: informatics + computer science (ESCO collapses both to this URI)
+programme,12,Informatics,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,implicit,high,user term: programming
+programme,12,Informatics,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,implicit,high,
+programme,12,Informatics,http://data.europa.eu/esco/skill/913e7e83-b8f8-4574-b1ca-1b38f3fd974a,execute software tests,implicit,high,user term: testing (1 of 2)
+programme,12,Informatics,http://data.europa.eu/esco/skill/5d74614d-32c8-4ca4-9818-6980e52424b1,plan software testing,implicit,high,user term: testing (2 of 2)
+programme,12,Informatics,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,implicit,high,
+programme,12,Informatics,http://data.europa.eu/esco/skill/24c200e5-be20-4370-a137-ab53797f3a17,software frameworks,implicit,high,user term: software engineering
+programme,12,Informatics,http://data.europa.eu/esco/skill/4463a721-69f3-413d-8321-43e3af13a4f1,use databases,implicit,high,user term: databases (1 of 3)
+programme,12,Informatics,http://data.europa.eu/esco/skill/43ae58b9-5e56-4524-b45a-b422777a0576,database,implicit,high,user term: databases (2 of 3)
+programme,12,Informatics,http://data.europa.eu/esco/skill/29fb0fb5-dfc4-4098-ac9b-3a712000f48f,manage database,implicit,high,user term: databases (3 of 3)
