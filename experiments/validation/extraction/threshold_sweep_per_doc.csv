@@ -1,0 +1,31 @@
+threshold,doc_kind,doc_id,doc_title,gold_n,extracted_n,tp,fp,fn,precision,recall,f1
+0.5,programme,21,Game Development,17,120,11,109,6,0.0917,0.6471,0.1606
+0.5,programme,25,Information Systems Engineering,16,94,4,90,12,0.0426,0.25,0.0727
+0.5,programme,29,Informatics Engineering,20,99,10,89,10,0.101,0.5,0.1681
+0.5,programme,26,Information Systems Engineering,22,85,12,73,10,0.1412,0.5455,0.2243
+0.5,programme,12,Informatics,10,108,5,103,5,0.0463,0.5,0.0847
+0.5,job_ad,253,IT Vadovas (-ė),8,50,1,49,7,0.02,0.125,0.0345
+0.5,job_ad,1,Network Automation Engineer,15,51,9,42,6,0.1765,0.6,0.2727
+0.5,job_ad,429,QA Engineer with verification,9,45,2,43,7,0.0444,0.2222,0.0741
+0.5,job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),11,59,3,56,8,0.0508,0.2727,0.0857
+0.5,job_ad,20,BI programuotojas (-a),14,57,4,53,10,0.0702,0.2857,0.1127
+0.6,programme,21,Game Development,17,120,11,109,6,0.0917,0.6471,0.1606
+0.6,programme,25,Information Systems Engineering,16,94,4,90,12,0.0426,0.25,0.0727
+0.6,programme,29,Informatics Engineering,20,99,10,89,10,0.101,0.5,0.1681
+0.6,programme,26,Information Systems Engineering,22,85,12,73,10,0.1412,0.5455,0.2243
+0.6,programme,12,Informatics,10,108,5,103,5,0.0463,0.5,0.0847
+0.6,job_ad,253,IT Vadovas (-ė),8,50,1,49,7,0.02,0.125,0.0345
+0.6,job_ad,1,Network Automation Engineer,15,51,9,42,6,0.1765,0.6,0.2727
+0.6,job_ad,429,QA Engineer with verification,9,28,2,26,7,0.0714,0.2222,0.1081
+0.6,job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),11,52,3,49,8,0.0577,0.2727,0.0952
+0.6,job_ad,20,BI programuotojas (-a),14,57,4,53,10,0.0702,0.2857,0.1127
+0.7,programme,21,Game Development,17,120,11,109,6,0.0917,0.6471,0.1606
+0.7,programme,25,Information Systems Engineering,16,94,4,90,12,0.0426,0.25,0.0727
+0.7,programme,29,Informatics Engineering,20,99,10,89,10,0.101,0.5,0.1681
+0.7,programme,26,Information Systems Engineering,22,85,12,73,10,0.1412,0.5455,0.2243
+0.7,programme,12,Informatics,10,65,4,61,6,0.0615,0.4,0.1067
+0.7,job_ad,253,IT Vadovas (-ė),8,33,1,32,7,0.0303,0.125,0.0488
+0.7,job_ad,1,Network Automation Engineer,15,8,6,2,9,0.75,0.4,0.5217
+0.7,job_ad,429,QA Engineer with verification,9,9,2,7,7,0.2222,0.2222,0.2222
+0.7,job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),11,2,1,1,10,0.5,0.0909,0.1538
+0.7,job_ad,20,BI programuotojas (-a),14,6,2,4,12,0.3333,0.1429,0.2
