@@ -88,6 +88,12 @@ _CROSS_SECTOR_BLOCKLIST: frozenset[str] = frozenset({
 # ── ESCO reuse-level lookup (built once on first use) ─────────────────────────
 
 _uri_reuse_level: dict[str, str] = {}
+_digital_skill_uris: frozenset[str] = frozenset()
+
+
+# ESCO's curated digital skills collection — 1284 URIs the Commission itself
+# flags as ICT-relevant. Sits next to skills_en.csv in the same download.
+DIGITAL_SKILLS_CSV_PATH = ESCO_CSV_PATH.parent / "digitalSkillsCollection_en.csv"
 
 
 def _get_uri_reuse_level() -> dict[str, str]:
@@ -107,23 +113,50 @@ def _get_uri_reuse_level() -> dict[str, str]:
     return _uri_reuse_level
 
 
+def _get_digital_skill_uris() -> frozenset[str]:
+    global _digital_skill_uris
+    if _digital_skill_uris:
+        return _digital_skill_uris
+    import csv
+    if not DIGITAL_SKILLS_CSV_PATH.exists():
+        logger.warning(f"Digital skills collection not found at {DIGITAL_SKILLS_CSV_PATH}")
+        return _digital_skill_uris
+    uris: set[str] = set()
+    with open(DIGITAL_SKILLS_CSV_PATH, encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            uri = row.get("conceptUri", "").strip()
+            if uri:
+                uris.add(uri)
+    _digital_skill_uris = frozenset(uris)
+    logger.info(f"Loaded {len(_digital_skill_uris)} URIs from ESCO digital skills collection")
+    return _digital_skill_uris
+
+
 # ── Domain filter ──────────────────────────────────────────────────────────────
 
 def _is_ict_relevant(skill_detail: dict) -> bool:
     """
     Return True if the skill should be kept based on domain relevance.
 
-    cross-sector / transversal skills are always kept.
-    occupation-specific / sector-specific skills are kept only when the
-    preferred label contains an ICT keyword.
+    Precedence (additive — any pass keeps the skill):
+      1. ESCO digital skills collection — authoritative ICT whitelist from
+         the Commission, sits in `digitalSkillsCollection_en.csv` (1284 URIs).
+      2. cross-sector / transversal reuse level — generic competences.
+      3. ICT keyword in the preferred label.
+
+    The cross-sector blocklist still rejects a small set of mislabelled
+    items before any of the above fires.
     """
     uri = skill_detail.get("esco_uri", "")
-    reuse_level = _get_uri_reuse_level().get(uri, "")
-
     preferred = skill_detail.get("preferred_label", "")
+
     if preferred in _CROSS_SECTOR_BLOCKLIST:
         return False
 
+    if uri in _get_digital_skill_uris():
+        return True
+
+    reuse_level = _get_uri_reuse_level().get(uri, "")
     if reuse_level in _ALWAYS_KEEP_REUSE_LEVELS or not reuse_level:
         return True
 
