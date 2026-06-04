@@ -81,8 +81,11 @@ def main(
     output_dir: Path = OUTPUT_DIR,
     model_name: str = DEFAULT_MODEL_NAME,
     batch_size: int = DEFAULT_BATCH_SIZE,
+    suffix: str = "",
+    title_aware: bool = False,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    sfx = f"_{suffix}" if suffix else ""
 
     logger.info(f"Loading dataset from {DATASET_PATH}…")
     dataset = pd.read_parquet(DATASET_PATH)
@@ -123,6 +126,8 @@ def main(
             candidates=candidates,
             model_call=model_call,
             batch_size=batch_size,
+            doc_title=row["title"] if title_aware else None,
+            doc_kind=row["doc_kind"] if title_aware else None,
         )
         elapsed = time.perf_counter() - t0
         kept_count = sum(1 for r in results if r.kept)
@@ -143,11 +148,11 @@ def main(
         modified_ds.at[row["orig_idx"], "skill_details"] = new_details
 
     decisions_df = pd.DataFrame(all_decisions)
-    decisions_df.to_csv(output_dir / "llm_verify_decisions.csv", index=False)
+    decisions_df.to_csv(output_dir / f"llm_verify_decisions{sfx}.csv", index=False)
 
     cmps, _ = compare_sample(annotations, modified_ds)
     agg = aggregate_metrics(cmps)
-    agg.to_csv(output_dir / "llm_verify_metrics.csv", index=False)
+    agg.to_csv(output_dir / f"llm_verify_metrics{sfx}.csv", index=False)
 
     # Report
     lines: list[str] = [f"# LLM-verifier results — model `{model_name}`", ""]
@@ -161,7 +166,7 @@ def main(
             f"| {r['doc_kind']} | {r['doc_id']} | {title} | {r['gold_n']} | {r['extracted_n']} | "
             f"{r['tp']} | {r['fp']} | {r['fn']} | {r['precision']:.3f} | {r['recall']:.3f} | {r['f1']:.3f} |"
         )
-    (output_dir / "LLM_VERIFY_REPORT.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (output_dir / f"LLM_VERIFY_REPORT{sfx}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     micro = agg[agg["doc_kind"] == "ALL"].iloc[0]
     logger.info(
@@ -176,5 +181,13 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL_NAME)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
+    parser.add_argument("--suffix", type=str, default="", help="Appended to output filenames, e.g. 'qwen2.5-3B_v2_title'.")
+    parser.add_argument("--title-aware", action="store_true", help="Inject document title + type into the verifier prompt.")
     args = parser.parse_args()
-    main(output_dir=args.output_dir, model_name=args.model, batch_size=args.batch_size)
+    main(
+        output_dir=args.output_dir,
+        model_name=args.model,
+        batch_size=args.batch_size,
+        suffix=args.suffix,
+        title_aware=args.title_aware,
+    )

@@ -40,17 +40,51 @@ class VerifyResult:
     raw_answer: str
 
 
-def build_prompt(doc_text: str, labels: list[str], char_limit: int) -> str:
-    """Format the verification prompt for a batch of candidate labels."""
+def build_prompt(
+    doc_text: str,
+    labels: list[str],
+    char_limit: int,
+    *,
+    doc_title: str | None = None,
+    doc_kind: str | None = None,
+) -> str:
+    """Format the verification prompt for a batch of candidate labels.
+
+    If ``doc_title`` and ``doc_kind`` are both supplied, the prompt is
+    rewritten in title-aware form and the in-doubt rule tilts toward NO
+    on clear domain mismatch (variant ``v2_title``).
+    """
     snippet = doc_text.strip()
     if len(snippet) > char_limit:
         snippet = snippet[:char_limit] + " […]"
     numbered = "\n".join(f"{i + 1}. {label}" for i, label in enumerate(labels))
+
+    title_aware = doc_title is not None and doc_kind is not None
+    if title_aware:
+        kind_phrase = "study programme" if doc_kind == "programme" else "job advertisement"
+        header = (
+            f"Title: {doc_title}\n"
+            f"Type: {kind_phrase}\n"
+            "\n"
+            "You are reviewing extracted skills for the document above. For each "
+            "candidate skill, decide whether it plausibly belongs to what the "
+            "programme teaches or the job requires.\n"
+        )
+        in_doubt = (
+            "When in doubt, prefer NO only if the skill is from a clearly "
+            "different domain than the title implies; otherwise prefer YES.\n"
+        )
+    else:
+        header = (
+            "You are reviewing extracted skills for a document. The document is "
+            "either a study programme description or a job advertisement. For each "
+            "candidate skill, decide whether it plausibly belongs to what the document "
+            "teaches (programme) or requires (job).\n"
+        )
+        in_doubt = "When in doubt, prefer YES.\n"
+
     return (
-        "You are reviewing extracted skills for a document. The document is "
-        "either a study programme description or a job advertisement. For each "
-        "candidate skill, decide whether it plausibly belongs to what the document "
-        "teaches (programme) or requires (job).\n"
+        f"{header}"
         "\n"
         "Document:\n"
         f"{snippet}\n"
@@ -68,7 +102,7 @@ def build_prompt(doc_text: str, labels: list[str], char_limit: int) -> str:
         "audiology for a programming job; tutor students in a job advertisement "
         "that is not in education).\n"
         "\n"
-        "When in doubt, prefer YES.\n"
+        f"{in_doubt}"
         "\n"
         "Candidate skills:\n"
         f"{numbered}\n"
@@ -113,6 +147,8 @@ def verify_candidates(
     *,
     batch_size: int = DEFAULT_BATCH_SIZE,
     char_limit: int = DEFAULT_DOC_CHAR_LIMIT,
+    doc_title: str | None = None,
+    doc_kind: str | None = None,
 ) -> list[VerifyResult]:
     """Run the verifier over one document's candidate URIs.
 
@@ -139,7 +175,13 @@ def verify_candidates(
     for start in range(0, len(candidates), batch_size):
         batch = candidates[start : start + batch_size]
         labels = [lbl for _, lbl in batch]
-        prompt = build_prompt(doc_text, labels, char_limit=char_limit)
+        prompt = build_prompt(
+            doc_text,
+            labels,
+            char_limit=char_limit,
+            doc_title=doc_title,
+            doc_kind=doc_kind,
+        )
         response = model_call(prompt)
         decisions = parse_answers(response, len(batch))
         for (uri, label), kept in zip(batch, decisions):
