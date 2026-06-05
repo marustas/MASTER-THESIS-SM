@@ -1,0 +1,58 @@
+doc_kind,doc_id,doc_title,esco_uri,preferred_label,annotation_type,annotator_confidence,notes
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/24c200e5-be20-4370-a137-ab53797f3a17,software frameworks,implicit,high,user term: software engineering
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,implicit,high,user term: programming
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/8088750d-8388-4170-a76f-48354c469c44,cyber security,implicit,high,user term: cybersecurity
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/7111b95d-0ce3-441a-9d92-4c75d05c4388,project management,implicit,high,
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/3c76296d-4bbd-44ba-8eaa-95bf275f79b7,manage ICT project,explicit,high,user term: coordination (1 of 2)
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/afdb41dd-5dd5-4fbb-bf9e-e041422698b4,coordinate operational activities,explicit,high,user term: coordination (2 of 2)
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/69cfc5ed-6569-4aca-a4cc-fd782ba51d9c,implement ICT risk management,explicit,high,user term: risk management
+job_ad,253,IT Vadovas (-ė),http://data.europa.eu/esco/skill/3579208e-49b3-4ce4-98e7-20e41b1ce8d4,develop information security strategy,explicit,high,user term: strategy implementation
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/02058de6-4b98-449f-8a45-8588b0eb2446,network engineering,implicit,high,user term: computer networks (1 of 2)
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/2164e860-7f20-48bc-b98c-5d9f8a561550,design computer network,implicit,high,user term: computer networks (2 of 2)
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,implicit,high,
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/ccd0a1d9-afda-43d9-b901-96344886e14d,Python (computer programming),explicit,high,
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,implicit,high,user term: programming
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,implicit,high,
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,explicit,high,
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/3e40c7d0-0e36-4b33-bc33-0aa87eda0561,electrical engineering,explicit,high,
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/9d2e926f-53d9-41f5-98f3-19dfaa687f3f,tools for software configuration management,explicit,high,user term: version control system
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/bf6c5ed4-84af-440f-abcc-7fa5ba19c738,real-time computing,implicit,high,user term: real time systems
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/334e3e49-fb02-4051-809a-f06adfdc1c40,troubleshoot,explicit,high,
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/55514865-3066-4abd-86a9-dbe45a440882,root cause analysis,explicit,high,
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/adc6dc11-3376-467b-96c5-9b0a21edc869,solve problems,implicit,high,user term: problem solving
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/f7e2eb04-3e50-4561-bce1-7e51a1fec308,define software architecture,explicit,high,user term: software architecture (1 of 2)
+job_ad,1,Network Automation Engineer,http://data.europa.eu/esco/skill/2450c3b3-e78e-435b-b84d-e05d984e71dc,software architecture models,explicit,high,user term: software architecture (2 of 2)
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/913e7e83-b8f8-4574-b1ca-1b38f3fd974a,execute software tests,explicit,high,user term: software testing (1 of 2)
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/85f46538-ae70-498a-bfbc-b8ddafe96c7d,levels of software testing,explicit,high,user term: software testing (2 of 2)
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/e207163b-7963-4c3e-9494-7a4bb000211b,estimate duration of work,explicit,high,user term: effort estimation
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/5d74614d-32c8-4ca4-9818-6980e52424b1,plan software testing,explicit,high,user term: test planning
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/598de5b0-5b58-4ea7-8058-a4bc4d18c742,SQL,explicit,high,
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/2636b3d3-843e-46a9-8b4c-a9d6ca3f5a2d,provide technical documentation,explicit,high,user term: documentation (1 of 3)
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/cffc3e97-e942-4b13-a2f3-0bf4910c06d3,use technical documentation,explicit,high,user term: documentation (2 of 3)
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/327d15c8-29ff-4ad4-a4fe-6536d777a45f,documentation types,explicit,high,user term: documentation (3 of 3)
+job_ad,429,QA Engineer with verification,http://data.europa.eu/esco/skill/6d3edede-8951-4621-a835-e04323300fa0,English,explicit,high,
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/24c200e5-be20-4370-a137-ab53797f3a17,software frameworks,implicit,high,user term: software engineering
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,implicit,high,user term: programming
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/2636b3d3-843e-46a9-8b4c-a9d6ca3f5a2d,provide technical documentation,explicit,high,user term: documentation (1 of 3)
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/cffc3e97-e942-4b13-a2f3-0bf4910c06d3,use technical documentation,explicit,high,user term: documentation (2 of 3)
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/327d15c8-29ff-4ad4-a4fe-6536d777a45f,documentation types,explicit,high,user term: documentation (3 of 3)
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,explicit,high,
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/913e7e83-b8f8-4574-b1ca-1b38f3fd974a,execute software tests,explicit,high,user term: testing (1 of 2)
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/5d74614d-32c8-4ca4-9818-6980e52424b1,plan software testing,explicit,high,user term: testing (2 of 2)
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/4707da90-9cfc-46ca-8de0-38a0b7bfb137,think analytically,explicit,high,user term: logical thinking (ESCO alt-label match)
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2,principles of artificial intelligence,implicit,high,user term: prompt engineering (proxy via AI principles)
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),http://data.europa.eu/esco/skill/f4a6e9f7-5cff-46c0-894c-59c20bb78694,automation technology,explicit,high,user term: automation
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/633a3637-2c6b-40ae-ac38-289eb2a62aa6,business analysis,explicit,high,
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/2b92a5b2-6758-4ee3-9fb4-b6387a55cc8f,perform data analysis,explicit,high,user term: data analysis (1 of 2)
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/97bd1c21-66b2-4b7e-ad0f-e3cda590e378,data analytics,explicit,high,user term: data analysis (2 of 2)
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/598de5b0-5b58-4ea7-8058-a4bc4d18c742,SQL,explicit,high,
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,implicit,high,user term: programming
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/24c200e5-be20-4370-a137-ab53797f3a17,software frameworks,implicit,high,user term: software engineering
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/2636b3d3-843e-46a9-8b4c-a9d6ca3f5a2d,provide technical documentation,explicit,high,user term: documentation (1 of 3)
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/cffc3e97-e942-4b13-a2f3-0bf4910c06d3,use technical documentation,explicit,high,user term: documentation (2 of 3)
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/327d15c8-29ff-4ad4-a4fe-6536d777a45f,documentation types,explicit,high,user term: documentation (3 of 3)
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/adc6dc11-3376-467b-96c5-9b0a21edc869,solve problems,explicit,high,user term: problem-solving
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/65e58886-bd1e-4c5b-8ca5-8d9b353c8aa1,data visualisation software,explicit,high,user term: Power BI (proxy via umbrella concept)
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/c3e36d05-8ae8-447f-bb2b-6f9409f85389,deliver visual presentation of data,explicit,high,user term: analytics visualization
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/143769cb-b61e-47d8-a61e-eedfbec1016c,business intelligence,explicit,high,
+job_ad,20,BI programuotojas (-a),http://data.europa.eu/esco/skill/98a1dec3-8138-4f46-a596-5e2a83b884b9,business analytics,explicit,high,

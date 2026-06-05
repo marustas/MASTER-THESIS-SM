@@ -1,0 +1,58 @@
+{
+  "seed": 42,
+  "n_per_side": 5,
+  "programmes": [
+    {
+      "programme_id": 21,
+      "name": "Game Development",
+      "cluster_label": 0.0
+    },
+    {
+      "programme_id": 25,
+      "name": "Information Systems Engineering",
+      "cluster_label": 1.0
+    },
+    {
+      "programme_id": 29,
+      "name": "Informatics Engineering",
+      "cluster_label": 2.0
+    },
+    {
+      "programme_id": 26,
+      "name": "Information Systems Engineering",
+      "cluster_label": 4.0
+    },
+    {
+      "programme_id": 12,
+      "name": "Informatics",
+      "cluster_label": 5.0
+    }
+  ],
+  "jobs": [
+    {
+      "job_id": 253,
+      "job_title": "IT Vadovas (-ė)",
+      "cluster_label": 7.0
+    },
+    {
+      "job_id": 1,
+      "job_title": "Network Automation Engineer",
+      "cluster_label": 3.0
+    },
+    {
+      "job_id": 429,
+      "job_title": "QA Engineer with verification",
+      "cluster_label": 5.0
+    },
+    {
+      "job_id": 193,
+      "job_title": "Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240, Vilnius)",
+      "cluster_label": 4.0
+    },
+    {
+      "job_id": 20,
+      "job_title": "BI programuotojas (-a)",
+      "cluster_label": 6.0
+    }
+  ]
+}

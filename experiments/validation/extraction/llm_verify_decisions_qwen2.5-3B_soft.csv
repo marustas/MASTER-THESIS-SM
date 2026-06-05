@@ -1,0 +1,322 @@
+doc_kind,doc_id,esco_uri,preferred_label,explicit,kept
+programme,12,http://data.europa.eu/esco/skill/b3950b87-a980-4cd4-a795-be8a9b63661d,Lithuanian,True,True
+programme,12,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,True,True
+programme,12,http://data.europa.eu/esco/skill/e49f4158-9d4c-425d-bf32-dfe89b19840a,plan,True,False
+programme,12,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,False
+programme,12,http://data.europa.eu/esco/skill/d62d2b4c-a6f8-439e-8a1b-4f29ab5f2c47,make decisions,True,False
+programme,12,http://data.europa.eu/esco/skill/3d64b8fd-bb09-4d13-a3cf-300ed8909088,write specifications,False,True
+programme,12,http://data.europa.eu/esco/skill/9a58cd26-58eb-4a1c-b1b6-64037fe9cfa1,think abstractly,False,True
+programme,12,http://data.europa.eu/esco/skill/fecf8a0d-62c4-4e71-9b03-0f4fc2ad7bf5,data models,False,True
+programme,12,http://data.europa.eu/esco/skill/fbca4e43-3816-44cf-81a5-d7b5ae320c00,guide staff,False,False
+programme,12,http://data.europa.eu/esco/skill/b633eb55-8f1f-4ae6-ab4c-2022ffe2cb7f,C++,False,False
+programme,12,http://data.europa.eu/esco/skill/4707da90-9cfc-46ca-8de0-38a0b7bfb137,think analytically,False,True
+programme,12,http://data.europa.eu/esco/skill/adc6dc11-3376-467b-96c5-9b0a21edc869,solve problems,False,True
+programme,12,http://data.europa.eu/esco/skill/d04ee340-5378-4601-8181-19da6d5cbfe0,manage website,False,False
+programme,12,http://data.europa.eu/esco/skill/9af1bd12-01bd-4d6a-947b-69e64f23150a,process qualitative information,False,False
+programme,12,http://data.europa.eu/esco/skill/9983816d-cc78-4d3f-9e3c-c7baa9ebc77a,computer equipment,False,False
+programme,12,http://data.europa.eu/esco/skill/dba46f87-0831-49cd-a1c7-340a653c0221,Agile development,False,False
+programme,12,http://data.europa.eu/esco/skill/045f71e6-0699-4169-8a54-9c6b96f3174d,advise others,False,True
+programme,12,http://data.europa.eu/esco/skill/a571ae14-3e16-4fd3-a615-5646e0b0b696,inspect data,False,True
+programme,12,http://data.europa.eu/esco/skill/209a5498-3449-4689-8ed9-bd08cab4fd78,engineering principles,False,True
+programme,12,http://data.europa.eu/esco/skill/31b67516-af16-4b97-8430-a8a8e0f84190,assessment processes,False,True
+programme,12,http://data.europa.eu/esco/skill/08e2ff26-88ff-47b5-9d37-d19ace01b075,manage feedback,False,False
+programme,12,http://data.europa.eu/esco/skill/63b9a087-a5db-424e-96ef-3212c8b5311e,tutor students,False,False
+programme,12,http://data.europa.eu/esco/skill/49de9958-2aa4-4eef-a89d-fe5d5bcd28c4,adapt to change,False,False
+programme,12,http://data.europa.eu/esco/skill/11c56452-fcec-4b00-9695-cca4728e5048,marketing analytics,False,False
+programme,12,http://data.europa.eu/esco/skill/5bbaa0e6-0fd7-4df2-9db7-34f78b40dc34,marketing management,False,False
+programme,12,http://data.europa.eu/esco/skill/a6532ae5-efc4-4ca4-b172-c11471940d09,electronic business,False,False
+programme,12,http://data.europa.eu/esco/skill/1bba98a7-92b9-450b-9235-e0c905f8f3c4,information architecture,False,False
+programme,21,http://data.europa.eu/esco/skill/14ee9f76-3524-43d5-8a1a-5ba8283f8bd7,Spanish,True,False
+programme,21,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,True,True
+programme,21,http://data.europa.eu/esco/skill/f4b3b063-02df-4a92-bb0e-d01e45642c6f,in-circuit test,True,False
+programme,21,http://data.europa.eu/esco/skill/1fe42b38-cd42-4fc7-ae77-14e4c9e96295,Chinese,True,False
+programme,21,http://data.europa.eu/esco/skill/4812a4ea-dc55-4dc6-b9b0-4a59bba2c647,German,True,False
+programme,21,http://data.europa.eu/esco/skill/6891bbce-20bf-4afc-bd5e-75bdf54c0165,Russian,True,False
+programme,21,http://data.europa.eu/esco/skill/7ee51257-8947-4b69-9bdf-322baf0a6398,Swedish,True,False
+programme,21,http://data.europa.eu/esco/skill/e747e77e-0ea1-4001-8b07-1d11946b5f1b,French,True,False
+programme,21,http://data.europa.eu/esco/skill/123cf7c5-6a3b-419d-be4f-49a6cc020f9f,interactive media,True,True
+programme,21,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,True,True
+programme,21,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,True,True
+programme,21,http://data.europa.eu/esco/skill/4463a721-69f3-413d-8321-43e3af13a4f1,use databases,True,True
+programme,21,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,True,True
+programme,21,http://data.europa.eu/esco/skill/658605f2-1c95-49f0-bd98-0af7b15ad0b0,entrepreneurship,True,True
+programme,21,http://data.europa.eu/esco/skill/9136cbf1-7916-4f1c-bc9a-0318ee1d6016,human-computer interaction,True,True
+programme,21,http://data.europa.eu/esco/skill/9e84a506-df06-4be3-874a-fa01293e3dd5,business processes,True,True
+programme,21,http://data.europa.eu/esco/skill/a59708e3-e654-4e37-8b8a-741c3b756eee,multimedia systems,True,True
+programme,21,http://data.europa.eu/esco/skill/afda6ca0-7aa8-41ef-ba5e-8dc607839daf,computer graphics,True,True
+programme,21,http://data.europa.eu/esco/skill/b17f4305-741a-4a1c-8fe8-6f11cb3d5c0a,business communication,True,True
+programme,21,http://data.europa.eu/esco/skill/bfe4f330-d595-48c7-ab3c-f309471d6953,psychology,True,True
+programme,21,http://data.europa.eu/esco/skill/31b67516-af16-4b97-8430-a8a8e0f84190,assessment processes,True,False
+programme,21,http://data.europa.eu/esco/skill/97965983-0da4-4902-9daf-d5cd2693ef73,3D modelling,True,True
+programme,21,http://data.europa.eu/esco/skill/1258cc12-37bb-4a12-b219-9c3d6b294533,work in an organised manner,True,False
+programme,21,http://data.europa.eu/esco/skill/d62d2b4c-a6f8-439e-8a1b-4f29ab5f2c47,make decisions,True,False
+programme,21,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,True
+programme,21,http://data.europa.eu/esco/skill/4e097377-7950-4993-9e22-a61b067b5c00,social sciences,False,False
+programme,21,http://data.europa.eu/esco/skill/519e801b-3cc4-44d4-bcf1-32fdb9a77e51,personal development,False,False
+programme,21,http://data.europa.eu/esco/skill/966f2fd3-3de6-42da-b87c-da924c6d7960,digital game creation systems,False,True
+programme,21,http://data.europa.eu/esco/skill/d1a86399-24d8-415f-98b9-e8cbb6b04a26,Unity (digital game creation systems),False,False
+programme,21,http://data.europa.eu/esco/skill/7369f779-4b71-4aab-8836-48b69c676eec,operate relational database management system,False,False
+programme,21,http://data.europa.eu/esco/skill/3ec2e4d6-7000-4905-bf1a-c5b1679416de,data warehouse,False,False
+programme,21,http://data.europa.eu/esco/skill/4707da90-9cfc-46ca-8de0-38a0b7bfb137,think analytically,False,False
+programme,21,http://data.europa.eu/esco/skill/9effa3d7-c0c4-4583-ad94-b496ba5e5f2c,data mining methods,False,False
+programme,21,http://data.europa.eu/esco/skill/2636b3d3-843e-46a9-8b4c-a9d6ca3f5a2d,provide technical documentation,False,False
+programme,21,http://data.europa.eu/esco/skill/7afb5a64-e574-421a-bb3a-7a7bc108d2a5,perform warehousing operations,False,False
+programme,21,http://data.europa.eu/esco/skill/6dc2dfac-3e21-44dd-a71c-9a1c8fe2514c,make independent operating decisions,False,False
+programme,21,http://data.europa.eu/esco/skill/91dd8397-063d-499c-83b9-0603a10d94ac,writing techniques,False,False
+programme,21,http://data.europa.eu/esco/skill/d56e2c2f-3e01-4b76-a7bb-ecb6d430172f,think holistically,False,False
+programme,21,http://data.europa.eu/esco/skill/609a8ac1-9d29-4237-9886-596dbbe7ca8a,address an audience,False,False
+programme,21,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,False,False
+programme,21,http://data.europa.eu/esco/skill/0823ccef-813f-4f22-afef-ac0d68615e8f,computer simulation,False,False
+programme,21,http://data.europa.eu/esco/skill/35f1dcdc-577f-46c6-96d9-6c7a64501de9,laboratory equipment,False,False
+programme,21,http://data.europa.eu/esco/skill/49fed129-e32b-4f67-b80a-609d79e45b20,electronic and telecommunication equipment,False,False
+programme,21,http://data.europa.eu/esco/skill/76ef6ed3-1658-4a1a-9593-204d799c6d0c,NoSQL,False,False
+programme,21,http://data.europa.eu/esco/skill/e6ee5bb8-12b9-4e60-8baf-102d0c4f1da5,semantics,False,False
+programme,21,http://data.europa.eu/esco/skill/f8e3425c-fe44-4ffb-bafe-0e20d91dadf4,SAP Data Services,False,False
+programme,21,http://data.europa.eu/esco/skill/a4d336a6-9ffd-402a-91cc-f359716ba4e0,ML (computer programming),False,False
+programme,21,http://data.europa.eu/esco/skill/2180bd8c-86de-4889-8165-adac902eee9d,embedded systems,False,False
+programme,21,http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7,JavaScript,False,True
+programme,21,http://data.europa.eu/esco/skill/57231a22-4da7-49c8-97b8-75672feadf1e,manage quantitative data,False,False
+programme,21,http://data.europa.eu/esco/skill/b633eb55-8f1f-4ae6-ab4c-2022ffe2cb7f,C++,False,False
+programme,21,http://data.europa.eu/esco/skill/ff8bd17c-77e9-4d4e-929a-a0cf86f3ed34,surveillance methods,False,False
+programme,21,http://data.europa.eu/esco/skill/198b614d-a9af-46f5-b3fd-2672b401dd8e,health and safety in the workplace,False,False
+programme,21,http://data.europa.eu/esco/skill/9ef0f3a0-9ce2-4ef1-a987-0366b5cb2dbe,database development tools,False,True
+programme,21,http://data.europa.eu/esco/skill/143769cb-b61e-47d8-a61e-eedfbec1016c,business intelligence,False,False
+programme,21,http://data.europa.eu/esco/skill/1bba98a7-92b9-450b-9235-e0c905f8f3c4,information architecture,False,False
+programme,21,http://data.europa.eu/esco/skill/ed5bbc64-7017-4e2e-b44e-65df88013a84,analyse information systems,False,True
+programme,21,http://data.europa.eu/esco/skill/db33c0f3-43ee-4ba3-ba47-9269ac837697,critically evaluate information and its sources,False,True
+programme,21,http://data.europa.eu/esco/skill/ab1e97ed-2319-4293-a8b7-072d2648822f,database management systems,False,True
+programme,21,http://data.europa.eu/esco/skill/094ef6aa-844f-44ce-8456-fdc49276bf58,digital printing,False,False
+programme,21,http://data.europa.eu/esco/skill/791e2eea-3380-4aed-b996-4bcabbe88591,market participants,False,False
+programme,21,http://data.europa.eu/esco/skill/a520b743-8f40-43ac-a2d5-755899120844,audio technology,False,False
+programme,21,http://data.europa.eu/esco/skill/6fe019dd-027f-45f3-b19c-d27f7ae00980,assess students,False,False
+programme,21,http://data.europa.eu/esco/skill/848b5879-10af-4e3a-bfbf-263956b4ebf3,management department processes,False,True
+programme,21,http://data.europa.eu/esco/skill/1cca610d-2afc-44a7-97fc-f2262fb5fc75,surveying,False,False
+programme,21,http://data.europa.eu/esco/skill/4c58528e-bdaa-43ad-8f5a-8ad0b8cd4bbb,design principles,False,True
+programme,21,http://data.europa.eu/esco/skill/69bbd53f-fbb0-4476-b4b2-ef7844464e28,web programming,False,True
+programme,21,http://data.europa.eu/esco/skill/a88da605-095f-4a4f-be1c-d1444df8228a,digital media,False,True
+programme,21,http://data.europa.eu/esco/skill/b105ec9b-0857-41d6-8d07-a83e58b73d90,ICT system programming,False,True
+programme,21,http://data.europa.eu/esco/skill/df64a7cc-2e96-4304-95d3-56fe0ac2dd39,design thinking,False,False
+programme,21,http://data.europa.eu/esco/skill/93350886-a21b-4e61-a1b1-319a325c0f90,express yourself creatively,False,False
+programme,25,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,True,True
+programme,25,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,True,True
+programme,25,http://data.europa.eu/esco/skill/b633eb55-8f1f-4ae6-ab4c-2022ffe2cb7f,C++,True,False
+programme,25,http://data.europa.eu/esco/skill/0ab9d433-10e5-4683-ae54-4687179a5259,literature,True,False
+programme,25,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,True,True
+programme,25,http://data.europa.eu/esco/skill/4339176e-3acd-4f7f-a5d9-445bee3d23f2,mathematics,True,True
+programme,25,http://data.europa.eu/esco/skill/4707da90-9cfc-46ca-8de0-38a0b7bfb137,think analytically,True,True
+programme,25,http://data.europa.eu/esco/skill/692ace70-7f97-4214-92bd-88f7637d8a44,physics,True,True
+programme,25,http://data.europa.eu/esco/skill/6d3edede-8951-4621-a835-e04323300fa0,English,True,True
+programme,25,http://data.europa.eu/esco/skill/74e49482-75e8-4637-bdb1-fff868d02f7a,scientific literature,True,True
+programme,25,http://data.europa.eu/esco/skill/7cf2762d-32e1-4b21-8ef8-574e40310c18,morality,True,False
+programme,25,http://data.europa.eu/esco/skill/8881a9c2-bd07-4954-bf27-c1f8acca9af0,sociology,True,False
+programme,25,http://data.europa.eu/esco/skill/88af9294-b697-4687-ae19-aefbb6234dfa,economics,True,True
+programme,25,http://data.europa.eu/esco/skill/95c35c3a-035f-47c2-90cf-7e934d20fc08,electronics,True,False
+programme,25,http://data.europa.eu/esco/skill/967b60c2-4657-4ffc-bcaf-aab565793f97,philosophy,True,False
+programme,25,http://data.europa.eu/esco/skill/adc6dc11-3376-467b-96c5-9b0a21edc869,solve problems,True,True
+programme,25,http://data.europa.eu/esco/skill/afda6ca0-7aa8-41ef-ba5e-8dc607839daf,computer graphics,True,False
+programme,25,http://data.europa.eu/esco/skill/b3950b87-a980-4cd4-a795-be8a9b63661d,Lithuanian,True,True
+programme,25,http://data.europa.eu/esco/skill/bfe4f330-d595-48c7-ab3c-f309471d6953,psychology,True,False
+programme,25,http://data.europa.eu/esco/skill/e49f4158-9d4c-425d-bf32-dfe89b19840a,plan,True,True
+programme,25,http://data.europa.eu/esco/skill/d04ee340-5378-4601-8181-19da6d5cbfe0,manage website,True,False
+programme,25,http://data.europa.eu/esco/skill/d9a3cb06-d6e0-4a64-88a6-9a8e11a99c93,labour market,True,False
+programme,25,http://data.europa.eu/esco/skill/7ee4c2ea-b349-4bd2-81a3-ec31475d4833,statistics,True,False
+programme,25,http://data.europa.eu/esco/skill/89f6560b-2194-45c9-9ece-d33049a73eef,computer engineering,True,True
+programme,25,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,True
+programme,25,http://data.europa.eu/esco/skill/9af1bd12-01bd-4d6a-947b-69e64f23150a,process qualitative information,True,False
+programme,25,http://data.europa.eu/esco/skill/c624c6a3-b0ba-4a31-a296-0d433fe47e41,think creatively,True,True
+programme,25,http://data.europa.eu/esco/skill/9983816d-cc78-4d3f-9e3c-c7baa9ebc77a,computer equipment,True,True
+programme,25,http://data.europa.eu/esco/skill/732cb4dd-af91-4c88-9a9f-5fc62144e500,provide information,True,True
+programme,25,http://data.europa.eu/esco/skill/3d64b8fd-bb09-4d13-a3cf-300ed8909088,write specifications,False,True
+programme,25,http://data.europa.eu/esco/skill/9a58cd26-58eb-4a1c-b1b6-64037fe9cfa1,think abstractly,False,False
+programme,25,http://data.europa.eu/esco/skill/fecf8a0d-62c4-4e71-9b03-0f4fc2ad7bf5,data models,False,False
+programme,25,http://data.europa.eu/esco/skill/fbca4e43-3816-44cf-81a5-d7b5ae320c00,guide staff,False,False
+programme,25,http://data.europa.eu/esco/skill/dba46f87-0831-49cd-a1c7-340a653c0221,Agile development,False,False
+programme,25,http://data.europa.eu/esco/skill/045f71e6-0699-4169-8a54-9c6b96f3174d,advise others,False,False
+programme,25,http://data.europa.eu/esco/skill/a571ae14-3e16-4fd3-a615-5646e0b0b696,inspect data,False,False
+programme,25,http://data.europa.eu/esco/skill/001115fb-569f-4ee6-8381-c6807ef2527f,show initiative,False,False
+programme,25,http://data.europa.eu/esco/skill/377861af-f966-4c87-a2db-7e99904312b9,geographic information systems,False,False
+programme,25,http://data.europa.eu/esco/skill/6eff134b-e34f-4d6e-a6e8-5e47cf2228d0,risk management,False,False
+programme,25,http://data.europa.eu/esco/skill/a7f0fbe0-c546-4f30-8e41-34a58c64567e,data storage,False,False
+programme,25,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,False,False
+programme,25,http://data.europa.eu/esco/skill/0823ccef-813f-4f22-afef-ac0d68615e8f,computer simulation,False,False
+programme,25,http://data.europa.eu/esco/skill/35f1dcdc-577f-46c6-96d9-6c7a64501de9,laboratory equipment,False,False
+programme,25,http://data.europa.eu/esco/skill/49fed129-e32b-4f67-b80a-609d79e45b20,electronic and telecommunication equipment,False,True
+programme,25,http://data.europa.eu/esco/skill/76ef6ed3-1658-4a1a-9593-204d799c6d0c,NoSQL,False,False
+programme,25,http://data.europa.eu/esco/skill/e6ee5bb8-12b9-4e60-8baf-102d0c4f1da5,semantics,False,False
+programme,25,http://data.europa.eu/esco/skill/f8e3425c-fe44-4ffb-bafe-0e20d91dadf4,SAP Data Services,False,False
+programme,25,http://data.europa.eu/esco/skill/a4d336a6-9ffd-402a-91cc-f359716ba4e0,ML (computer programming),False,False
+programme,25,http://data.europa.eu/esco/skill/d9013e0e-e937-43d5-ab71-0e917ee882b8,manage time,False,False
+programme,25,http://data.europa.eu/esco/skill/93350886-a21b-4e61-a1b1-319a325c0f90,express yourself creatively,False,False
+programme,25,http://data.europa.eu/esco/skill/8fdf4273-d8ce-47a2-b461-45cb1282ef36,reverse engineering,False,False
+programme,25,http://data.europa.eu/esco/skill/209a5498-3449-4689-8ed9-bd08cab4fd78,engineering principles,False,False
+programme,25,http://data.europa.eu/esco/skill/31b67516-af16-4b97-8430-a8a8e0f84190,assessment processes,False,True
+programme,25,http://data.europa.eu/esco/skill/08e2ff26-88ff-47b5-9d37-d19ace01b075,manage feedback,False,False
+programme,25,http://data.europa.eu/esco/skill/63b9a087-a5db-424e-96ef-3212c8b5311e,tutor students,False,False
+programme,25,http://data.europa.eu/esco/skill/49de9958-2aa4-4eef-a89d-fe5d5bcd28c4,adapt to change,False,False
+programme,26,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,True,False
+programme,26,http://data.europa.eu/esco/skill/bd14968e-e409-45af-b362-3495ed7b10e0,cloud technologies,True,False
+programme,26,http://data.europa.eu/esco/skill/0ab9d433-10e5-4683-ae54-4687179a5259,literature,True,False
+programme,26,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,True,True
+programme,26,http://data.europa.eu/esco/skill/4339176e-3acd-4f7f-a5d9-445bee3d23f2,mathematics,True,True
+programme,26,http://data.europa.eu/esco/skill/43ae58b9-5e56-4524-b45a-b422777a0576,database,True,True
+programme,26,http://data.europa.eu/esco/skill/60c78287-22eb-4103-9c8c-28deaa460da0,work in teams,True,True
+programme,26,http://data.europa.eu/esco/skill/692ace70-7f97-4214-92bd-88f7637d8a44,physics,True,False
+programme,26,http://data.europa.eu/esco/skill/8881a9c2-bd07-4954-bf27-c1f8acca9af0,sociology,True,False
+programme,26,http://data.europa.eu/esco/skill/88af9294-b697-4687-ae19-aefbb6234dfa,economics,True,False
+programme,26,http://data.europa.eu/esco/skill/89f6560b-2194-45c9-9ece-d33049a73eef,computer engineering,True,True
+programme,26,http://data.europa.eu/esco/skill/9136cbf1-7916-4f1c-bc9a-0318ee1d6016,human-computer interaction,True,False
+programme,26,http://data.europa.eu/esco/skill/95c35c3a-035f-47c2-90cf-7e934d20fc08,electronics,True,False
+programme,26,http://data.europa.eu/esco/skill/a4346013-a967-4a58-a533-6b32ad1364c5,data protection,True,True
+programme,26,http://data.europa.eu/esco/skill/adc6dc11-3376-467b-96c5-9b0a21edc869,solve problems,True,True
+programme,26,http://data.europa.eu/esco/skill/b17f4305-741a-4a1c-8fe8-6f11cb3d5c0a,business communication,True,True
+programme,26,http://data.europa.eu/esco/skill/bfe4f330-d595-48c7-ab3c-f309471d6953,psychology,True,False
+programme,26,http://data.europa.eu/esco/skill/c29aa9d2-4da8-4bdd-831c-8d4a2fb51730,work independently,True,True
+programme,26,http://data.europa.eu/esco/skill/e87ec79a-c9ff-46f5-84fa-7a0f394cdf40,robotics,True,False
+programme,26,http://data.europa.eu/esco/skill/f049d050-12da-4e40-813a-2b5eb6df6b51,Internet of Things,True,False
+programme,26,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,True,True
+programme,26,http://data.europa.eu/esco/skill/8088750d-8388-4170-a76f-48354c469c44,cyber security,True,False
+programme,26,http://data.europa.eu/esco/skill/7ee4c2ea-b349-4bd2-81a3-ec31475d4833,statistics,True,False
+programme,26,http://data.europa.eu/esco/skill/c624c6a3-b0ba-4a31-a296-0d433fe47e41,think creatively,True,True
+programme,26,http://data.europa.eu/esco/skill/001115fb-569f-4ee6-8381-c6807ef2527f,show initiative,True,True
+programme,26,http://data.europa.eu/esco/skill/1349751e-dfb5-492e-89af-e7d9bd2546ac,patents,True,False
+programme,26,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,False,False
+programme,26,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,False,True
+programme,26,http://data.europa.eu/esco/skill/abdc7ac8-151f-40c6-bc1a-1e9b4b073290,augmented reality,False,False
+programme,26,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,False,False
+programme,26,http://data.europa.eu/esco/skill/d8829a1d-dbde-435b-b921-29d6462f35c9,Android (mobile operating systems),False,False
+programme,26,http://data.europa.eu/esco/skill/dba46f87-0831-49cd-a1c7-340a653c0221,Agile development,False,False
+programme,26,http://data.europa.eu/esco/skill/045f71e6-0699-4169-8a54-9c6b96f3174d,advise others,False,True
+programme,26,http://data.europa.eu/esco/skill/a571ae14-3e16-4fd3-a615-5646e0b0b696,inspect data,False,True
+programme,26,http://data.europa.eu/esco/skill/6fa1c2c0-a012-4ca0-9642-e01569ba322c,ICT system integration,False,False
+programme,26,http://data.europa.eu/esco/skill/adcca622-b933-4ba3-bc43-bf371879edc3,data security principles,False,True
+programme,26,http://data.europa.eu/esco/skill/209a5498-3449-4689-8ed9-bd08cab4fd78,engineering principles,False,True
+programme,26,http://data.europa.eu/esco/skill/31b67516-af16-4b97-8430-a8a8e0f84190,assessment processes,False,True
+programme,26,http://data.europa.eu/esco/skill/08e2ff26-88ff-47b5-9d37-d19ace01b075,manage feedback,False,False
+programme,26,http://data.europa.eu/esco/skill/63b9a087-a5db-424e-96ef-3212c8b5311e,tutor students,False,False
+programme,26,http://data.europa.eu/esco/skill/49de9958-2aa4-4eef-a89d-fe5d5bcd28c4,adapt to change,False,True
+programme,26,http://data.europa.eu/esco/skill/2180bd8c-86de-4889-8165-adac902eee9d,embedded systems,False,False
+programme,26,http://data.europa.eu/esco/skill/397da142-ab35-48fe-b154-7c38f447adfb,digital systems,False,False
+programme,26,http://data.europa.eu/esco/skill/3e40c7d0-0e36-4b33-bc33-0aa87eda0561,electrical engineering,False,False
+programme,26,http://data.europa.eu/esco/skill/75d8e5d9-bef3-418b-9011-01bff9f27207,lead others,False,False
+programme,26,http://data.europa.eu/esco/skill/fbdbed1c-442a-47b3-a26f-0e867d82bbea,ergonomics,False,False
+programme,26,http://data.europa.eu/esco/skill/9983816d-cc78-4d3f-9e3c-c7baa9ebc77a,computer equipment,False,False
+programme,26,http://data.europa.eu/esco/skill/9af1bd12-01bd-4d6a-947b-69e64f23150a,process qualitative information,False,False
+programme,26,http://data.europa.eu/esco/skill/913e7e83-b8f8-4574-b1ca-1b38f3fd974a,execute software tests,False,False
+programme,26,http://data.europa.eu/esco/skill/172020d1-e151-445b-8173-e2a5fb16fe51,utilise computer-aided software engineering tools,False,False
+programme,29,http://data.europa.eu/esco/skill/6d3edede-8951-4621-a835-e04323300fa0,English,True,True
+programme,29,http://data.europa.eu/esco/skill/8088750d-8388-4170-a76f-48354c469c44,cyber security,True,True
+programme,29,http://data.europa.eu/esco/skill/afda6ca0-7aa8-41ef-ba5e-8dc607839daf,computer graphics,True,False
+programme,29,http://data.europa.eu/esco/skill/b3950b87-a980-4cd4-a795-be8a9b63661d,Lithuanian,True,False
+programme,29,http://data.europa.eu/esco/skill/f049d050-12da-4e40-813a-2b5eb6df6b51,Internet of Things,True,True
+programme,29,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,True,True
+programme,29,http://data.europa.eu/esco/skill/294cf13e-4fdf-4cb8-bb6b-31b9da7f4819,logic,True,True
+programme,29,http://data.europa.eu/esco/skill/4339176e-3acd-4f7f-a5d9-445bee3d23f2,mathematics,True,True
+programme,29,http://data.europa.eu/esco/skill/54924a2c-daca-40d3-9716-4b38ceb04f38,algorithms,True,True
+programme,29,http://data.europa.eu/esco/skill/692ace70-7f97-4214-92bd-88f7637d8a44,physics,True,False
+programme,29,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,True,False
+programme,29,http://data.europa.eu/esco/skill/7ee4c2ea-b349-4bd2-81a3-ec31475d4833,statistics,True,False
+programme,29,http://data.europa.eu/esco/skill/88af9294-b697-4687-ae19-aefbb6234dfa,economics,True,True
+programme,29,http://data.europa.eu/esco/skill/9136cbf1-7916-4f1c-bc9a-0318ee1d6016,human-computer interaction,True,True
+programme,29,http://data.europa.eu/esco/skill/967b60c2-4657-4ffc-bcaf-aab565793f97,philosophy,True,False
+programme,29,http://data.europa.eu/esco/skill/c29aa9d2-4da8-4bdd-831c-8d4a2fb51730,work independently,True,True
+programme,29,http://data.europa.eu/esco/skill/e49f4158-9d4c-425d-bf32-dfe89b19840a,plan,True,True
+programme,29,http://data.europa.eu/esco/skill/f9a6f35b-01a7-40c9-8b61-b6ee46f97272,operating systems,True,True
+programme,29,http://data.europa.eu/esco/skill/b758675a-b03b-4e4b-897c-57ca14b1a3d0,probability theory,True,False
+programme,29,http://data.europa.eu/esco/skill/86d2e2ea-1ba2-4aa6-b465-8a1f9abc81b8,apply information security policies,True,False
+programme,29,http://data.europa.eu/esco/skill/6fa1c2c0-a012-4ca0-9642-e01569ba322c,ICT system integration,True,False
+programme,29,http://data.europa.eu/esco/skill/adcca622-b933-4ba3-bc43-bf371879edc3,data security principles,True,False
+programme,29,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,False
+programme,29,http://data.europa.eu/esco/skill/c624c6a3-b0ba-4a31-a296-0d433fe47e41,think creatively,True,False
+programme,29,http://data.europa.eu/esco/skill/adc6dc11-3376-467b-96c5-9b0a21edc869,solve problems,False,True
+programme,29,http://data.europa.eu/esco/skill/001115fb-569f-4ee6-8381-c6807ef2527f,show initiative,False,True
+programme,29,http://data.europa.eu/esco/skill/2180bd8c-86de-4889-8165-adac902eee9d,embedded systems,False,False
+programme,29,http://data.europa.eu/esco/skill/3cd569a2-4f88-4c1e-9995-8dce8c5e51a7,JavaScript,False,False
+programme,29,http://data.europa.eu/esco/skill/57231a22-4da7-49c8-97b8-75672feadf1e,manage quantitative data,False,False
+programme,29,http://data.europa.eu/esco/skill/b633eb55-8f1f-4ae6-ab4c-2022ffe2cb7f,C++,False,False
+programme,29,http://data.europa.eu/esco/skill/ff8bd17c-77e9-4d4e-929a-a0cf86f3ed34,surveillance methods,False,False
+programme,29,http://data.europa.eu/esco/skill/198b614d-a9af-46f5-b3fd-2672b401dd8e,health and safety in the workplace,False,False
+programme,29,http://data.europa.eu/esco/skill/9ef0f3a0-9ce2-4ef1-a987-0366b5cb2dbe,database development tools,False,False
+programme,29,http://data.europa.eu/esco/skill/fbdbed1c-442a-47b3-a26f-0e867d82bbea,ergonomics,False,False
+programme,29,http://data.europa.eu/esco/skill/9983816d-cc78-4d3f-9e3c-c7baa9ebc77a,computer equipment,False,False
+programme,29,http://data.europa.eu/esco/skill/ecc4552a-92c5-4222-b18d-faf5ac841080,deep learning,False,False
+programme,29,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,False,True
+programme,29,http://data.europa.eu/esco/skill/abdc7ac8-151f-40c6-bc1a-1e9b4b073290,augmented reality,False,False
+programme,29,http://data.europa.eu/esco/skill/edebd83d-35f6-4ed5-a940-6c203d178c01,data science,False,True
+programme,29,http://data.europa.eu/esco/skill/d8829a1d-dbde-435b-b921-29d6462f35c9,Android (mobile operating systems),False,False
+programme,29,http://data.europa.eu/esco/skill/143769cb-b61e-47d8-a61e-eedfbec1016c,business intelligence,False,False
+programme,29,http://data.europa.eu/esco/skill/1bba98a7-92b9-450b-9235-e0c905f8f3c4,information architecture,False,False
+programme,29,http://data.europa.eu/esco/skill/ed5bbc64-7017-4e2e-b44e-65df88013a84,analyse information systems,False,True
+programme,29,http://data.europa.eu/esco/skill/db33c0f3-43ee-4ba3-ba47-9269ac837697,critically evaluate information and its sources,False,True
+programme,29,http://data.europa.eu/esco/skill/209a5498-3449-4689-8ed9-bd08cab4fd78,engineering principles,False,True
+programme,29,http://data.europa.eu/esco/skill/48db96bf-3314-45c6-bad8-fdb6e20e5639,data engineering,False,False
+programme,29,http://data.europa.eu/esco/skill/0823ccef-813f-4f22-afef-ac0d68615e8f,computer simulation,False,False
+programme,29,http://data.europa.eu/esco/skill/35f1dcdc-577f-46c6-96d9-6c7a64501de9,laboratory equipment,False,False
+programme,29,http://data.europa.eu/esco/skill/49fed129-e32b-4f67-b80a-609d79e45b20,electronic and telecommunication equipment,False,False
+programme,29,http://data.europa.eu/esco/skill/76ef6ed3-1658-4a1a-9593-204d799c6d0c,NoSQL,False,False
+programme,29,http://data.europa.eu/esco/skill/e6ee5bb8-12b9-4e60-8baf-102d0c4f1da5,semantics,False,False
+programme,29,http://data.europa.eu/esco/skill/f8e3425c-fe44-4ffb-bafe-0e20d91dadf4,SAP Data Services,False,False
+programme,29,http://data.europa.eu/esco/skill/a4d336a6-9ffd-402a-91cc-f359716ba4e0,ML (computer programming),False,False
+programme,29,http://data.europa.eu/esco/skill/dba46f87-0831-49cd-a1c7-340a653c0221,Agile development,False,True
+programme,29,http://data.europa.eu/esco/skill/045f71e6-0699-4169-8a54-9c6b96f3174d,advise others,False,False
+programme,29,http://data.europa.eu/esco/skill/a571ae14-3e16-4fd3-a615-5646e0b0b696,inspect data,False,False
+job_ad,1,http://data.europa.eu/esco/skill/6d3edede-8951-4621-a835-e04323300fa0,English,True,False
+job_ad,1,http://data.europa.eu/esco/skill/02058de6-4b98-449f-8a45-8588b0eb2446,network engineering,True,False
+job_ad,1,http://data.europa.eu/esco/skill/3e40c7d0-0e36-4b33-bc33-0aa87eda0561,electrical engineering,True,True
+job_ad,1,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,True,True
+job_ad,1,http://data.europa.eu/esco/skill/334e3e49-fb02-4051-809a-f06adfdc1c40,troubleshoot,True,True
+job_ad,1,http://data.europa.eu/esco/skill/ccd0a1d9-afda-43d9-b901-96344886e14d,Python (computer programming),True,True
+job_ad,1,http://data.europa.eu/esco/skill/9d2e926f-53d9-41f5-98f3-19dfaa687f3f,tools for software configuration management,True,False
+job_ad,1,http://data.europa.eu/esco/skill/c624c6a3-b0ba-4a31-a296-0d433fe47e41,think creatively,True,False
+job_ad,1,http://data.europa.eu/esco/skill/14ee9f76-3524-43d5-8a1a-5ba8283f8bd7,Spanish,False,False
+job_ad,1,http://data.europa.eu/esco/skill/584c13e8-fd06-4ca3-a45b-cca5b2f147a7,Portuguese,False,False
+job_ad,1,http://data.europa.eu/esco/skill/bec4359e-cb92-468f-a997-8fb28e32fba9,ICT project management methodologies,False,False
+job_ad,1,http://data.europa.eu/esco/skill/055192dc-f16c-4855-835d-19cac6ff20aa,life sciences,False,False
+job_ad,1,http://data.europa.eu/esco/skill/75b30aeb-34c0-40f4-b77d-271d75a98b14,improve business processes,False,False
+job_ad,1,http://data.europa.eu/esco/skill/e5ad0cce-e3d5-4c60-8504-5d1c7e3b55b9,electrical equipment components,False,False
+job_ad,1,http://data.europa.eu/esco/skill/b8df1689-6763-437d-bfca-fe03d43f36c3,Computer Assisted Language Learning,False,False
+job_ad,20,http://data.europa.eu/esco/skill/598de5b0-5b58-4ea7-8058-a4bc4d18c742,SQL,True,True
+job_ad,20,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,True
+job_ad,20,http://data.europa.eu/esco/skill/4339176e-3acd-4f7f-a5d9-445bee3d23f2,mathematics,True,True
+job_ad,20,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,True,True
+job_ad,20,http://data.europa.eu/esco/skill/7ee4c2ea-b349-4bd2-81a3-ec31475d4833,statistics,True,True
+job_ad,20,http://data.europa.eu/esco/skill/143769cb-b61e-47d8-a61e-eedfbec1016c,business intelligence,True,True
+job_ad,193,http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97,computer programming,True,True
+job_ad,193,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,False
+job_ad,253,http://data.europa.eu/esco/skill/6eff134b-e34f-4d6e-a6e8-5e47cf2228d0,risk management,True,True
+job_ad,253,http://data.europa.eu/esco/skill/8088750d-8388-4170-a76f-48354c469c44,cyber security,True,False
+job_ad,253,http://data.europa.eu/esco/skill/7afb5a64-e574-421a-bb3a-7a7bc108d2a5,perform warehousing operations,True,False
+job_ad,253,http://data.europa.eu/esco/skill/3c03ee71-4a23-448f-b79e-81fd75d27dca,apply change management,True,True
+job_ad,253,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,True
+job_ad,253,http://data.europa.eu/esco/skill/b3950b87-a980-4cd4-a795-be8a9b63661d,Lithuanian,False,False
+job_ad,253,http://data.europa.eu/esco/skill/6891bbce-20bf-4afc-bd5e-75bdf54c0165,Russian,False,False
+job_ad,253,http://data.europa.eu/esco/skill/e49f4158-9d4c-425d-bf32-dfe89b19840a,plan,False,False
+job_ad,253,http://data.europa.eu/esco/skill/0a48d064-dd04-47fb-a00d-85e9b4874033,business management principles,False,False
+job_ad,253,http://data.europa.eu/esco/skill/86d2e2ea-1ba2-4aa6-b465-8a1f9abc81b8,apply information security policies,False,False
+job_ad,253,http://data.europa.eu/esco/skill/7954861c-86d4-4529-afbb-2c23dab9ac74,negotiate compromises,False,False
+job_ad,253,http://data.europa.eu/esco/skill/7b5cce4d-c7fe-4119-b48f-70aa05391787,computer science,False,False
+job_ad,253,http://data.europa.eu/esco/skill/b0288eea-74b3-460a-8ac5-edc4ba70b75c,manage closed-circuit television system,False,False
+job_ad,253,http://data.europa.eu/esco/skill/60c78287-22eb-4103-9c8c-28deaa460da0,work in teams,False,True
+job_ad,253,http://data.europa.eu/esco/skill/66da3162-6c8d-44cb-9dd5-6f9efe1fcf67,trademarks,False,False
+job_ad,253,http://data.europa.eu/esco/skill/598de5b0-5b58-4ea7-8058-a4bc4d18c742,SQL,False,False
+job_ad,253,http://data.europa.eu/esco/skill/633a3637-2c6b-40ae-ac38-289eb2a62aa6,business analysis,False,False
+job_ad,253,http://data.europa.eu/esco/skill/c29aa9d2-4da8-4bdd-831c-8d4a2fb51730,work independently,False,True
+job_ad,253,http://data.europa.eu/esco/skill/ddbf25f1-b91a-4083-9ef1-cc113a46e4c0,ecosystems,False,False
+job_ad,253,http://data.europa.eu/esco/skill/f84a433f-34f1-4083-b0a3-24802623509c,web services,False,False
+job_ad,253,http://data.europa.eu/esco/skill/6fa1c2c0-a012-4ca0-9642-e01569ba322c,ICT system integration,False,False
+job_ad,253,http://data.europa.eu/esco/skill/bdcf429c-5ccf-4c3d-bb61-4c987573a35e,show entrepreneurial spirit,False,False
+job_ad,253,http://data.europa.eu/esco/skill/d47b9f28-8131-4efd-8801-53f226955f21,periodisation,False,False
+job_ad,253,http://data.europa.eu/esco/skill/f0de4973-0a70-4644-8fd4-3a97080476f4,DevOps,False,False
+job_ad,253,http://data.europa.eu/esco/skill/f8e3425c-fe44-4ffb-bafe-0e20d91dadf4,SAP Data Services,False,False
+job_ad,253,http://data.europa.eu/esco/skill/9e84a506-df06-4be3-874a-fa01293e3dd5,business processes,False,False
+job_ad,253,http://data.europa.eu/esco/skill/dc9a236c-c640-43c3-812f-269403591edb,customer relationship management,False,False
+job_ad,253,http://data.europa.eu/esco/skill/ecc18804-a466-40d9-98b4-fba5cd67dd4b,accounting,False,False
+job_ad,253,http://data.europa.eu/esco/skill/bec4359e-cb92-468f-a997-8fb28e32fba9,ICT project management methodologies,False,False
+job_ad,429,http://data.europa.eu/esco/skill/598de5b0-5b58-4ea7-8058-a4bc4d18c742,SQL,True,False
+job_ad,429,http://data.europa.eu/esco/skill/15d76317-c71a-4fa2-aadc-2ecc34e627b7,communication,True,True
+job_ad,429,http://data.europa.eu/esco/skill/6d3edede-8951-4621-a835-e04323300fa0,English,True,True
+job_ad,429,http://data.europa.eu/esco/skill/c624c6a3-b0ba-4a31-a296-0d433fe47e41,think creatively,True,False
+job_ad,429,http://data.europa.eu/esco/skill/0e1fe34b-f4e7-4642-8c8b-5a05ac3438e5,manage schedule of tasks,True,False
+job_ad,429,http://data.europa.eu/esco/skill/10c42c72-ecaa-414c-a014-7e97fcecae8d,reprography,True,False
+job_ad,429,http://data.europa.eu/esco/skill/ddc3119d-1d6e-4324-9125-a3380d299ac5,computer technology,True,False
+job_ad,429,http://data.europa.eu/esco/skill/580660a6-5d3a-421d-a54f-d85b706c2b2f,use online tools to collaborate,True,True
+job_ad,429,http://data.europa.eu/esco/skill/7a8fb784-67fa-41e9-a75c-6b491d91f800,develop strategy to solve problems,False,True

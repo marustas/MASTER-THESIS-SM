@@ -1,0 +1,6 @@
+variant,description,tp,fp,fn,near_miss,precision,recall,f1
+baseline_fixedK_t070,"Fixed K=10, τ=0.70 (canonical baseline neighbour selection)",53,468,89,6,0.1017,0.3732,0.1599
+baseline_fixedK_t050,"Fixed K=10, τ=0.50 (relaxed-threshold baseline from prior sweep)",61,707,81,8,0.0794,0.4296,0.1341
+adaptive_k,"Adaptive K: τ_eff = max(0.50, 0.85·cos_max), K_max=25, max-cosine scoring",64,890,78,13,0.0671,0.4507,0.1168
+adaptive_k_tfidf_s030,"Adaptive K + TF-IDF score = Σ sim/log(1+|skills|), keep score≥0.30",53,519,89,9,0.0927,0.3732,0.1485
+adaptive_k_tfidf_s050,Same as above but score_threshold=0.50 (more conservative),48,346,94,6,0.1218,0.338,0.1791

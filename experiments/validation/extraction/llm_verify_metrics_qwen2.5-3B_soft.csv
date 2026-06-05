@@ -1,0 +1,12 @@
+doc_kind,doc_id,doc_title,gold_n,extracted_n,tp,fp,fn,near_miss,precision,recall,f1,jaccard
+programme,21,Game Development,17,26,7,19,10,0,0.2692,0.4118,0.3256,0.1944
+programme,25,Information Systems Engineering,16,20,0,20,16,0,0.0,0.0,0.0,0.0
+programme,29,Informatics Engineering,20,20,6,14,14,0,0.3,0.3,0.3,0.1765
+programme,26,Information Systems Engineering,22,19,6,13,16,1,0.3158,0.2727,0.2927,0.1714
+programme,12,Informatics,10,11,1,10,9,0,0.0909,0.1,0.0952,0.05
+job_ad,253,IT Vadovas (-ė),8,5,0,5,8,1,0.0,0.0,0.0,0.0
+job_ad,1,Network Automation Engineer,15,4,4,0,11,0,1.0,0.2667,0.4211,0.2667
+job_ad,429,QA Engineer with verification,9,4,1,3,8,0,0.25,0.1111,0.1538,0.0833
+job_ad,193,Ieškome Technologijų ir AI praktikanto (-ės). Gal tai tu? :) (Ukmergės g. 240 Vilnius),11,1,1,0,10,0,1.0,0.0909,0.1667,0.0909
+job_ad,20,BI programuotojas (-a),14,6,2,4,12,0,0.3333,0.1429,0.2,0.1111
+ALL,-1,micro-average,142,116,28,88,114,2,0.2414,0.1972,0.2171,0.1144

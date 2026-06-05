@@ -1,0 +1,9 @@
+variant,normalisation,description,tp,fp,fn,near_miss,precision,recall,f1
+baseline_canonical_t070,none,"Reference: fixed K=10, τ=0.70, max-cosine scoring (no source mask)",53,468,89,6,0.1017,0.3732,0.1599
+baseline_canonical_t070,label_cluster_j0.5,"Reference: fixed K=10, τ=0.70, max-cosine scoring (no source mask)",57,446,74,0,0.1133,0.4351,0.1798
+same_source_t070,none,"Source-separated: fixed K=10, τ=0.70, max-cosine scoring",53,468,89,6,0.1017,0.3732,0.1599
+same_source_t070,label_cluster_j0.5,"Source-separated: fixed K=10, τ=0.70, max-cosine scoring",57,446,74,0,0.1133,0.4351,0.1798
+best_prior_tfidf_s050,none,Reference: adaptive K + TF-IDF score≥0.50 (no source mask),48,346,94,6,0.1218,0.338,0.1791
+best_prior_tfidf_s050,label_cluster_j0.5,Reference: adaptive K + TF-IDF score≥0.50 (no source mask),51,333,80,0,0.1328,0.3893,0.1981
+same_source_tfidf_s050,none,Source-separated: adaptive K + TF-IDF score≥0.50,48,347,94,6,0.1215,0.338,0.1788
+same_source_tfidf_s050,label_cluster_j0.5,Source-separated: adaptive K + TF-IDF score≥0.50,51,334,80,0,0.1325,0.3893,0.1977
