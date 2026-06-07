@@ -85,6 +85,15 @@ _CROSS_SECTOR_BLOCKLIST: frozenset[str] = frozenset({
     "cook",                 # alt: "cooking"
 })
 
+# Cross-sector URIs that ESCO classifies as sector-specific or occupation-specific
+# yet which are functionally core ICT competences in this corpus context. They
+# fail _ICT_KEYWORDS (no ICT-prefix in preferredLabel) AND are not in
+# digitalSkillsCollection_en.csv. Each entry should be backed by annotator
+# evidence from the validation gold; add sparingly.
+_EXTRA_KEEP_URIS: frozenset[str] = frozenset({
+    "http://data.europa.eu/esco/skill/7111b95d-0ce3-441a-9d92-4c75d05c4388",  # project management
+})
+
 # ── ESCO reuse-level lookup (built once on first use) ─────────────────────────
 
 _uri_reuse_level: dict[str, str] = {}
@@ -139,10 +148,13 @@ def _is_ict_relevant(skill_detail: dict) -> bool:
     Return True if the skill should be kept based on domain relevance.
 
     Precedence (additive — any pass keeps the skill):
-      1. ESCO digital skills collection — authoritative ICT whitelist from
+      1. Manually-whitelisted URIs (`_EXTRA_KEEP_URIS`) — cross-sector
+         skills functionally core to ICT in this corpus, backed by
+         annotator evidence from the validation gold.
+      2. ESCO digital skills collection — authoritative ICT whitelist from
          the Commission, sits in `digitalSkillsCollection_en.csv` (1284 URIs).
-      2. cross-sector / transversal reuse level — generic competences.
-      3. ICT keyword in the preferred label.
+      3. cross-sector / transversal reuse level — generic competences.
+      4. ICT keyword in the preferred label.
 
     The cross-sector blocklist still rejects a small set of mislabelled
     items before any of the above fires.
@@ -152,6 +164,9 @@ def _is_ict_relevant(skill_detail: dict) -> bool:
 
     if preferred in _CROSS_SECTOR_BLOCKLIST:
         return False
+
+    if uri in _EXTRA_KEEP_URIS:
+        return True
 
     if uri in _get_digital_skill_uris():
         return True
