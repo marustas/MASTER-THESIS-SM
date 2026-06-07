@@ -6,19 +6,19 @@ extracted URI is genuinely taught/required by the document, and keep
 only those the verifier confirms.  Compare against the same gold
 standard.
 
-Default model: Qwen/Qwen2.5-1.5B-Instruct (~3 GB, MPS-friendly on
-Apple Silicon).  First run downloads the model into the HuggingFace
-cache.
+Default model: Qwen/Qwen2.5-3B-Instruct with ``batch_size=1`` (~6 GB,
+MPS-friendly on Apple Silicon).  First run downloads the model into the
+HuggingFace cache.  This is the variant adopted as canonical (F1=0.248
+micro / 0.279 concept) after a sweep over Phi-3.5-mini, Qwen2.5-1.5B and
+prompt variants — see ``VARIANT_SWEEP_REPORT.md`` in the validation dir.
 
-Writes:
-  experiments/validation/extraction/llm_verify_metrics.csv
-  experiments/validation/extraction/llm_verify_per_doc.csv
-  experiments/validation/extraction/llm_verify_decisions.csv
-  experiments/validation/extraction/LLM_VERIFY_REPORT.md
+Writes (use ``--suffix qwen2.5-3B_b1`` to match the canonical filenames):
+  experiments/validation/extraction/llm_verify_metrics_<suffix>.csv
+  experiments/validation/extraction/llm_verify_decisions_<suffix>.csv
+  experiments/validation/extraction/LLM_VERIFY_REPORT_<suffix>.md
 
 Usage:
-  python -m experiments.scripts.extraction_pilot_llm_verify
-  python -m experiments.scripts.extraction_pilot_llm_verify --model Qwen/Qwen2.5-3B-Instruct
+  python -m experiments.scripts.extraction_pilot_llm_verify --suffix qwen2.5-3B_b1
 """
 
 from __future__ import annotations

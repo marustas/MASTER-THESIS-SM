@@ -8,7 +8,10 @@ Designed as a post-filter on top of the existing extractor: it never
 adds new URIs, only rejects existing ones.  Recall ceiling is therefore
 the extractor's recall; the verifier's job is to improve precision.
 
-Default model: ``Qwen/Qwen2.5-1.5B-Instruct`` (~3 GB, MPS-friendly).
+Default model: ``Qwen/Qwen2.5-3B-Instruct`` with ``batch_size=1``
+(~6 GB, MPS-friendly). Selected after a sweep over Phi-3.5-mini,
+Qwen2.5-1.5B and prompt variants (strict/soft/lenient/v2_title) — the
+3B-b1 setup was the only one to clear F1 ≈ 0.25 on the 10-doc gold sample.
 Tests inject a callable instead of the real model — no network access.
 """
 
@@ -20,8 +23,8 @@ from typing import Callable, Iterable
 
 from loguru import logger
 
-DEFAULT_MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
-DEFAULT_BATCH_SIZE = 10
+DEFAULT_MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
+DEFAULT_BATCH_SIZE = 1
 DEFAULT_DOC_CHAR_LIMIT = 3500
 DEFAULT_MAX_NEW_TOKENS = 256
 
