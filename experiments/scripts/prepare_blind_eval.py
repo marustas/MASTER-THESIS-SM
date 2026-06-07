@@ -240,20 +240,18 @@ def _uri_to_label(df: pd.DataFrame) -> dict[str, str]:
 
 
 def _compute_gap_skills(
-    top_job_titles: list[str],
-    title_to_skills: dict[str, set[str]],
+    top_job_ids: list[int],
+    job_skills_by_id: dict[int, set[str]],
     prog_skills: set[str],
     uri_label: dict[str, str],
 ) -> list[str]:
-    """Aggregate skill demand across top-K matched jobs, subtract programme skills.
-
-    Linked by ``job_title`` because the rankings file's ``job_id`` field is
-    from a stale dataset snapshot.  ``title_to_skills`` already unions all
-    occurrences of a title within the current dataset.
+    """Aggregate skill demand across the top-K matched jobs, subtract
+    programme skills. ``top_job_ids`` and ``job_skills_by_id`` keys must be
+    the global ``dataset.parquet`` row indices.
     """
     demand: Counter[str] = Counter()
-    for title in top_job_titles:
-        for u in title_to_skills.get(title, set()):
+    for jid in top_job_ids:
+        for u in job_skills_by_id.get(jid, set()):
             demand[u] += 1
     missing = [(u, c) for u, c in demand.items() if u not in prog_skills]
     missing.sort(key=lambda t: (-t[1], uri_label.get(t[0], t[0])))
@@ -270,48 +268,44 @@ def build() -> dict:
     df = pd.read_parquet(DATASET)
     rankings = pd.read_parquet(RANKINGS)
 
-    # rankings.programme_id is positional within the programmes subset (0-44);
-    # rankings.job_id is from a stale snapshot — bridge by job_title instead.
-    programmes = df[df["source_type"] == "programme"].reset_index(drop=True)
+    # rankings.programme_id / job_id are the global ``dataset.parquet`` row
+    # indices.  Keep df indices throughout to align bucket lookups, top-K
+    # candidate joins and skill-set lookups in a single coordinate system.
+    programmes = df[df["source_type"] == "programme"]
     jobs = df[df["source_type"] == "job_ad"]
     uri_label = _uri_to_label(df)
 
-    # Title → union of skill URIs across all occurrences (some titles repeat).
-    title_to_skills: dict[str, set[str]] = {}
-    for _, row in jobs.iterrows():
-        t = row.get("job_title")
-        if not isinstance(t, str) or not t:
-            continue
-        title_to_skills.setdefault(t, set()).update(_skill_uris(row))
+    job_skills_by_id: dict[int, set[str]] = {
+        int(idx): _skill_uris(row) for idx, row in jobs.iterrows()
+    }
 
     bucket_membership = _compute_bucket_membership(programmes, rankings)
 
-    # Top-K matched job titles per positional programme id.
-    top_k_titles = (
+    # Top-K matched job df indices per programme df index.
+    top_k_job_ids = (
         rankings.sort_values(["programme_id", "hybrid_score"], ascending=[True, False])
         .groupby("programme_id", sort=False)
         .head(TOP_K_FOR_GAPS)
-        .groupby("programme_id")["job_title"]
-        .apply(list)
+        .groupby("programme_id")["job_id"]
+        .apply(lambda s: [int(x) for x in s])
         .to_dict()
     )
 
-    # Assemble programme records (positional 0-44 matches buckets + rankings).
     records: list[dict] = []
-    for pos, row in programmes.iterrows():
-        pos_id = int(pos)
+    for idx, row in programmes.iterrows():
+        prog_id = int(idx)
         prog_uris = _skill_uris(row)
         gap_skills = _compute_gap_skills(
-            top_k_titles.get(pos_id, []),
-            title_to_skills,
+            top_k_job_ids.get(prog_id, []),
+            job_skills_by_id,
             prog_uris,
             uri_label,
         )
         records.append({
-            "real_programme_id": pos_id,
+            "real_programme_id": prog_id,
             "name": str(row["name"]),
             "institution": str(row.get("institution", "")),
-            "primary_bucket": _primary_bucket(pos_id, bucket_membership),
+            "primary_bucket": _primary_bucket(prog_id, bucket_membership),
             "description": _description_for(row),
             "gap_skills": gap_skills,
         })
