@@ -1,5 +1,8 @@
 @startuml skill_extraction_explicit
 top to bottom direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 40
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam ArrowThickness 2
