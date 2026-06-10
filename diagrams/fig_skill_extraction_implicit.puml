@@ -1,0 +1,45 @@
+@startuml skill_extraction_implicit
+left to right direction
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 13
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Corpus Input**\n---\nAll cleaned documents\n(programmes or job ads)\n+ explicit skills per doc\n(from explicit extractor)" as CORPUS
+
+component "**fit() — Index Build**\n---\nEmbed every document\n(all-MiniLM-L6-v2,\nL2-normalised);\nstore explicit skill set\nper document" as FIT
+
+component "**Corpus Store**\n---\nEmbeddings matrix (N × d)\n+ Explicit skill sets\n(list of N)" as STORE
+
+component "**Target Input**\n---\nTarget document text\n+ explicit_uris (already\nfound on this doc)\n+ doc_idx (optional)" as TGT
+
+component "**Target Embedding**\n---\nReuse stored embedding\nif doc_idx known;\nelse encode on the fly" as EMB
+
+component "**Cosine Similarity**\n---\nsims = E · target_emb\n(N similarities);\nself-match masked to −1\nwhen doc_idx given" as SIM
+
+component "**Neighbour Selection**\n---\nKeep sims ≥ 0.60,\ntake top-K = 10\n(paper Section 4.2,\nthreshold 0.59 → 0.60)" as NBR
+
+component "**Skill Aggregation**\n---\nCollect explicit skills\nfrom each neighbour;\nfor each URI keep the\nmax neighbour similarity" as AGG
+
+component "**Exclude Explicit**\n---\nDrop URIs already in\ntarget's explicit_uris\n(implicit = NOT in target,\nbut present in peers)" as EXC
+
+component "**Output**\n---\nList[ExtractedSkill]\nimplicit = True\nconfidence = max neighbour\ncosine similarity\n(E3 = 0.5 weight applied\nlater in alignment)" as OUT #DFF0D8
+
+CORPUS --> FIT
+FIT --> STORE : embeddings\n+ skill sets
+TGT --> EMB
+STORE --> EMB : lookup by doc_idx
+EMB --> SIM : target_emb (d,)
+STORE --> SIM : embeddings (N × d)
+SIM --> NBR
+NBR --> AGG : top-10 indices
+STORE --> AGG : neighbour skill sets
+AGG --> EXC : candidate URIs
+TGT --> EXC : explicit_uris
+EXC --> OUT
+
+@enduml
