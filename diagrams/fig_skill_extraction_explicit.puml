@@ -1,5 +1,5 @@
 @startuml skill_extraction_explicit
-left to right direction
+top to bottom direction
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam ArrowThickness 2
