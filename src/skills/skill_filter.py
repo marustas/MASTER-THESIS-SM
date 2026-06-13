@@ -85,9 +85,24 @@ _CROSS_SECTOR_BLOCKLIST: frozenset[str] = frozenset({
     "cook",                 # alt: "cooking"
 })
 
+# Cross-sector URIs that ESCO classifies as sector-specific or occupation-specific
+# yet which are functionally core ICT competences in this corpus context. They
+# fail _ICT_KEYWORDS (no ICT-prefix in preferredLabel) AND are not in
+# digitalSkillsCollection_en.csv. Each entry should be backed by annotator
+# evidence from the validation gold; add sparingly.
+_EXTRA_KEEP_URIS: frozenset[str] = frozenset({
+    "http://data.europa.eu/esco/skill/7111b95d-0ce3-441a-9d92-4c75d05c4388",  # project management
+})
+
 # ── ESCO reuse-level lookup (built once on first use) ─────────────────────────
 
 _uri_reuse_level: dict[str, str] = {}
+_digital_skill_uris: frozenset[str] = frozenset()
+
+
+# ESCO's curated digital skills collection — 1284 URIs the Commission itself
+# flags as ICT-relevant. Sits next to skills_en.csv in the same download.
+DIGITAL_SKILLS_CSV_PATH = ESCO_CSV_PATH.parent / "digitalSkillsCollection_en.csv"
 
 
 def _get_uri_reuse_level() -> dict[str, str]:
@@ -107,23 +122,56 @@ def _get_uri_reuse_level() -> dict[str, str]:
     return _uri_reuse_level
 
 
+def _get_digital_skill_uris() -> frozenset[str]:
+    global _digital_skill_uris
+    if _digital_skill_uris:
+        return _digital_skill_uris
+    import csv
+    if not DIGITAL_SKILLS_CSV_PATH.exists():
+        logger.warning(f"Digital skills collection not found at {DIGITAL_SKILLS_CSV_PATH}")
+        return _digital_skill_uris
+    uris: set[str] = set()
+    with open(DIGITAL_SKILLS_CSV_PATH, encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            uri = row.get("conceptUri", "").strip()
+            if uri:
+                uris.add(uri)
+    _digital_skill_uris = frozenset(uris)
+    logger.info(f"Loaded {len(_digital_skill_uris)} URIs from ESCO digital skills collection")
+    return _digital_skill_uris
+
+
 # ── Domain filter ──────────────────────────────────────────────────────────────
 
 def _is_ict_relevant(skill_detail: dict) -> bool:
     """
     Return True if the skill should be kept based on domain relevance.
 
-    cross-sector / transversal skills are always kept.
-    occupation-specific / sector-specific skills are kept only when the
-    preferred label contains an ICT keyword.
+    Precedence (additive — any pass keeps the skill):
+      1. Manually-whitelisted URIs (`_EXTRA_KEEP_URIS`) — cross-sector
+         skills functionally core to ICT in this corpus, backed by
+         annotator evidence from the validation gold.
+      2. ESCO digital skills collection — authoritative ICT whitelist from
+         the Commission, sits in `digitalSkillsCollection_en.csv` (1284 URIs).
+      3. cross-sector / transversal reuse level — generic competences.
+      4. ICT keyword in the preferred label.
+
+    The cross-sector blocklist still rejects a small set of mislabelled
+    items before any of the above fires.
     """
     uri = skill_detail.get("esco_uri", "")
-    reuse_level = _get_uri_reuse_level().get(uri, "")
-
     preferred = skill_detail.get("preferred_label", "")
+
     if preferred in _CROSS_SECTOR_BLOCKLIST:
         return False
 
+    if uri in _EXTRA_KEEP_URIS:
+        return True
+
+    if uri in _get_digital_skill_uris():
+        return True
+
+    reuse_level = _get_uri_reuse_level().get(uri, "")
     if reuse_level in _ALWAYS_KEEP_REUSE_LEVELS or not reuse_level:
         return True
 

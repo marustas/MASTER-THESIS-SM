@@ -1,0 +1,26 @@
+{
+  "n_programmes": 45,
+  "n_jobs": 520,
+  "n_pairs": 23400,
+  "wilcoxon_uniform_vs_cap3": {
+    "W": 0.0,
+    "p": 5.684341886080802e-14
+  },
+  "chosen_lambda": 0.5,
+  "chosen_mu": 0.5,
+  "final": {
+    "config": "FINAL",
+    "n_programmes": 45,
+    "cov_mean": 0.6899,
+    "cov_std": 0.1731,
+    "top1_unique": 19,
+    "head_tied": 10,
+    "top5_generalists": 5,
+    "top5_max_repeat": 28,
+    "top1_score_mean": 0.323,
+    "top1_score_max": 0.6278,
+    "top1_score_median": 0.2891,
+    "score_mean_all": 0.0531,
+    "score_median_all": 0.0388
+  }
+}

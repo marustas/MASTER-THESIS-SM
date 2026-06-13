@@ -1,0 +1,51 @@
+@startuml skill_extraction_explicit
+top to bottom direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 40
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ArrowThickness 2
+skinparam defaultFontSize 13
+skinparam component {
+    BackgroundColor #F5F5F5
+    BorderColor #333333
+}
+
+component "**Input**\n---\nCleaned document text\n(programme or job ad)" as IN
+
+component "**spaCy Parse**\n---\nen_core_web_sm,\nparser disabled,\nNER + PoS + sentences" as NLP
+
+component "**S1 — NER**\n(α = 1)\n---\nspaCy named entities;\nPRODUCT / ORG / LANGUAGE\n/ WORK_OF_ART / LAW / GPE\nscored 1.0,\nothers 0.5" as S1
+
+component "**S2 — PoS Rule**\n(β = 1)\n---\nComma-separated noun list:\nif one noun is a known\nESCO skill, score the\nother nouns 1.0\n(paper Section 4.1)" as S2
+
+component "**S3 — ESCO Dictionary**\n(γ = 20)\n---\nspaCy PhraseMatcher over\nESCO preferred + alt labels\n(1–8 tokens, lowercase);\nbinary hit score 1.0" as S3
+
+component "**S4 — Embedding Sim**\n(λ = 2)\n---\nall-MiniLM-L6-v2\ncosine vs. pre-computed\nESCO label embeddings;\nmax similarity per\ncandidate" as S4
+
+component "**Candidate Pool**\n---\nUnion of S1 ∪ S2 ∪ S3\nsurface forms" as POOL
+
+component "**Relevance Score**\n---\nx = (α·S1 + β·S2 +\n   γ·S3 + λ·S4) / (α+β+γ+λ)\n\nThreshold: x ≥ 0.35" as REL
+
+component "**URI Resolution**\n---\nDictionary hit wins;\nelse best S4 ESCO match;\nkeep top-confidence\nsurface per URI" as RES
+
+component "**Output**\n---\nList[ExtractedSkill]\nexplicit = True\nconfidence ∈ [0.35, 1.0]" as OUT #DFF0D8
+
+IN --> NLP : text[:500k]
+NLP --> S1
+NLP --> S2 : needs S3 hits\nas anchor
+NLP --> S3
+S3 --> S2 : dict_hit_surfaces
+S1 --> POOL
+S2 --> POOL
+S3 --> POOL
+POOL --> S4 : candidate phrases
+S1 --> REL
+S2 --> REL
+S3 --> REL
+S4 --> REL
+REL --> RES : x ≥ 0.35
+RES --> OUT : ESCO URI + label\n+ matched text
+
+@enduml
