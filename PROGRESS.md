@@ -1,8 +1,16 @@
 # Implementation Progress
 
-## Step 36 — Replace LinkedIn Data Source (Commercial Viability) [ ]
+## Step 36 — Replace LinkedIn Data Source (Commercial Viability) [~] scaffolded, paused
 
 **Deferred — not required for thesis defence. Only relevant if project is productised.**
+
+**2026-06-11 — scaffolding landed, live integration paused.** Branch `feature/job_source_diversification` (base 71d6d1c) carries 4 commits:
+- `feat(eures): add EURES portal API job scraper` — httpx async client, 9 countries × 12 IT queries, JobAd normalisation
+- `feat(adzuna): add Adzuna API job scraper` — free-tier `it-jobs` category, 6 EU countries
+- `feat(job_ads): wire EURES and Adzuna into scrape + merge pipeline` — `_merge_all_jobs` ingests 4 sources additively
+- `test(scraping): add offline tests for EURES and Adzuna scrapers` — 15 tests via `httpx.MockTransport`, suite stays at 584 pass
+
+**Pause reason:** EURES public JV-search JSON API is auth-gated as of 2026. All probed endpoints (`/eures/api/jv-searchengine/{search, jvs/search, v1/jvs/search, page/jv-search/search}`) return 401/403 even with portal cookies. Adopting EURES requires either a Playwright-based UI scraper or a swap to Jooble/Careerjet. LinkedIn replacement intent is additive (user's preference) — no LinkedIn data was removed.
 
 LinkedIn ToS explicitly prohibits scraping; *hiQ v. LinkedIn* (2022) settled in LinkedIn's favour. Commercial use of the existing LinkedIn-derived corpus is legally exposed (ToS breach + GDPR risk on personal data in postings). Research/thesis use is a tolerated grey area and does not require action now.
 
